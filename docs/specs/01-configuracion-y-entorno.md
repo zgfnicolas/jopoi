@@ -1,7 +1,7 @@
 # S01 · Configuración, entorno y presupuesto cero
 
 Área: Backend · base. Tamaño relativo: XS. Dependencias: Ninguna.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: base implementada el 2026-10-22 según el plan aprobado. Configuración y contratos disponibles; sin aplicación arrancable, conexiones ni despliegue. Pruebas de comportamiento pendientes de S17/S18. Sin publicar como issue.
 
 ## Problem Statement
 
@@ -45,6 +45,9 @@ Definir los entornos local y publicado, la configuración del servidor y el cont
 | Regla incumplida | RULE_VIOLATION | 422 con motivo categorizado, como humedad o peso. |
 | Cupo de recorridos agotado | RUN_LIMIT_REACHED | 429, sin crear otro recorrido. |
 | Base indispensable indisponible | DATABASE_UNAVAILABLE | 503, sin confirmación de guardado. |
+| Trazabilidad vencida, determinable sin revelar datos | TRACE_EXPIRED | 410, sin servir el recorrido vencido. |
+| Otra capacidad indispensable sin configuración válida | CONFIGURATION_UNAVAILABLE | 503 recuperable, sin publicar variables ni valores. |
+| Fallo inesperado | INTERNAL_ERROR | 500 con mensaje genérico, sin excepción del proveedor. |
 
 Una acción ya guardada en SQL puede responder correctamente con publicación pausada por cuota o red indisponible. No convertir ese caso en error de guardado ni revertirlo por un HTTP 429 o 503 posterior del proveedor. Los endpoints de lectura pueden devolver estado parcial de red cuando la proyección local sigue disponible.
 
@@ -65,4 +68,4 @@ Contrataciones, elección de otro hosting, cambios de alcance, despliegue, insta
 
 ## Further Notes
 
-Derivada de Q6, Q16, Q26–Q29 y ADR 0003. Las decisiones de configuración son propuestas técnicas de esta síntesis, no acciones ya realizadas.
+Derivada de Q6, Q16, Q26–Q29 y ADR 0003. La instrucción posterior de implementar el plan de S01 autoriza esta base: no incluye las demás specs, cuentas, compras ni despliegues. El [registro de implementación y entorno](../configuracion-y-entorno.md) documenta versiones, variables, contratos y verificaciones realizadas. Las constantes no sustituyen el control durable de cuotas de S10.
