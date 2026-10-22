@@ -1,6 +1,6 @@
 # Alcance de la demo Jopói
 
-Estado: alcance confirmado globalmente en Q31. Fase actual: preparar specs; no escribir código. Fecha: 2026-10-22.
+Estado: alcance confirmado globalmente en Q31. Specs redactadas para revisión; no escribir código. Fecha: 2026-10-22.
 
 Este documento es la fuente vigente del alcance. Integra las cinco rondas de definición, incluida la corrección de Q26 a presupuesto cero. La aplicación todavía no está implementada.
 
@@ -138,6 +138,7 @@ No quedan preguntas de alcance abiertas. Versiones, esquema concreto, nombres de
 
 ## Documentos relacionados
 
+- [Lista ordenada de specs](specs/README.md), desde backend hasta frontend y entrega, con las pruebas al final.
 - [Modelo de dominio de la demo](modelo-demo.md).
 - [Flujo y trazabilidad](flujo-y-trazabilidad.md).
 - [Infraestructura y fuentes oficiales](infraestructura-demo.md).

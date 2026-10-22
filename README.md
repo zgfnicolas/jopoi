@@ -9,6 +9,7 @@ La definición del proyecto quedó confirmada en Q31. La fase actual es preparar
 | Documento | Contenido |
 | --- | --- |
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
+| [Specs ordenadas](docs/specs/README.md) | 18 specs desde backend hasta frontend y entrega, con pruebas al final. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |
