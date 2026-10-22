@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.env*
+!.env.example
+.tools/
+.cache/
+.vercel/
+*.tsbuildinfo
+src/generated/prisma/
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/live/
