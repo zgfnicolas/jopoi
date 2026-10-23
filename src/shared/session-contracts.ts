@@ -1,3 +1,5 @@
+import type { OperationState } from "./operation-contracts";
+
 /** DTO privados de la demo. No incluyen identidad interna, cookies ni hashes. */
 export interface DemoRunIntentInput {
   readonly requestId: string;
@@ -11,7 +13,7 @@ export interface DemoSessionSummary {
 
 export interface DemoRunSummary {
   readonly traceId: string;
-  readonly state: "DRAFT" | "PUBLISHED" | "APPROVED" | "ASSIGNED" | "PICKED_UP" | "RECEIVED" | "REJECTED" | "INCIDENT";
+  readonly state: OperationState;
   readonly version: number;
   readonly expiresAt: string;
 }

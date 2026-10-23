@@ -1,14 +1,8 @@
-import { formatFixedDecimal, normalizeHumidityPercent, parseFixedDecimal, parseQuantityGrams } from "../../domain/decimal";
-import { invalidField, type DomainResult } from "../../domain/result";
-
-const MAX_POSTGRES_BIGINT = 9223372036854775807n;
+import { formatFixedDecimal, normalizeHumidityPercent, parseFixedDecimal, parseOperationQuantityGrams } from "../../domain/decimal";
+import type { DomainResult } from "../../domain/result";
 
 export function toStoredGrams(value: unknown, field = "quantityKg"): DomainResult<bigint> {
-  const parsed = parseQuantityGrams(value, field);
-  if (!parsed.ok) return parsed;
-  return parsed.value <= MAX_POSTGRES_BIGINT
-    ? parsed
-    : invalidField(field, "La cantidad supera el rango de almacenamiento.", "RULE_VIOLATION");
+  return parseOperationQuantityGrams(value, field);
 }
 
 export function toStoredHumidity(value: unknown): DomainResult<number> {

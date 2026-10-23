@@ -2,6 +2,8 @@
 
 S02 implementada en `feature/s02-escenario-y-calculo`, creada desde `main` con S01 confirmada. La entrega aporta datos versionados, snapshots independientes, precisión decimal, cálculo ilustrativo y recursos locales. Persistencia, reglas de asignación, API y pantallas siguen pendientes de sus specs.
 
+Actualización S06: S03/S04 ya incorporaron persistencia y sesiones, y S06 implementa decisiones puras y evaluación de viajes sobre el snapshot guardado. Ver [reglas de operación](reglas-de-operacion.md). La API operativa y los eventos se integrarán en S07/S08; las descripciones siguientes conservan el alcance original de S02.
+
 ## Escenario chips-v1
 
 `createScenarioSnapshot()` devuelve una copia profundamente congelada de `chips-v1`. El catálogo no se exporta como objeto mutable y cada llamada crea referencias independientes. El resultado contiene datos JSON, sin `bigint`, fechas de ejecución, tokens ni estado operativo.
@@ -27,14 +29,14 @@ Las ventanas se representan con `dayOffset`, minutos desde medianoche y offset f
 | Ruta | Compatible con el corredor de ejemplo | Compatible con el corredor de ejemplo |
 | Retiro | 08:00–10:00 | 14:00–16:00 |
 
-Con los datos iniciales, Retorno A satisface las condiciones. Viaje B incumple capacidad, carrocería y horario. La capacidad es disponibilidad declarada del viaje ficticio, no una inferencia de que un camión está vacío. No se guarda una compatibilidad global permanente: editar la cantidad puede modificar la compatibilidad por capacidad. S06 implementará la evaluación y sus bloqueos; S02 no asigna viajes.
+Con los datos iniciales, Retorno A satisface las condiciones. Viaje B incumple capacidad, carrocería y horario. La capacidad es disponibilidad declarada del viaje ficticio, no una inferencia de que un camión está vacío. No se guarda una compatibilidad global permanente: editar la cantidad modifica la evaluación por capacidad. S06 implementa esa evaluación y decide los bloqueos; S07/S08 persistirán las decisiones. S02 no asigna viajes.
 
 Los motivos precargados tienen código y etiqueta, sin campos libres:
 
 - Rechazo: `HUMIDITY_ABOVE_LIMIT` y `MATERIAL_NOT_AS_DECLARED`.
 - Incidencia: `WEIGHT_MISMATCH` y `MATERIAL_ISSUE`.
 
-S06 aplicará el motivo permitido por comando; un motivo de peso solo corresponde si hay diferencia exacta. No se crean transiciones ni se verifica calidad física en S02.
+S06 aplica el motivo permitido por comando; un motivo de peso solo corresponde si hay diferencia exacta, y el motivo de humedad exige exceder el máximo del comprador. No se crean transiciones ni se verifica calidad física en S02.
 
 ## Contratos de consumo
 

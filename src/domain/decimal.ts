@@ -1,5 +1,8 @@
 import { invalidField, type DomainResult } from "./result";
 
+/** Rango operativo acordado con S03, expresado en gramos enteros. */
+export const MAX_OPERATION_GRAMS = 9223372036854775807n;
+
 /** No acepta exponentes, separadores locales, signos ni precisión adicional. */
 export function parseFixedDecimal(
   input: unknown,
@@ -49,11 +52,24 @@ export function normalizeQuantityKg(
   return parsed.ok ? { ok: true, value: formatFixedDecimal(parsed.value, 3) } : parsed;
 }
 
-export function normalizeHumidityPercent(humidityPercent: unknown): DomainResult<string> {
-  const parsed = parseFixedDecimal(humidityPercent, 2, "humidityPercent");
+export function parseOperationQuantityGrams(value: unknown, field = "quantityKg"): DomainResult<bigint> {
+  const parsed = parseQuantityGrams(value, field);
+  if (!parsed.ok) return parsed;
+  return parsed.value <= MAX_OPERATION_GRAMS
+    ? parsed
+    : invalidField(field, "La cantidad supera el rango de almacenamiento.", "RULE_VIOLATION");
+}
+
+export function parseHumidityHundredths(humidityPercent: unknown, field = "humidityPercent"): DomainResult<bigint> {
+  const parsed = parseFixedDecimal(humidityPercent, 2, field);
   if (!parsed.ok) return parsed;
   if (parsed.value > 10000n) {
-    return invalidField("humidityPercent", "La humedad debe estar entre 0 y 100%.", "RULE_VIOLATION");
+    return invalidField(field, "La humedad debe estar entre 0 y 100%.", "RULE_VIOLATION");
   }
-  return { ok: true, value: formatFixedDecimal(parsed.value, 2) };
+  return parsed;
+}
+
+export function normalizeHumidityPercent(humidityPercent: unknown): DomainResult<string> {
+  const parsed = parseHumidityHundredths(humidityPercent);
+  return parsed.ok ? { ok: true, value: formatFixedDecimal(parsed.value, 2) } : parsed;
 }
