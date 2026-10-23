@@ -2,7 +2,7 @@
 
 S08 implementa recuperación y comandos HTTP en `feature/s08-api-del-recorrido`, desde `main` con S07 integrada mediante PR #6. Reutiliza reglas de S06, transacciones/recibos/eventos de S07 y sesión de S04. No añade dependencias, variables de entorno ni migraciones.
 
-Actualización S09: [el adaptador HCS](hedera-testnet.md) amplía publication con network, topicId, transactionId, sequenceNumber como string, consensusTimestamp, confirmedAt, verifiedAt y lastErrorCode categorizado; los ausentes son null. El primer hito puede fijar metadata privada de generación sin exigir clave ni contactar red. S10 sigue pendiente de activar los envíos. Las secciones siguientes conservan el contrato y la evidencia de cierre de S08.
+Actualización S09/S10: [el adaptador HCS](hedera-testnet.md) amplía publication con network, topicId, transactionId, sequenceNumber como string, consensusTimestamp, confirmedAt, verifiedAt y lastErrorCode categorizado; los ausentes son null. El primer hito puede fijar metadata privada de generación sin exigir clave ni contactar red. [S10](cuotas-reintentos-y-mantenimiento.md) activa trabajo posterior a la respuesta SQL y añade intentos, elegibilidad, bloqueo por predecesor y cuota al resumen privado, además del POST privado de reintento. Las secciones siguientes conservan el contrato y la evidencia de cierre de S08.
 
 ## Acceso y recuperación
 

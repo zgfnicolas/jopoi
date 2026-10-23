@@ -8,6 +8,7 @@ import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { readPublicEvent } from "../events/payload";
 import { publicationSummary, publicationSummarySelect } from "../hedera/summary";
+import { quotaSummary } from "../hedera/coordinator";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun, requireSession, sessionSummary } from "../sessions/service";
 import { readRunOperation, readRunSnapshot } from "./storage";
@@ -22,16 +23,18 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
     where: { runId: run.id }, orderBy: { ordinal: "asc" },
     include: { publication: { select: publicationSummarySelect } },
   });
+  const quota = await quotaSummary(tx, process.env, new Date());
   const events = rows.map((row) => {
     if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
     return {
       event: readPublicEvent(row, run.traceId),
-      publication: publicationSummary(row.publication),
+      publication: publicationSummary(row.publication, { blockedBy: rows.find(previous => previous.ordinal < row.ordinal && previous.publication?.state !== "CONFIRMED")?.id ?? null, quota }),
     };
   });
   return {
     traceId: run.traceId, version: run.version, expiresAt: run.expiresAt.toISOString(),
     operation, scenario, compatibility: compatibility.value, economics: economics.value, events,
+    quota,
   };
 }
 

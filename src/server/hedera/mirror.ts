@@ -79,7 +79,7 @@ export async function lookupTransaction(id: string, expectedTopic: string | null
     return { kind: "confirmed", topicId: row.entity_id, sequenceNumber: null, consensusTimestamp: row.consensus_timestamp };
   }
   if (rows.some((row) => !["DUPLICATE_TRANSACTION", "UNKNOWN", "INVALID_NODE_ACCOUNT", "INVALID_PAYER_SIGNATURE"].includes(row.result))) {
-    return { kind: "rejected", code: "HCS_TRANSACTION_REJECTED" };
+    return { kind: "rejected", code: "HCS_TRANSACTION_REJECTED", source: "MIRROR" };
   }
   return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" };
 }

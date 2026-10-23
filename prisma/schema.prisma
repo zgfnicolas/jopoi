@@ -71,6 +71,19 @@ enum VerificationState {
   UNAVAILABLE
 }
 
+enum HcsAttemptKind {
+  AUTOMATIC
+  MANUAL
+}
+
+enum HcsAttemptState {
+  RESERVED
+  STARTED
+  UNCERTAIN
+  REJECTED
+  CONFIRMED
+}
+
 model DemoSession {
   id          String    @id @default(uuid()) @db.Uuid
   tokenHash   String    @unique @db.VarChar(64)
@@ -178,6 +191,8 @@ model HcsPublication {
   attemptHistory          Json              @default("[]") @db.JsonB
   automaticAttempts       Int               @default(0) @db.SmallInt
   manualAttempts          Int               @default(0) @db.SmallInt
+  manualAuthorizedAt      DateTime?         @db.Timestamptz(3)
+  attempts                HcsSubmissionAttempt[]
   nextAttemptAt           DateTime?         @db.Timestamptz(3)
   leaseOwner              String?           @db.Uuid
   leaseExpiresAt          DateTime?         @db.Timestamptz(3)
@@ -192,6 +207,37 @@ model HcsPublication {
 
   @@index([state, nextAttemptAt])
   @@index([leaseExpiresAt])
+  @@index([nextAttemptAt, eventId], map: "HcsPublication_due_idx")
+}
+
+model HcsSubmissionAttempt {
+  id                      String          @id @default(uuid()) @db.Uuid
+  eventId                 String          @db.Uuid
+  publication             HcsPublication  @relation(fields: [eventId], references: [eventId], onDelete: Cascade, onUpdate: NoAction)
+  slot                    Int             @db.SmallInt
+  kind                    HcsAttemptKind
+  state                   HcsAttemptState @default(RESERVED)
+  transactionId           String          @unique @db.VarChar(128)
+  signedTransactionBytes  Bytes
+  topicId                 String          @db.VarChar(64)
+  operatorId              String          @db.VarChar(64)
+  configurationGeneration String          @db.VarChar(64)
+  quotaDate               DateTime        @db.Date
+  startedAt               DateTime?       @db.Timestamptz(3)
+  finishedAt              DateTime?       @db.Timestamptz(3)
+  proof                   String          @default("NONE") @db.VarChar(16)
+  lastErrorCode           String?         @db.VarChar(64)
+  createdAt               DateTime        @default(now()) @db.Timestamptz(3)
+
+  @@unique([eventId, slot])
+  @@index([eventId, state])
+}
+
+model MaintenanceLease {
+  name              String    @id @db.VarChar(32)
+  owner             String?   @db.Uuid
+  expiresAt         DateTime? @db.Timestamptz(3)
+  lastCompletedDate DateTime? @db.Date
 }
 
 model DailyQuota {

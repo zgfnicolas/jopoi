@@ -3,6 +3,7 @@ export const API_ERROR_CATALOG = Object.freeze({
   INVALID_INPUT: { status: 400, message: "Revisá los datos ingresados." },
   SESSION_REQUIRED: { status: 401, message: "Necesitás iniciar una sesión de demostración." },
   SESSION_EXPIRED: { status: 401, message: "Tu sesión venció. Iniciá una nueva demostración." },
+  MAINTENANCE_UNAUTHORIZED: { status: 401, message: "Solicitud de mantenimiento no autorizada." },
   WRONG_ROLE: { status: 403, message: "El rol seleccionado no permite realizar esta acción." },
   REQUEST_FORBIDDEN: { status: 403, message: "La solicitud no está permitida desde este origen." },
   NOT_FOUND: { status: 404, message: "El recurso solicitado no está disponible." },

@@ -12,7 +12,9 @@ Actualización S07: un módulo privado agrupa recibo idempotente, versión/estad
 
 Actualización S08: la [API privada del recorrido](api-del-recorrido.md) conecta esa ejecución y añade lecturas autorizadas de snapshot e historial. Reutiliza la misma base, sin migraciones ni cambios en los servicios de escritura de S07.
 
-Actualización S09: [el adaptador HCS](hedera-testnet.md) incorpora la migración `202610230002_hcs_binding`, con vinculación inmutable de configuración por recorrido y evidencia de verificación JSONB. Se aplicó con `--local-only` y el estado confirmó las tres migraciones al día; PostgreSQL volvió a detenerse conservando datos. No modifica las dos migraciones anteriores. No se inicia envío desde los comandos operativos hasta S10.
+Actualización S09: [el adaptador HCS](hedera-testnet.md) incorpora la migración `202610230002_hcs_binding`, con vinculación inmutable de configuración por recorrido y evidencia de verificación JSONB. Se aplicó con `--local-only` y el estado confirmó las tres migraciones al día; PostgreSQL volvió a detenerse conservando datos. No modifica las dos migraciones anteriores.
+
+Actualización S10: [el coordinador](cuotas-reintentos-y-mantenimiento.md) añade `HcsSubmissionAttempt`, autorización manual y `MaintenanceLease` mediante `202610230003_publication_coordination`. Cuota e intento se reservan en una transacción serializable antes del envío. Las preparaciones que pudieron enviarse se protegen con trigger; el backfill conserva incertidumbre. La cuarta migración está aplicada y comprobada localmente y PostgreSQL volvió a detenerse. Se implementó limpieza acotada, sin ejecutarla durante esta entrega. Las tres migraciones anteriores permanecen intactas.
 
 ## Preparación local
 
@@ -121,7 +123,7 @@ La fábrica separada `createDatabaseClient(url)` sirve también a CLI y no lee e
 
 La FK sesión→recorrido usa `RESTRICT`, no cascada. Una sesión vencida a las 24 horas conserva sus recorridos durante su plazo operativo de siete días. La caducidad no se interpreta como borrado inmediato.
 
-S10 eliminará recorridos vencidos en lotes acotados; sus comandos, eventos y publicaciones se eliminan en cascada. Después podrá eliminar sesiones vencidas sin recorridos. Los contactos vencen por separado a los 90 días. No se eliminarán cuotas vigentes ni mensajes HCS al borrar SQL. Las futuras API bloquearán acceso vencido sin esperar al barrido.
+S10 implementa eliminación de recorridos vencidos en lotes acotados; sus comandos, eventos y publicaciones se eliminan en cascada. Después elimina sesiones vencidas sin recorridos. Los contactos vencen por separado a los 90 días. No elimina cuotas vigentes ni mensajes HCS al borrar SQL. Las API privadas bloquean acceso vencido sin esperar al barrido. La limpieza de negocio no se ejecutó durante esta entrega.
 
 La migración `202610220001_initial` contiene el DDL generado más las restricciones y triggers, dentro de `BEGIN`/`COMMIT`. No modificarla después de aplicarla: añadir una nueva migración ante cambios. No usar `db push` ni `migrate reset` para sincronizar datos existentes. Ante fallos, revisar estado y logs privados; cualquier resolución del historial debe corresponder al estado real de la base, sin marcar una migración fallida como exitosa ni borrar datos para ocultar el problema.
 

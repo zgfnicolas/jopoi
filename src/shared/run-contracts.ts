@@ -18,6 +18,7 @@ export interface DemoRunDetail {
   readonly scenario: ScenarioSnapshot;
   readonly compatibility: readonly TripCompatibility[];
   readonly economics: EconomicsSummary;
+  readonly quota: { readonly limit: number | null; readonly used: number; readonly remaining: number | null; readonly resetsAt: string };
   readonly events: readonly {
     readonly event: PublicEventRecord;
     readonly publication: PublicationSummary;

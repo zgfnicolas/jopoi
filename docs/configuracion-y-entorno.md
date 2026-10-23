@@ -37,7 +37,7 @@ Esa carpeta no está incluida en el repositorio; una copia nueva debe disponer d
 | Publicado | Vercel Hobby + Neon Free | Destino acordado; no hay cuentas, base ni despliegue creados por S01. |
 | Trazabilidad | Hedera HCS testnet | Red fijada en código; no hay conexiones ni transacciones realizadas por S01. |
 
-Presupuesto cero: sin tarjetas, planes pagos, upgrades automáticos ni compra de HBAR. Una pausa o cuota agotada debe mantenerse como indisponibilidad real. S10 aplicará cuotas y mantenimiento; S16 preparará la publicación gratuita. Las constantes de S01 no garantizan por sí mismas el cumplimiento de las cuotas del proveedor.
+Presupuesto cero: sin tarjetas, planes pagos, upgrades automáticos ni compra de HBAR. Una pausa o cuota agotada debe mantenerse como indisponibilidad real. S10 aplica cuotas y mantenimiento; S16 preparará la publicación gratuita. Las constantes de S01 no garantizan por sí mismas el cumplimiento de las cuotas del proveedor.
 
 ## Inventario del entorno
 
@@ -94,7 +94,7 @@ El parser puro vive en `src/server/config/environment.ts`: acepta un mapa explí
 
 ## Políticas y errores compartidos
 
-`src/shared/demo-policy.ts` fija sesión de 86.400 segundos, tres recorridos, cuota HCS predeterminada/máxima de 100, siete días de retención operativa, 90 días de contactos y frecuencia diaria de mantenimiento. S04 aplica duración y cuota de sesión y fecha de vencimiento de recorridos. S10 implementará cuota HCS y limpieza; S01 no añade temporizadores, cron ni contadores en memoria.
+`src/shared/demo-policy.ts` fija sesión de 86.400 segundos, tres recorridos, cuota HCS predeterminada/máxima de 100, siete días de retención operativa, 90 días de contactos y frecuencia diaria de mantenimiento. S04 aplica duración y cuota de sesión y fecha de vencimiento de recorridos. S10 implementa cuota HCS y limpieza; S01 no añade temporizadores, cron ni contadores en memoria.
 
 `src/shared/api-errors.ts` contiene el catálogo de códigos, estados HTTP y mensajes en español, y el contrato público:
 
@@ -112,16 +112,16 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S09 |
+| Comando del manifiesto | Estado actualizado tras S10 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Next.js sirve las API de S04/S05, sin interfaz. SQL es necesario para persistir; SESSION_SECRET corresponde solo a sesión. Producción exige APP_URL HTTPS y build previo. |
-| `build` | Ejecutado correctamente en S09: genera Prisma, comprueba tipos y compila los siete paths existentes de API. No verifica atomicidad, comportamiento HTTP ni integración real de red. |
+| `build` | Ejecutado correctamente en S10: genera Prisma, comprueba tipos y compila los nueve paths de API. No verifica atomicidad, comportamiento HTTP ni integración real de red. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
 | `hedera:topic` | S09 implementa prepare/submit/status con journal privado. Solo se ejecutó `--help`, sin cargar secretos ni contactar la red. |
-| `maintenance` | Pendiente del script de S10. |
+| `maintenance` | Implementado en S10: `--help` comprobado; `--run [--local-only]` ejecuta limpieza y recuperación reales, sin haberse ejecutado durante esta entrega. |
 | `test`, `test:e2e` | Lanzadores preliminares; suites pendientes de S17 y S18. No se ejecutan en S01. |
 
 S04 añade `REQUEST_FORBIDDEN`/403 al catálogo para rechazos de origen o protección CSRF. El token opaco de sesión se guarda como HMAC-SHA-256 mediante `SESSION_SECRET`; cambiar ese secreto invalida las cookies existentes. La configuración sigue siendo lazy y el build no necesita credenciales de sesión ni Hedera.
@@ -132,7 +132,9 @@ S06 añade [reglas de dominio puras](reglas-de-operacion.md), sin nuevas capacid
 
 S07 incorpora [ejecución transaccional privada y eventos](eventos-y-hashes.md), sin configuración nueva ni migraciones. Añade canonicalize 5.1.0 fijada exactamente para JCS, compatible con Node >=22, y reutiliza SHA-256 de Node. Exige SQL y secreto de sesión al ejecutar comandos, pero no necesita configuración Hedera; el build mantiene carga lazy. S08 expone las rutas operativas, con las mismas capacidades SQL/sesión y origen configurado para mutaciones; no requiere nuevas variables.
 
-S09 incorpora [adaptador y preparación de testnet](hedera-testnet.md). `hederaTarget()` lee metadata sin clave y `hederaOperator()` permite preparar el topic sin un topic preexistente; `hedera()` conserva la capacidad completa. El comando operativo solo usa metadata para fijar la vinculación; puede guardar SQL sin ella y sin credenciales. La nueva migración se aplicó y comprobó en PostgreSQL local; otras bases deben migrarse antes de usar el esquema actualizado. El despliegue y los disparadores de envío siguen pendientes de S16 y S10.
+S09 incorpora [adaptador y preparación de testnet](hedera-testnet.md). `hederaTarget()` lee metadata sin clave y `hederaOperator()` permite preparar el topic sin un topic preexistente; `hedera()` conserva la capacidad completa. El comando operativo solo usa metadata para fijar la vinculación; puede guardar SQL sin ella y sin credenciales. La nueva migración se aplicó y comprobó en PostgreSQL local; otras bases deben migrarse antes de usar el esquema actualizado. El despliegue sigue pendiente de S16.
+
+S10 incorpora [cuotas y mantenimiento](cuotas-reintentos-y-mantenimiento.md), `hcsQuota()` independiente de claves, `MAINTENANCE_UNAUTHORIZED`/401, `after` tras SQL y cron diario protegido por `CRON_SECRET`. No añade variables ni dependencias. La cuarta migración está aplicada localmente; ayuda, tipos, Prisma y build comprobados. No se ejecutó mantenimiento, limpieza de negocio ni red. `next.config.ts` mantiene el SDK como paquete externo del servidor Node.
 
 ## Verificación de S01 y escenarios posteriores
 

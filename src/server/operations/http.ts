@@ -7,6 +7,7 @@ import { ApplicationError } from "../application-error";
 import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMutation } from "../http";
 import { SESSION_COOKIE } from "../sessions/credentials";
 import { executeOperationCommand } from "./commands";
+import { schedulePublications } from "../hedera/service";
 import { getCurrentRun, getOwnedRun } from "./queries";
 
 const uuid = z.uuid().transform((value) => value.toLowerCase());
@@ -68,6 +69,7 @@ export async function postCommandHttp(request: NextRequest, context: TraceContex
       current: { operation: result.current.operation, version: result.current.version },
       event: result.event, publication: result.publication,
     };
+    if (result.event !== null) schedulePublications(traceId);
     return NextResponse.json(body, { headers: PRIVATE_RESPONSE_HEADERS });
   });
 }

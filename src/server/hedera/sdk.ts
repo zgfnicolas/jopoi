@@ -41,13 +41,13 @@ export function statusCode(status: Status): HcsCode {
 }
 
 export function sendFailure(error: unknown): Exclude<NetworkOutcome, { kind: "confirmed" }> {
-  if (error instanceof HcsError) return { kind: "rejected", code: error.code };
+  if (error instanceof HcsError) return { kind: "not_sent", code: error.code };
   if (error instanceof PrecheckStatusError) {
     const status = error.status;
     if ([Status.DuplicateTransaction, Status.Unknown, Status.Busy, Status.PlatformNotActive].includes(status)) {
       return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" };
     }
-    return { kind: "rejected", code: statusCode(status) };
+    return { kind: "rejected", code: statusCode(status), source: "PRECHECK" };
   }
   // Transport failures do not prove whether submission reached the network.
   return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" };
@@ -125,7 +125,7 @@ export function transactionExpired(tx: Transaction): boolean {
 export async function submitMessage(environment: Environment, prepared: PreparedMessage) {
   try {
     const tx = readPreparedMessage(environment, prepared);
-    if (transactionExpired(tx)) return { kind: "unknown" as const, code: "HCS_TRANSACTION_EXPIRED" as const };
+    if (transactionExpired(tx)) return { kind: "not_sent" as const, code: "HCS_TRANSACTION_EXPIRED" as const };
     return await withTestnetClient(async (client) => {
       // No operator: bytes are already signed; execute must not add or replace signatures.
       await tx.execute(client, 5000);
@@ -146,7 +146,7 @@ export async function queryReceipt(transactionId: string): Promise<NetworkOutcom
       const final = receipts.find((item) => ![Status.Unknown, Status.ReceiptNotFound, Status.DuplicateTransaction,
         Status.InvalidNodeAccount, Status.InvalidPayerSignature, Status.Busy, Status.PlatformNotActive].includes(item.status));
       return final === undefined ? { kind: "unknown", code: "HCS_RESULT_UNKNOWN" }
-        : { kind: "rejected", code: statusCode(final.status) };
+        : { kind: "rejected", code: statusCode(final.status), source: "RECEIPT" };
     });
   } catch { return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" }; }
 }

@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Las bases S01–S08 implementan configuración, escenario/cálculo, SQL, sesiones, contactos, reglas, eventos con persistencia atómica y API operativa privada. S09 añade adaptador HCS testnet, reconciliación/contraste y CLI de topic con @hiero-ledger/sdk 2.90.1, con su migración aplicada y comprobada en PostgreSQL local. S10 conectará los envíos con cuotas y leases. Todavía no hay interfaz, comprobación real de red ni despliegue externo. Las pruebas de comportamiento quedan para S17/S18.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Las bases S01–S09 implementan configuración, escenario/cálculo, SQL, sesiones, contactos, reglas, eventos con persistencia atómica, API operativa privada y adaptador HCS testnet. S10 conecta los envíos con cuota global, leases, reintento privado y mantenimiento diario. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Todavía no hay interfaz, comprobación real de red ni despliegue externo. Las pruebas de comportamiento quedan para S17/S18.
 
 ## Documentación
 
@@ -19,6 +19,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Eventos y hashes](docs/eventos-y-hashes.md) | S07, payload público, JCS/SHA-256, idempotencia y ejecución transaccional privada. |
 | [API del recorrido](docs/api-del-recorrido.md) | S08, recuperación privada, historial, comandos HTTP y estados SQL/red separados. |
 | [Hedera testnet](docs/hedera-testnet.md) | S09, firma/persistencia, receipt/mirror, generación fija y CLI administrativo. |
+| [Cuotas, reintentos y mantenimiento](docs/cuotas-reintentos-y-mantenimiento.md) | S10, coordinación durable, 3+1 intentos, cron diario y limpieza acotada. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

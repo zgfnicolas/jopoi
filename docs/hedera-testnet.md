@@ -1,6 +1,6 @@
 # Adaptador HCS y verificación en testnet
 
-S09 se implementa en `feature/s09-hedera-testnet`, desde `main` con S08 integrada mediante PR #7. Añade capacidades privadas de preparación durable, envío acotado, reconciliación y contraste de mensajes. S10 conectará esas capacidades con interacción, cuotas, leases, reintentos y mantenimiento. Las rutas de S08 siguen guardando SQL y creando pendientes; no disparan envíos todavía.
+S09 se implementó en `feature/s09-hedera-testnet`, desde `main` con S08 integrada mediante PR #7. Añadió preparación durable, envío acotado, reconciliación y contraste de mensajes. Actualización S10: [el coordinador durable](cuotas-reintentos-y-mantenimiento.md) conecta esas capacidades con interacción, cuotas, leases, reintentos y mantenimiento. Las secciones siguientes conservan la evidencia de cierre de S09; el antiguo servicio privado fue reemplazado por el coordinador compartido, que exige cuota y lease antes de todo envío.
 
 ## SDK y configuración
 
