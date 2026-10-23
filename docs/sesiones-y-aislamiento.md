@@ -49,7 +49,7 @@ Los DTO compartidos están en `src/shared/session-contracts.ts`:
 - Recuperación/bootstrap: `{ session, activeRun }`, con `activeRun: null` antes del primer recorrido.
 - Inicio/reinicio: `{ session, run, created, replayed }`. `created` solo indica creación en esta petición y determina el 201; `replayed` indica una intención ya resuelta. Ambos pueden ser falsos al retomar un recorrido con una clave nueva.
 
-El recorrido activo es el de mayor ordinal vigente. Repetir una intención anterior puede devolver otro recorrido distinto del actualmente activo: siempre el asociado originalmente a esa clave, con su estado y versión vigentes. Para consultar el activo se usa GET de sesión. S08 añadirá los DTO completos, consultas privadas por traceId y comandos; S11 implementará la proyección compartible.
+El recorrido activo es el de mayor ordinal vigente. Repetir una intención anterior puede devolver otro recorrido distinto del actualmente activo: siempre el asociado originalmente a esa clave, con su estado y versión vigentes. GET de sesión conserva su resumen; S08 añade los [DTO completos, consultas privadas por traceId y comandos](api-del-recorrido.md). GET /api/demo/runs/current recupera el detalle o run: null sin iniciar una exploración. S11 implementará la proyección compartible.
 
 El `requestId` del cuerpo identifica una intención estable: el cliente genera un UUID una vez y lo conserva al reintentar. El `error.requestId` de S01 es otro identificador, generado por el servidor para diagnóstico. No se copia de headers ni de la clave idempotente.
 
@@ -91,4 +91,4 @@ Comprobado durante S04: schema válido, cliente generado, TypeScript, build de N
 
 No se crean ni ejecutan suites en S04. Quedan para S17/S18: recuperación sin renovar vencimiento; cuota concurrente; reintentos antes y después de reiniciar y con cupo agotado; claves cruzadas START/RESET; aislamiento entre propietarios; sesión/recorrido vencidos; origen/header rechazados; entradas y límites de tamaño; ausencia de secretos; pérdida de cookie; fallos SQL sin escritura parcial; atributos de cookie y coordinación del bootstrap en navegador.
 
-La guarda de propiedad quedará conectada a las consultas y comandos de S08: S04 no acredita aún esas rutas. La caducidad de sesión bloquea acceso privado, pero conserva el recorrido durante su retención. La consulta pública y el borrado diario corresponden a S11 y S10 respectivamente. No hubo despliegues ni consumo de testnet.
+Actualización S08: la guarda de propiedad ya está conectada a las consultas y comandos privados; sus pruebas de comportamiento siguen pendientes de S17/S18. La caducidad de sesión bloquea acceso privado, pero conserva el recorrido durante su retención. La consulta pública y el borrado diario corresponden a S11 y S10 respectivamente. No hubo despliegues ni consumo de testnet.

@@ -2,7 +2,7 @@
 
 S06 implementa el dominio del recorrido en `feature/s06-reglas-de-operacion`, desde `main` con S05 integrada. Aporta decisiones puras y resultados explicados; las escrituras SQL, recibos idempotentes, evidencia y API de comandos se integrarán en S07/S08. No añade endpoints, migraciones, dependencias ni operaciones Hedera.
 
-Actualización S07: la [ejecución transaccional y los eventos](eventos-y-hashes.md) ya utilizan las decisiones de S06. Se exporta `normalizeOperationCommand` para compartir la normalización antes del recibo, sin exigir nuevamente el estado de origen. La API y las pruebas siguen pendientes de S08 y S17/S18. Las descripciones siguientes conservan el alcance original de S06.
+Actualización S07/S08: la [ejecución transaccional y los eventos](eventos-y-hashes.md) y la [API operativa privada](api-del-recorrido.md) ya utilizan las decisiones de S06. Se exporta `normalizeOperationCommand` para compartir la normalización antes del recibo, sin exigir nuevamente el estado de origen. Las pruebas siguen pendientes de S17/S18. Las descripciones siguientes conservan el alcance original de S06.
 
 ## Interfaz y datos
 

@@ -10,6 +10,8 @@ Actualización S06: el límite exacto de gramos de `toStoredGrams` se centraliza
 
 Actualización S07: un módulo privado agrupa recibo idempotente, versión/estado, evento y publicación pendiente en la transacción serializable existente. Reutiliza modelos, índices y triggers sin migraciones adicionales; la API corresponde a S08. Ver [eventos y hashes](eventos-y-hashes.md).
 
+Actualización S08: la [API privada del recorrido](api-del-recorrido.md) conecta esa ejecución y añade lecturas autorizadas de snapshot e historial. Reutiliza la misma base, sin migraciones ni cambios en los servicios de escritura de S07.
+
 ## Preparación local
 
 Se utiliza PostgreSQL **17.11**, empaquetado EDB **17.11-5**, para Windows x64. La distribución portable procede de la [página de binarios EDB](https://www.enterprisedb.com/download-postgresql-binaries). El [checksum publicado por EDB](https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip.sha256) es:

@@ -2,7 +2,7 @@
 
 S07 implementa formatos públicos v1 y ejecución privada transaccional en `feature/s07-eventos-y-hashes`, desde `main` con S06 integrada. Reutiliza esquema y triggers sin nuevas migraciones. La única dependencia añadida es `canonicalize` **5.1.0**, fijada exactamente, Apache-2.0 y compatible con Node >=22 según su [manifiesto oficial](https://github.com/erdtman/canonicalize/blob/v5.1.0/package.json). El workspace usa Node 24; no se actualizaron otras versiones del lockfile.
 
-No se agregan rutas HTTP ni CLI para ejecutar comandos. S08 conectará esta capacidad a su API; S09/S10 prepararán y enviarán transacciones HCS. S07 no exige credenciales Hedera, firma, reserva cuota ni contacta la red.
+S07 no agrega rutas HTTP ni CLI para ejecutar comandos. Actualización S08: la [API privada del recorrido](api-del-recorrido.md) ya conecta esta capacidad mediante comandos HTTP y recupera historial con hashes. S09/S10 prepararán y enviarán transacciones HCS. S07/S08 no exigen credenciales Hedera ni firman, reservan cuota o contactan la red. Las secciones siguientes conservan la evidencia de cierre de S07.
 
 ## Contrato público v1
 
