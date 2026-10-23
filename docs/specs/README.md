@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-22. Base: alcance confirmado en Q31 y aclaración posterior de trabajar en specs antes de escribir código.
 
-Estado: 18 specs documentadas; S01 y S02 implementadas como bases de configuración y escenario/cálculo por instrucciones posteriores del usuario. S03–S18 siguen sin implementar. Ninguna publicada como issue. El usuario confirmó API pública más navegador como límites de prueba. No hay issue tracker configurado ni remoto Git en este repositorio.
+Estado: 18 specs documentadas; S01–S03 implementadas como bases de configuración, escenario/cálculo y SQL por instrucciones posteriores del usuario. S04–S18 siguen sin implementar. El usuario confirmó API pública más navegador como límites de prueba. S02 se integró mediante PR #1; este trabajo no publica nuevas issues ni PRs.
 
 ## Orden de trabajo
 
@@ -35,9 +35,10 @@ Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spe
 
 ## Estado real y precedencia
 
-- El repositorio contiene el commit de documentación f2de0ec y archivos de preparación técnica. No hay una aplicación funcional, migraciones aplicadas, servicios creados o despliegue que estas specs puedan dar por terminado.
+- El repositorio conserva la documentación de alcance y las bases S01–S03. Hay una migración aplicada a PostgreSQL local; no hay aplicación funcional, servicios externos creados ni despliegue que estas specs puedan dar por terminado.
 - S01 incorpora configuración privada, políticas y errores compartidos; su [documentación de entorno](../configuracion-y-entorno.md) distingue lo implementado de las conexiones y funcionalidades pendientes. Su cierre incluye comprobación TypeScript y revisión estática; las suites siguen reservadas a S17 y S18.
 - S02 incorpora `chips-v1`, snapshots independientes, cálculo exacto y recursos locales con atribución. Su [documentación de escenario](../escenario-y-calculo.md) registra contratos y verificaciones de tipos/recursos, sin adelantar persistencia, reglas de asignación ni suites.
+- S03 incorpora esquema, migración y acceso SQL. Su [documentación de persistencia](../persistencia-sql.md) registra PostgreSQL portable y comprobación de conexión, sin adelantar servicios HTTP, HCS ni suites.
 - La fuente de requisitos es el alcance confirmado, su glosario y sus ADR. Bocetos exploratorios, dependencias instaladas y el código intentado antes de la aclaración no son requisitos aprobados.
 - Estas specs detallan contratos técnicos para revisión. Las elecciones nuevas —por ejemplo, rutas HTTP, precisión decimal, semilla v1, canonicalización y límite manual de reintento— se presentan como propuestas de implementación, sin reabrir el producto.
 - Los documentos describen interfaces HTTP y comportamiento. La estructura de archivos, los snippets y la implementación quedan para otra fase.

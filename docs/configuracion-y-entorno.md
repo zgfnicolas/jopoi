@@ -1,6 +1,6 @@
 # Configuración y entorno de desarrollo
 
-S01 implementada como base reutilizable. No hay todavía aplicación Next.js arrancable, esquema Prisma, conexión SQL comprobada, integración Hedera ni despliegue. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
+S01 implementada como base reutilizable. Posteriormente S03 incorporó esquema Prisma, migración local y conexión SQL comprobada; ver [persistencia SQL](persistencia-sql.md). Todavía no hay aplicación Next.js arrancable, integración Hedera ni despliegue externo. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
 
 ## Versiones y preparación local
 
@@ -111,13 +111,13 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado tras S01 |
+| Comando del manifiesto | Estado actualizado tras S03 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Pendientes de aplicación Next.js; no arrancan una demo funcional. |
 | `build` | Requiere esquema Prisma y aplicación Next.js posteriores. No es criterio de cierre de S01. |
-| `db:generate`, `db:migrate` | Pendientes de S03; no hay esquema/migraciones. |
-| `db:local` | Lanzador preliminar PGlite instalado previamente; no ejecutado ni aceptado como evidencia de PostgreSQL listo. S03 concretará el entorno SQL. |
+| `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
+| `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Pendiente del script de S05. |
 | `hedera:topic` | Pendiente del script de S09 y credenciales testnet. |
 | `maintenance` | Pendiente del script de S10. |

@@ -18,7 +18,7 @@ Vercel Free/Hobby sigue siendo el destino solicitado. No se sustituye por un pla
 
 La oferta consultada de Neon Free es USD 0, sin tarjeta, con 1 GB de almacenamiento por proyecto, 100 CU-h de cómputo al mes por proyecto y 5 GB de transferencia pública al mes por proyecto. La base se suspende tras cinco minutos de inactividad; no tiene SLA y puede suspenderse al agotar cómputo o transferencia. Fuentes: [planes Neon](https://neon.com/docs/introduction/plans) y [precios Neon](https://neon.com/pricing).
 
-Q29 eligió Neon Free, sin tarjeta ni upgrades automáticos, con datos acotados y aceptación de pausas y límites. Esto no garantiza que cualquier volumen de uso entre en la capa gratuita: se controlará con cuotas y se mostrará indisponibilidad real si el servicio se suspende. Se conserva el gasto cero. No existe una base provisionada en el repositorio.
+Q29 eligió Neon Free, sin tarjeta ni upgrades automáticos, con datos acotados y aceptación de pausas y límites. Esto no garantiza que cualquier volumen de uso entre en la capa gratuita: se controlará con cuotas y se mostrará indisponibilidad real si el servicio se suspende. Se conserva el gasto cero. No existe una base Neon provisionada; S03 preparó PostgreSQL portable exclusivamente para desarrollo local.
 
 La guía oficial indica conexión pooled para la aplicación y conexión directa para Prisma CLI/migraciones. Las versiones compatibles y el adaptador se fijarán al implementar. Fuente: [Prisma y Neon](https://neon.com/docs/guides/prisma).
 
@@ -46,5 +46,5 @@ Hedera testnet usa HBAR de prueba gratuitos. Las transacciones HCS consumen ese 
 
 - Acordado: prototipo personal, presupuesto cero, Vercel Free/Hobby, Neon Free con Prisma, HCS testnet, cuotas y política de vencimiento con barrido y limpieza diarios.
 - Rechazado: prever Pro para la publicación. No hay autorización para pagar.
-- Definición de infraestructura resuelta y alcance confirmado en Q31. El usuario indicó preparar primero las specs y no escribir código todavía.
-- Sin realizar: alta de servicios, creación de base, creación de topic HCS, configuración de secretos y despliegue.
+- Definición de infraestructura resuelta y alcance confirmado en Q31. Después de preparar las specs, el usuario autorizó implementar S01–S03; S03 creó la base local y sus credenciales privadas. Ver [persistencia SQL](persistencia-sql.md).
+- Sin realizar: alta de servicios externos, creación de base Neon, creación de topic HCS, configuración de secretos externos y despliegue.
