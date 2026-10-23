@@ -4,6 +4,8 @@ S03 incorpora PostgreSQL local, siete modelos Prisma, migración inicial, restri
 
 Actualización S04: una segunda migración añade el octavo modelo, `SessionRunIntent`, con clave por sesión/intención y FK compuesta de propiedad. Los endpoints de sesión e inicio/reinicio ya utilizan esta base; ver [sesiones y aislamiento](sesiones-y-aislamiento.md). La migración inicial permanece intacta. Las descripciones siguientes conservan el alcance de S03.
 
+Actualización S05: la API de solicitud y el exportador privado utilizan `DemoRequest`, sin nuevas migraciones. Se fija vencimiento de 90 días y la exportación excluye vencidos al corte inicial; el borrado sigue pendiente de S10. Ver [contactos y exportación](contactos-y-exportacion.md).
+
 ## Preparación local
 
 Se utiliza PostgreSQL **17.11**, empaquetado EDB **17.11-5**, para Windows x64. La distribución portable procede de la [página de binarios EDB](https://www.enterprisedb.com/download-postgresql-binaries). El [checksum publicado por EDB](https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip.sha256) es:

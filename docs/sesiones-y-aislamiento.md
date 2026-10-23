@@ -2,6 +2,8 @@
 
 S04 implementa acceso anónimo privado, recuperación, inicio y reinicio de recorridos. Se desarrolló en `feature/s04-sesiones-y-aislamiento` desde `main` con S03 integrada. No representa cuentas de empresas ni firmas independientes de los roles simulados.
 
+Actualización S05: las utilidades de origen/JSON acotado/errores se extraen a `src/server/http.ts` y se comparten con la API de contactos, conservando contratos y límite de 4 KiB de S04. Ver [contactos y exportación](contactos-y-exportacion.md).
+
 ## Preparación y ejecución local
 
 Se conservan las versiones de S03 y PostgreSQL portable. Preparar `DATABASE_URL`, `DIRECT_URL` y un `SESSION_SECRET` privado de al menos 32 caracteres, generado con 32 bytes aleatorios. No versionarlo, imprimirlo ni reutilizar `CRON_SECRET`. La aplicación necesita solo las capacidades que utiliza: estas rutas no requieren Hedera ni cron.

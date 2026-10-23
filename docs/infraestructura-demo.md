@@ -46,5 +46,5 @@ Hedera testnet usa HBAR de prueba gratuitos. Las transacciones HCS consumen ese 
 
 - Acordado: prototipo personal, presupuesto cero, Vercel Free/Hobby, Neon Free con Prisma, HCS testnet, cuotas y política de vencimiento con barrido y limpieza diarios.
 - Rechazado: prever Pro para la publicación. No hay autorización para pagar.
-- Definición de infraestructura resuelta y alcance confirmado en Q31. Después de preparar las specs, el usuario autorizó implementar S01–S04; S03 creó la base local y S04 añadió su migración de intenciones y endpoints de sesión. Ver [persistencia SQL](persistencia-sql.md) y [sesiones y aislamiento](sesiones-y-aislamiento.md).
+- Definición de infraestructura resuelta y alcance confirmado en Q31. Después de preparar las specs, el usuario autorizó implementar S01–S05; S03 creó la base local, S04 añadió sesiones y S05 incorporó contacto/exportación privada sobre el esquema existente. Ver [persistencia SQL](persistencia-sql.md), [sesiones y aislamiento](sesiones-y-aislamiento.md) y [contactos y exportación](contactos-y-exportacion.md).
 - Sin realizar: alta de servicios externos, creación de base Neon, creación de topic HCS, configuración de secretos externos y despliegue.

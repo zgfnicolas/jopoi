@@ -10,6 +10,7 @@ export const API_ERROR_CATALOG = Object.freeze({
   VERSION_CONFLICT: { status: 409, message: "La información cambió. Actualizala antes de continuar." },
   IDEMPOTENCY_CONFLICT: { status: 409, message: "La solicitud ya se utilizó con una intención diferente." },
   TRACE_EXPIRED: { status: 410, message: "El período de consulta de esta trazabilidad venció." },
+  DEMO_REQUEST_EXPIRED: { status: 410, message: "La solicitud anterior venció. Enviá una nueva solicitud para conocer el prototipo." },
   RULE_VIOLATION: { status: 422, message: "La acción no cumple las condiciones de la demostración." },
   RUN_LIMIT_REACHED: { status: 429, message: "Alcanzaste el límite de recorridos de esta sesión." },
   DATABASE_UNAVAILABLE: { status: 503, message: "El servicio de datos no está disponible. Intentá nuevamente más tarde." },
