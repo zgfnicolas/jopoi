@@ -1,0 +1,62 @@
+{
+  "scenarioVersion": "chips-v1",
+  "assets": [
+    {
+      "id": "chips-texture",
+      "kind": "reference-photo",
+      "localPath": "/demo/chips-v1/chips-texture.jpg",
+      "mediaType": "image/jpeg",
+      "width": 1280,
+      "height": 853,
+      "author": "www.Pixel.la Free Stock Photos",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Woodchips_texture.jpg",
+      "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Woodchips_texture.jpg/1280px-Woodchips_texture.jpg",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "obtainedOn": "2026-10-22",
+      "changes": "Versión reducida a 1280 px por Wikimedia Commons. Sin retoques ni transformaciones locales.",
+      "attribution": "Woodchips texture — www.Pixel.la Free Stock Photos, vía Wikimedia Commons, CC0 1.0.",
+      "alt": "Textura de pequeñas piezas de madera en una fotografía de referencia.",
+      "caption": "Fotografía de referencia ajena a una operación real de Jopói. No acredita ubicación, tratamiento ni calidad del lote ficticio.",
+      "referenceQuantityKg": null
+    },
+    {
+      "id": "chips-pile",
+      "kind": "reference-photo",
+      "localPath": "/demo/chips-v1/chips-pile.jpg",
+      "mediaType": "image/jpeg",
+      "width": 1280,
+      "height": 960,
+      "author": "Geo Lightspeed7",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Wood_chip_pile.jpg",
+      "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/dd/Wood_chip_pile.jpg/1280px-Wood_chip_pile.jpg",
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "obtainedOn": "2026-10-22",
+      "changes": "Versión reducida a 1280 px por Wikimedia Commons. Sin retoques ni transformaciones locales; se conserva CC BY-SA 4.0 para este recurso.",
+      "attribution": "Wood chip pile — Geo Lightspeed7, vía Wikimedia Commons, CC BY-SA 4.0. Versión reducida por Wikimedia Commons; sin respaldo ni asociación del autor con Jopói.",
+      "alt": "Pila de astillas de madera al aire libre en una fotografía de referencia.",
+      "caption": "Fotografía de referencia ajena a una operación real de Jopói. No acredita ubicación, tratamiento ni calidad del lote ficticio.",
+      "referenceQuantityKg": null
+    },
+    {
+      "id": "weighing-example",
+      "kind": "static-weighing-example",
+      "localPath": "/demo/chips-v1/pesaje-ejemplo.svg",
+      "mediaType": "image/svg+xml",
+      "width": 1000,
+      "height": 720,
+      "author": "Proyecto Jopói",
+      "sourceUrl": null,
+      "downloadUrl": null,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "obtainedOn": "2026-10-22",
+      "changes": "Recurso SVG original creado para chips-v1; el proyecto lo ofrece bajo CC0 1.0.",
+      "attribution": "Comprobante de pesaje ficticio — Proyecto Jopói, CC0 1.0.",
+      "alt": "Ejemplo ficticio de pesaje sin validez: bruto 18.000 kg, tara 6.000 kg y neto 12.000 kg.",
+      "caption": "EJEMPLO FICTICIO — SIN VALIDEZ. Comprobante estático del escenario inicial de 12.000 kg; no acredita cantidades editadas ni una entrega real.",
+      "referenceQuantityKg": "12000.000"
+    }
+  ]
+}

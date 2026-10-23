@@ -1,7 +1,7 @@
 # S02 · Escenario precargado y explicación económica
 
 Área: Backend · datos de ejemplo. Tamaño relativo: S. Dependencias: S01.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: base implementada el 2026-10-22 según el plan aprobado, en `feature/s02-escenario-y-calculo`. Snapshot, cálculo y recursos disponibles; integración SQL/API y pruebas pendientes de sus specs. Sin publicar como issue.
 
 ## Problem Statement
 
@@ -33,6 +33,7 @@ Preparar un escenario reproducible de chips forestales sin tratar, con un compra
 - Fotos y comprobante de pesaje precargados, con origen y derecho de uso documentados al producirlos. Su contenido y sus leyendas no afirman que pertenezcan a una entrega real.
 - Conservar la versión y los valores del escenario usados por cada recorrido; cambiar el catálogo no reescribe el historial ni el hash de recorridos anteriores.
 - Representar cantidades e importes con precisión decimal explícita. No usar redondeo visual como validación del peso recibido.
+- Implementación aprobada: gramos y centavos enteros en la aritmética interna; material redondeado una sola vez a centavos con mitad hacia arriba. Salidas monetarias como cadenas con dos decimales. Las fotos son referencias libres con atribución, ajenas a una operación real; el comprobante es un SVG ficticio estático del escenario inicial.
 
 ### Criterios de aceptación
 
@@ -51,4 +52,4 @@ Cotizaciones reales, precios actualizados de mercado, optimización de rutas, ma
 
 ## Further Notes
 
-Q2, Q11–Q14, Q23 y Q30. Los valores de semilla v1 son una propuesta técnica nueva y explícitamente ilustrativa; no proceden de una validación de mercado.
+Q2, Q11–Q14, Q23 y Q30. La semilla v1 aprobada al implementar sigue siendo ilustrativa y no procede de una validación de mercado. El [registro de implementación](../escenario-y-calculo.md) detalla contratos, recursos, redondeo y verificaciones. La persistencia histórica y las reglas de asignación se integrarán en S03/S06; no se dan por implementadas en S02.
