@@ -1,15 +1,17 @@
 import type { ApiErrorCode, FieldErrors } from "../shared/api-errors";
 
 /** Resultado de dominio; el adaptador HTTP de S01 añade mensaje y requestId. */
-export interface DomainFailure {
+type ValidationErrorCode = Extract<ApiErrorCode, "INVALID_INPUT" | "RULE_VIOLATION">;
+
+export interface DomainFailure<Code extends ApiErrorCode = ValidationErrorCode> {
   readonly ok: false;
   readonly error: {
-    readonly code: Extract<ApiErrorCode, "INVALID_INPUT" | "RULE_VIOLATION">;
+    readonly code: Code;
     readonly fields: FieldErrors;
   };
 }
 
-export type DomainResult<T> = { readonly ok: true; readonly value: T } | DomainFailure;
+export type DomainResult<T, Code extends ApiErrorCode = ValidationErrorCode> = { readonly ok: true; readonly value: T } | DomainFailure<Code>;
 
 export function invalidField(
   field: string,
