@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Se implementaron S01 (configuración privada, políticas y errores), S02 (escenario y cálculo económico), S03 (modelo SQL y acceso Prisma), S04 (sesiones anónimas y límite de recorridos), S05 (solicitud real de demo y exportación privada) y S06 (decisiones de dominio, roles y compatibilidad explicada). Next.js compila los endpoints de sesión, inicio, reinicio y contacto; el CLI permite exportar contactos a CSV para Excel. Las reglas operativas de S06 se integrarán con persistencia y API en S07/S08; todavía no hay interfaz, integración Hedera ni despliegue externo. PostgreSQL local conserva las dos migraciones de S03/S04; S05/S06 reutilizan el esquema. Las suites de comportamiento quedan para S17/S18.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Las bases S01–S07 implementan configuración, escenario/cálculo, SQL, sesiones, contactos, reglas de dominio y eventos con persistencia atómica. Next.js compila los endpoints de sesión, inicio, reinicio y contacto; el CLI permite exportar contactos a CSV para Excel. S07 aporta ejecución transaccional privada, payloads públicos JCS y hashes SHA-256; S08 la expondrá mediante la API operativa. Todavía no hay interfaz, integración Hedera ni despliegue externo. Se conservan las dos migraciones de S03/S04; S07 añade únicamente canonicalize 5.1.0. Las pruebas de comportamiento quedan para S17/S18.
 
 ## Documentación
 
@@ -16,6 +16,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Sesiones y aislamiento](docs/sesiones-y-aislamiento.md) | S04, preparación local, contratos HTTP, cookies, idempotencia y cuota por sesión. |
 | [Contactos y exportación](docs/contactos-y-exportacion.md) | S05, API de solicitudes, retención e instrucciones privadas de CSV para Excel. |
 | [Reglas de operación](docs/reglas-de-operacion.md) | S06, máquina de estados, roles, motivos y compatibilidad explicada de viajes. |
+| [Eventos y hashes](docs/eventos-y-hashes.md) | S07, payload público, JCS/SHA-256, idempotencia y ejecución transaccional privada. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

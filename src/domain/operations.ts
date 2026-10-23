@@ -25,7 +25,7 @@ function operationFailure(code: "WRONG_ROLE" | "STATE_CONFLICT", field: string, 
 }
 
 /** Forma HTTP y atributos extra se rechazan en S08; aquí se validan los datos del comando tipado. */
-function normalizeCommand(command: OperationCommand, snapshot: ScenarioSnapshot): DomainResult<OperationCommand> {
+export function normalizeOperationCommand(command: OperationCommand, snapshot: ScenarioSnapshot): DomainResult<OperationCommand> {
   if (!ROLES.includes(command.role)) return invalidField("role", "Elegí un rol simulado válido.");
   switch (command.action) {
     case "save":
@@ -107,7 +107,7 @@ function weightsDiffer(quantityKg: string, receivedKg: string): DomainResult<boo
 
 /** Decide sin mutaciones ni IO. S07/S08 persistirán la decisión con su evidencia y autorización. */
 export function decideOperation(operation: OperationData, command: OperationCommand, snapshot: ScenarioSnapshot): OperationResult<OperationDecision> {
-  const normalized = normalizeCommand(command, snapshot);
+  const normalized = normalizeOperationCommand(command, snapshot);
   if (!normalized.ok) return normalized;
   const input = normalized.value;
   const transition = TRANSITIONS[input.action];

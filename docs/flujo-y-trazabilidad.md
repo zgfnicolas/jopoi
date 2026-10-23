@@ -2,6 +2,8 @@
 
 Estado: decisiones confirmadas hasta Q30; barrido diario aceptado en Q28. Presupuesto cero y Vercel Free. Fuente vigente: [alcance](alcance-demo.md). No describe una integración ya implementada.
 
+Actualización S07: ya existe [ejecución transaccional privada con eventos, hashes y pendientes](eventos-y-hashes.md). La API operativa corresponde a S08, y el envío/verificación real a S09/S10. Las explicaciones siguientes describen el flujo acordado; todavía no acreditan una integración de red funcionando.
+
 ## Acciones representadas
 
 | Rol simulado | Acción | Restricción acordada |
