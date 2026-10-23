@@ -1,6 +1,6 @@
 # Configuración y entorno de desarrollo
 
-S01 implementada como base reutilizable. Posteriormente S03 incorporó esquema Prisma, migración local y conexión SQL comprobada; ver [persistencia SQL](persistencia-sql.md). Todavía no hay aplicación Next.js arrancable, integración Hedera ni despliegue externo. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
+S01 implementada como base reutilizable. Posteriormente S03 incorporó esquema Prisma, migración local y conexión SQL comprobada; ver [persistencia SQL](persistencia-sql.md). S04 añade endpoints compilables de sesión, inicio y reinicio; ver [sesiones y aislamiento](sesiones-y-aislamiento.md). Todavía no hay interfaz, comandos operativos, integración Hedera ni despliegue externo. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
 
 ## Versiones y preparación local
 
@@ -93,7 +93,7 @@ El parser puro vive en `src/server/config/environment.ts`: acepta un mapa explí
 
 ## Políticas y errores compartidos
 
-`src/shared/demo-policy.ts` fija sesión de 86.400 segundos, tres recorridos, cuota HCS predeterminada/máxima de 100, siete días de retención operativa, 90 días de contactos y frecuencia diaria de mantenimiento. S04 y S10 implementarán su aplicación; S01 no añade temporizadores, cron ni contadores en memoria.
+`src/shared/demo-policy.ts` fija sesión de 86.400 segundos, tres recorridos, cuota HCS predeterminada/máxima de 100, siete días de retención operativa, 90 días de contactos y frecuencia diaria de mantenimiento. S04 aplica duración y cuota de sesión y fecha de vencimiento de recorridos. S10 implementará cuota HCS y limpieza; S01 no añade temporizadores, cron ni contadores en memoria.
 
 `src/shared/api-errors.ts` contiene el catálogo de códigos, estados HTTP y mensajes en español, y el contrato público:
 
@@ -111,17 +111,19 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S03 |
+| Comando del manifiesto | Estado actualizado tras S04 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
-| `dev`, `start` | Pendientes de aplicación Next.js; no arrancan una demo funcional. |
-| `build` | Requiere esquema Prisma y aplicación Next.js posteriores. No es criterio de cierre de S01. |
+| `dev`, `start` | Next.js sirve las API de S04, sin interfaz. Requieren SQL y SESSION_SECRET; producción también exige APP_URL HTTPS y build previo. |
+| `build` | Ejecutado correctamente en S04: genera Prisma y compila los tres paths de API. No verifica comportamiento HTTP. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Pendiente del script de S05. |
 | `hedera:topic` | Pendiente del script de S09 y credenciales testnet. |
 | `maintenance` | Pendiente del script de S10. |
 | `test`, `test:e2e` | Lanzadores preliminares; suites pendientes de S17 y S18. No se ejecutan en S01. |
+
+S04 añade `REQUEST_FORBIDDEN`/403 al catálogo para rechazos de origen o protección CSRF. El token opaco de sesión se guarda como HMAC-SHA-256 mediante `SESSION_SECRET`; cambiar ese secreto invalida las cookies existentes. La configuración sigue siendo lazy y el build no necesita credenciales de sesión ni Hedera.
 
 ## Verificación de S01 y escenarios posteriores
 

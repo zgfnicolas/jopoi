@@ -19,6 +19,11 @@ enum RunState {
   INCIDENT
 }
 
+enum SessionIntentKind {
+  START
+  RESET
+}
+
 enum SimulatedRole {
   GENERATOR
   COORDINATOR
@@ -101,10 +106,25 @@ model DemoRun {
   incidentReasonCode    String?          @db.VarChar(64)
   commands              CommandReceipt[]
   events                OperationEvent[]
+  sessionIntents        SessionRunIntent[]
 
+  @@unique([id, sessionId])
   @@unique([sessionId, creationRequestId])
   @@unique([sessionId, ordinal])
   @@index([expiresAt])
+}
+
+// Incluye intenciones que retoman un recorrido sin crear otro ni consumir cupo.
+model SessionRunIntent {
+  sessionId String            @db.Uuid
+  requestId String            @db.Uuid
+  kind      SessionIntentKind
+  runId     String            @db.Uuid
+  run       DemoRun           @relation(fields: [runId, sessionId], references: [id, sessionId], onDelete: Cascade, onUpdate: NoAction)
+  createdAt DateTime          @default(now()) @db.Timestamptz(3)
+
+  @@id([sessionId, requestId])
+  @@index([runId, sessionId])
 }
 
 model CommandReceipt {

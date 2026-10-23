@@ -4,6 +4,7 @@ export const API_ERROR_CATALOG = Object.freeze({
   SESSION_REQUIRED: { status: 401, message: "Necesitás iniciar una sesión de demostración." },
   SESSION_EXPIRED: { status: 401, message: "Tu sesión venció. Iniciá una nueva demostración." },
   WRONG_ROLE: { status: 403, message: "El rol seleccionado no permite realizar esta acción." },
+  REQUEST_FORBIDDEN: { status: 403, message: "La solicitud no está permitida desde este origen." },
   NOT_FOUND: { status: 404, message: "El recurso solicitado no está disponible." },
   STATE_CONFLICT: { status: 409, message: "El estado actual no permite esta acción. Actualizá la información." },
   VERSION_CONFLICT: { status: 409, message: "La información cambió. Actualizala antes de continuar." },

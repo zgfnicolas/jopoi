@@ -2,6 +2,8 @@
 
 S03 incorpora PostgreSQL local, siete modelos Prisma, migración inicial, restricciones SQL y acceso privado reutilizable. Se implementó en `feature/s03-persistencia-sql`, desde `main` con S01/S02 integradas. No añade API, cookies, formularios, reglas de operación, publicaciones Hedera ni cron.
 
+Actualización S04: una segunda migración añade el octavo modelo, `SessionRunIntent`, con clave por sesión/intención y FK compuesta de propiedad. Los endpoints de sesión e inicio/reinicio ya utilizan esta base; ver [sesiones y aislamiento](sesiones-y-aislamiento.md). La migración inicial permanece intacta. Las descripciones siguientes conservan el alcance de S03.
+
 ## Preparación local
 
 Se utiliza PostgreSQL **17.11**, empaquetado EDB **17.11-5**, para Windows x64. La distribución portable procede de la [página de binarios EDB](https://www.enterprisedb.com/download-postgresql-binaries). El [checksum publicado por EDB](https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip.sha256) es:
