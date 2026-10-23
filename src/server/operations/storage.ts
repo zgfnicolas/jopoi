@@ -40,7 +40,7 @@ const snapshotSchema: z.ZodType<ScenarioSnapshot> = z.strictObject({
 
 export const receiptResultSchema = z.strictObject({ version: z.literal(1), operation: operationDataSchema, eventId: eventUuid.nullable() });
 
-export function readRunSnapshot(run: DemoRun): ScenarioSnapshot {
+export function readRunSnapshot(run: Pick<DemoRun, "scenarioSnapshot" | "scenarioVersion">): ScenarioSnapshot {
   const parsed = snapshotSchema.safeParse(run.scenarioSnapshot);
   if (!parsed.success || parsed.data.version !== run.scenarioVersion) throw new ApplicationError("INTERNAL_ERROR");
   const snapshot = parsed.data;

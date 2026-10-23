@@ -1,7 +1,7 @@
 # S11 · API pública de trazabilidad y verificación
 
 Área: Backend · consulta pública integrada. Tamaño relativo: L. Dependencias: S07, S09, S10.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada como base de consulta pública por instrucción posterior del usuario. Tipos, Prisma y build comprobados; comportamiento por API y testnet pendiente de S17/S18. Detalle: [implementación y contratos](../api-publica-de-trazabilidad.md).
 
 ## Problem Statement
 

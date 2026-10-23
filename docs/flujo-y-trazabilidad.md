@@ -6,6 +6,8 @@ Actualización S08: ya existen [ejecución transaccional con eventos, hashes y p
 
 Actualización S09/S10: están escritos el [adaptador y CLI de testnet](hedera-testnet.md) y el [coordinador durable](cuotas-reintentos-y-mantenimiento.md), con preparación persistida, marcador previo al envío, cuotas, leases, reintento privado, mantenimiento diario, reconciliación y contraste. Las cuatro migraciones están aplicadas y comprobadas localmente. No se ha ejecutado una comprobación real de red ni limpieza de negocio.
 
+Actualización S11: la [API pública de trazabilidad](api-publica-de-trazabilidad.md) permite consultar sin sesión, separa integridad local y evidencia histórica, y ofrece contraste remoto transitorio sin escrituras ni activación de envíos. Borradores muestran contexto mínimo y las discrepancias se aíslan por hito. Caducidad y enlaces testnet están implementados; página y QR siguen en S15 y la comprobación real de red en S18.
+
 ## Acciones representadas
 
 | Rol simulado | Acción | Restricción acordada |

@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Las bases S01–S09 implementan configuración, escenario/cálculo, SQL, sesiones, contactos, reglas, eventos con persistencia atómica, API operativa privada y adaptador HCS testnet. S10 conecta los envíos con cuota global, leases, reintento privado y mantenimiento diario. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Todavía no hay interfaz, comprobación real de red ni despliegue externo. Las pruebas de comportamiento quedan para S17/S18.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Las bases S01–S10 implementan configuración, escenario/cálculo, SQL, sesiones, contactos, reglas, eventos, API privada, adaptador HCS y coordinación durable. S11 añade historial público y contraste remoto de solo lectura, sin sesión ni activación de envíos. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Todavía no hay interfaz, comprobación real de red ni despliegue externo. Las pruebas de comportamiento quedan para S17/S18.
 
 ## Documentación
 
@@ -20,6 +20,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [API del recorrido](docs/api-del-recorrido.md) | S08, recuperación privada, historial, comandos HTTP y estados SQL/red separados. |
 | [Hedera testnet](docs/hedera-testnet.md) | S09, firma/persistencia, receipt/mirror, generación fija y CLI administrativo. |
 | [Cuotas, reintentos y mantenimiento](docs/cuotas-reintentos-y-mantenimiento.md) | S10, coordinación durable, 3+1 intentos, cron diario y limpieza acotada. |
+| [API pública de trazabilidad](docs/api-publica-de-trazabilidad.md) | S11, historial sin sesión, integridad, contraste remoto transitorio y caducidad. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

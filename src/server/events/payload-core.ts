@@ -6,6 +6,7 @@ import type { ScenarioSnapshot } from "../../domain/scenario-types";
 import type { HcsEventEnvelope, PublicEventPayload, PublicEventRecord, PublicEventType } from "../../shared/event-contracts";
 import type { OperationAction, OperationData, SimulatedRole } from "../../shared/operation-contracts";
 import { ApplicationError } from "../application-error";
+import type { TraceIntegrity } from "../../shared/trace-contracts";
 
 const TYPES: Readonly<Record<OperationAction, PublicEventType | null>> = {
   save: null, publish: "LOT_PUBLISHED", approve: "LOT_APPROVED", reject: "LOT_REJECTED",
@@ -63,6 +64,24 @@ export function readPublicEvent(row: OperationEvent, traceId: string): PublicEve
     throw new ApplicationError("INTERNAL_ERROR");
   }
   return record;
+}
+
+export type PublicEventRow = Pick<OperationEvent, "id" | "ordinal" | "type" | "simulatedRole" | "appliedAt" | "payloadVersion" | "payload" | "digest">;
+
+/** Public recovery isolates corruption; private command reads remain strict. */
+export function inspectPublicEvent(row: PublicEventRow, traceId: string): { event: PublicEventRecord | null; integrity: TraceIntegrity } {
+  const stored = eventDigest.safeParse(row.digest);
+  let localDigest: string | null = null;
+  try { localDigest = createHash("sha256").update(canonicalJson(row.payload), "utf8").digest("hex"); } catch { /* Invalid JSON remains an explicit mismatch. */ }
+  const parsed = publicEventSchema.safeParse(row.payload);
+  const payload = parsed.success ? parsed.data : null;
+  const matched = payload !== null && stored.success && localDigest === stored.data && payload.eventId === row.id
+    && payload.traceId === traceId && payload.ordinal === row.ordinal && payload.version === row.payloadVersion
+    && payload.type === row.type && payload.role.toUpperCase() === row.simulatedRole && payload.appliedAt === row.appliedAt.toISOString();
+  return {
+    event: matched ? { payload: payload!, digest: stored.data! } : null,
+    integrity: { state: matched ? "MATCHED" : "MISMATCH", storedDigest: stored.success ? stored.data : null, localDigest },
+  };
 }
 
 export function createHcsEnvelope(record: PublicEventRecord): { envelope: HcsEventEnvelope; bytes: Uint8Array } {
