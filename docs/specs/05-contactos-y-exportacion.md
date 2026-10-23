@@ -1,7 +1,7 @@
 # S05 · Solicitud real de demo y exportación privada
 
 Área: Backend · contacto. Tamaño relativo: S. Dependencias: S01, S03.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por autorización posterior del usuario en `feature/s05-contactos-y-exportacion`; tipos, schema, compilación y ayuda CLI comprobados. Comportamiento pendiente de S17/S18.
 
 ## Problem Statement
 
@@ -64,3 +64,5 @@ Correos, SMS, WhatsApp, calendario, CRM, panel administrativo público, archivos
 ## Further Notes
 
 Q4, Q10, Q19 y Q25, precisadas por Q27. No se ha publicado ninguna solicitud ni se ha creado un servicio externo.
+
+La [documentación de implementación](../contactos-y-exportacion.md) concreta límites, normalización, DTO, idempotencia, vencimiento y exportación. En la planificación se confirmó CSV para Excel en Windows: UTF-8 con BOM y separador `;`. Se reutiliza el modelo SQL sin nuevas migraciones. El formulario visual queda en S13; S10 implementará el borrado diario.
