@@ -46,6 +46,14 @@ export interface HcsEventEnvelope {
 export interface PublicationSummary {
   readonly state: "QUEUED" | "IN_FLIGHT" | "UNCERTAIN" | "CONFIRMED" | "FAILED" | "PAUSED_QUOTA" | "PAUSED_CONFIG";
   readonly verificationState: "NOT_CHECKED" | "PENDING" | "MATCHED" | "MISMATCH" | "UNAVAILABLE";
+  readonly network: "testnet";
+  readonly topicId: string | null;
+  readonly transactionId: string | null;
+  readonly sequenceNumber: string | null;
+  readonly consensusTimestamp: string | null;
+  readonly confirmedAt: string | null;
+  readonly verifiedAt: string | null;
+  readonly lastErrorCode: string | null;
 }
 
 /** Resultado privado: no reutilizar como proyección pública de S11. */

@@ -12,7 +12,7 @@ Se conservan las versiones exactas del manifiesto y `package-lock.json`, sin act
 | Next.js | 16.4.2 | Su metadata admite Node >=20.9 y React 19. |
 | React / React DOM | 19.3.1 | Versiones coincidentes; satisfacen los pares declarados. |
 | Prisma CLI, Client y adaptador PostgreSQL | 7.10.1 | Versiones coincidentes; CLI y Client admiten Node 24 y TypeScript >=5.4. |
-| SDK Hedera | `@hashgraph/sdk` 2.81.0 | Admite Node >=18. No se importa ni inicializa en S01; S09 implementará el adaptador. |
+| SDK Hedera | `@hiero-ledger/sdk` 2.90.1 | S09 sustituye el namespace anterior; admite Node >=18. Adaptador privado Node y CLI, sin cliente ni red durante importación. |
 | TypeScript | 7.0.2 | Ejecutó satisfactoriamente la comprobación de tipos de S01. |
 | Zod / server-only | 4.6.7 / 0.0.1 | Validación de configuración y frontera de importación del servidor. |
 
@@ -53,8 +53,9 @@ Todas estas variables se consumen en servidor; ninguna se exporta con `NEXT_PUBL
 | `CRON_SECRET` | Secreto del trabajo diario, mínimo 32 caracteres sin espacios. | Secreto privado, independiente de sesión. |
 | `APP_URL` | Origen público. En desarrollo/test, ausente utiliza `http://127.0.0.1:3000`. En producción es obligatorio y HTTPS. | No confidencial, pero leído en servidor; no se publica el objeto de configuración. |
 | `HEDERA_OPERATOR_ID` | Operador de testnet en formato numérico `0.0.N`, N positivo. | Identificador no confidencial; no se añade a errores públicos. |
-| `HEDERA_OPERATOR_KEY` | Clave privada no vacía. Su formato criptográfico y correspondencia con el operador se comprobarán con el SDK en S09. | Secreto privado. |
+| `HEDERA_OPERATOR_KEY` | S09 acepta DER hexadecimal canónico, ED25519 o ECDSA; valida con el SDK y exige clave simple coincidente con la cuenta. | Secreto privado. |
 | `HEDERA_TOPIC_ID` | Topic testnet en formato numérico `0.0.N`, N positivo. | Identificador no confidencial; su existencia no se comprueba en S01. |
+| `HCS_CONFIGURATION_GENERATION` | S09: etiqueta de 1–64 caracteres alfanuméricos, `_` o `-`, renovada tras reset/cambio de destino. | Metadata privada que participa en la vinculación inmutable del recorrido, sin clave privada. |
 | `HCS_DAILY_LIMIT` | Entero de 1 a 100; ausente/vacío utiliza 100. Otros valores invalidan la capacidad HCS. | Política privada de operación; no implica un contador implementado. |
 | `NODE_ENV` | Lo establece el runtime. Admite `development`, `test` o `production`; ausente utiliza `development`. Solo interviene en la configuración del origen. | No secreto. No se redefine en la plantilla. |
 
@@ -111,15 +112,15 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S08 |
+| Comando del manifiesto | Estado actualizado tras S09 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Next.js sirve las API de S04/S05, sin interfaz. SQL es necesario para persistir; SESSION_SECRET corresponde solo a sesión. Producción exige APP_URL HTTPS y build previo. |
-| `build` | Ejecutado correctamente en S08: genera Prisma, comprueba tipos y compila los siete paths de API, incluidos recuperación actual/por traceId y comandos. No verifica atomicidad ni comportamiento HTTP. |
+| `build` | Ejecutado correctamente en S09: genera Prisma, comprueba tipos y compila los siete paths existentes de API. No verifica atomicidad, comportamiento HTTP ni integración real de red. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
-| `hedera:topic` | Pendiente del script de S09 y credenciales testnet. |
+| `hedera:topic` | S09 implementa prepare/submit/status con journal privado. Solo se ejecutó `--help`, sin cargar secretos ni contactar la red. |
 | `maintenance` | Pendiente del script de S10. |
 | `test`, `test:e2e` | Lanzadores preliminares; suites pendientes de S17 y S18. No se ejecutan en S01. |
 
@@ -130,6 +131,8 @@ S05 añade `DEMO_REQUEST_EXPIRED`/410. La API de contacto exige origen y SQL, si
 S06 añade [reglas de dominio puras](reglas-de-operacion.md), sin nuevas capacidades de configuración, errores HTTP, rutas, dependencias o migraciones. Los resultados operativos reutilizan INVALID_INPUT, WRONG_ROLE, STATE_CONFLICT y RULE_VIOLATION. La integración transaccional queda en S07/S08.
 
 S07 incorpora [ejecución transaccional privada y eventos](eventos-y-hashes.md), sin configuración nueva ni migraciones. Añade canonicalize 5.1.0 fijada exactamente para JCS, compatible con Node >=22, y reutiliza SHA-256 de Node. Exige SQL y secreto de sesión al ejecutar comandos, pero no necesita configuración Hedera; el build mantiene carga lazy. S08 expone las rutas operativas, con las mismas capacidades SQL/sesión y origen configurado para mutaciones; no requiere nuevas variables.
+
+S09 incorpora [adaptador y preparación de testnet](hedera-testnet.md). `hederaTarget()` lee metadata sin clave y `hederaOperator()` permite preparar el topic sin un topic preexistente; `hedera()` conserva la capacidad completa. El comando operativo solo usa metadata para fijar la vinculación; puede guardar SQL sin ella y sin credenciales. La nueva migración se aplicó y comprobó en PostgreSQL local; otras bases deben migrarse antes de usar el esquema actualizado. El despliegue y los disparadores de envío siguen pendientes de S16 y S10.
 
 ## Verificación de S01 y escenarios posteriores
 

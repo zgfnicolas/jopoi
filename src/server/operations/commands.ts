@@ -10,6 +10,8 @@ import type { OperationAction, OperationCommand, SimulatedRole } from "../../sha
 import { ApplicationError } from "../application-error";
 import { advanceRunVersion, withTransaction } from "../database";
 import { createPublicEvent, eventTypeForAction, readPublicEvent } from "../events/payload";
+import { configuredTarget } from "../hedera/target";
+import { publicationSummary } from "../hedera/summary";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, receiptResultSchema, runChanges } from "./storage";
@@ -75,7 +77,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         replayed: true,
         applied: { operation: original.data.operation, version: previous.resultingVersion, eventId: original.data.eventId },
         current: { operation: current, version: run.version }, event,
-        publication: publication === null ? null : { state: publication.state, verificationState: publication.verificationState },
+        publication: publication === null ? null : publicationSummary(publication),
       };
     }
     if (!allowWrite || run.version !== expectedVersion) throw new ApplicationError("VERSION_CONFLICT");
@@ -103,20 +105,27 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
       }, select: { id: true },
     });
     await advanceRunVersion(tx, run.id, expectedVersion);
-    await tx.demoRun.update({ where: { id: run.id }, data: runChanges(operation, command.action, appliedAt), select: { id: true } });
+    const target = command.action === "publish" ? configuredTarget(process.env) : null;
+    await tx.demoRun.update({ where: { id: run.id }, data: {
+      ...runChanges(operation, command.action, appliedAt),
+      ...(target === null ? {} : { hcsConfigurationGeneration: target.generation, hcsTopicId: target.topicId, hcsOperatorId: target.operatorId }),
+    }, select: { id: true } });
+    let publication = null;
     if (event !== null) {
-      await tx.operationEvent.create({ data: {
+      const stored = await tx.operationEvent.create({ data: {
         id: event.payload.eventId, runId: run.id, commandId: receipt.id,
         ordinal: event.payload.ordinal, type: event.payload.type, simulatedRole: ROLES[command.role],
         appliedAt, payloadVersion: 1, payload: jsonObject(event.payload), digest: event.digest,
         publication: { create: { network: "testnet", state: "QUEUED", verificationState: "NOT_CHECKED",
           automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt } },
-      }, select: { id: true } });
+      }, include: { publication: true } });
+      publication = stored.publication;
+      if (publication === null) throw new ApplicationError("INTERNAL_ERROR");
     }
     return {
       replayed: false, applied: { operation, version: resultingVersion, eventId },
       current: { operation, version: resultingVersion }, event,
-      publication: event === null ? null : { state: "QUEUED", verificationState: "NOT_CHECKED" },
+      publication: publication === null ? null : publicationSummary(publication),
     };
   }
 

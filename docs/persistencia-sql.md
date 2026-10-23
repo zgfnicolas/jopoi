@@ -12,6 +12,8 @@ Actualización S07: un módulo privado agrupa recibo idempotente, versión/estad
 
 Actualización S08: la [API privada del recorrido](api-del-recorrido.md) conecta esa ejecución y añade lecturas autorizadas de snapshot e historial. Reutiliza la misma base, sin migraciones ni cambios en los servicios de escritura de S07.
 
+Actualización S09: [el adaptador HCS](hedera-testnet.md) incorpora la migración `202610230002_hcs_binding`, con vinculación inmutable de configuración por recorrido y evidencia de verificación JSONB. Se aplicó con `--local-only` y el estado confirmó las tres migraciones al día; PostgreSQL volvió a detenerse conservando datos. No modifica las dos migraciones anteriores. No se inicia envío desde los comandos operativos hasta S10.
+
 ## Preparación local
 
 Se utiliza PostgreSQL **17.11**, empaquetado EDB **17.11-5**, para Windows x64. La distribución portable procede de la [página de binarios EDB](https://www.enterprisedb.com/download-postgresql-binaries). El [checksum publicado por EDB](https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip.sha256) es:

@@ -1,7 +1,7 @@
 # S09 · Adaptador HCS real y verificación en testnet
 
 Área: Backend · integración externa. Tamaño relativo: L. Dependencias: S01, S07.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por instrucción posterior, con migración aplicada y comprobada en PostgreSQL local; pruebas de comportamiento reservadas a S17/S18. Ver [adaptador y preparación de testnet](../hedera-testnet.md).
 
 ## Problem Statement
 
@@ -36,6 +36,8 @@ Integrar exclusivamente HCS testnet, preparar y conservar cada transacción ante
 - Saldo de prueba agotado, topic inválido o configuración incompleta mantienen la acción SQL y suspenden el envío con explicación. No comprar HBAR reales ni crear un comprobante simulado.
 - Después de un reset de testnet, conservar la confirmación histórica registrada y señalar si no puede verificarse actualmente. No cambiar silenciosamente el topic de un evento ya preparado; una nueva generación identifica nuevos recorridos.
 - Cliente y tiempos de red acotados por ejecución. Sin suscripción permanente ni proceso residente para escuchar eventos.
+- Concreción confirmada: DER hexadecimal para claves; HCS_CONFIGURATION_GENERATION explícita y vinculación inmutable por recorrido al primer hito con metadata, o al preparar su primer envío si faltaba metadata. La acción SQL sigue disponible sin credenciales.
+- Usar @hiero-ledger/sdk 2.90.1, preparación persistida y marcador durable previo al envío. No conectar disparadores operativos hasta S10; el CLI de topic prepara, envía una sola vez o recupera un journal privado.
 
 ### Criterios de aceptación
 
