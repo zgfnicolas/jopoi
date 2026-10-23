@@ -136,6 +136,8 @@ S09 incorpora [adaptador y preparación de testnet](hedera-testnet.md). `hederaT
 
 S10 incorpora [cuotas y mantenimiento](cuotas-reintentos-y-mantenimiento.md), `hcsQuota()` independiente de claves, `MAINTENANCE_UNAUTHORIZED`/401, `after` tras SQL y cron diario protegido por `CRON_SECRET`. No añade variables ni dependencias. La cuarta migración está aplicada localmente; ayuda, tipos, Prisma y build comprobados. No se ejecutó mantenimiento, limpieza de negocio ni red. `next.config.ts` mantiene el SDK como paquete externo del servidor Node.
 
+S11 añade [historial y verificación públicos](api-publica-de-trazabilidad.md). Necesita solo SQL para recuperar el recorrido y usa mirror HTTPS para un contraste explícito, sin cargar el SDK de firma, exigir secretos de sesión/Hedera ni leer cookies. No añade variables, dependencias o migraciones; reutiliza TRACE_EXPIRED/410. Tipos, Prisma y build con once paths de API comprobados; comportamiento y red pendientes de S17/S18.
+
 ## Verificación de S01 y escenarios posteriores
 
 Se ejecutaron comprobación TypeScript y revisión estática del diff, dependencias, fronteras de importación y tratamiento del entorno. No se crearon ni ejecutaron suites, conexiones SQL, transacciones testnet, build Next.js ni despliegues.
