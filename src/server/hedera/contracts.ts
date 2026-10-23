@@ -6,6 +6,7 @@ export const HCS_CODES = [
   "HCS_INVALID_TOPIC", "HCS_TOPIC_FEES", "HCS_INSUFFICIENT_TEST_BALANCE", "HCS_INVALID_PREPARATION",
   "HCS_TRANSACTION_EXPIRED", "HCS_TRANSACTION_REJECTED", "HCS_RESULT_UNKNOWN", "HCS_UNAVAILABLE",
   "HCS_MIRROR_PENDING", "HCS_MIRROR_UNAVAILABLE", "HCS_MESSAGE_MISMATCH", "HCS_INVALID_EVIDENCE",
+  "HCS_QUOTA_EXHAUSTED", "HCS_ATTEMPTS_EXHAUSTED",
 ] as const;
 export type HcsCode = typeof HCS_CODES[number];
 export class HcsError extends Error {
@@ -20,7 +21,8 @@ export interface PreparedMessage {
 }
 export type NetworkOutcome =
   | { readonly kind: "confirmed"; readonly sequenceNumber: string | null; readonly consensusTimestamp: string | null; readonly topicId: string | null }
-  | { readonly kind: "rejected"; readonly code: HcsCode }
+  | { readonly kind: "rejected"; readonly code: HcsCode; readonly source: "PRECHECK" | "RECEIPT" | "MIRROR" }
+  | { readonly kind: "not_sent"; readonly code: HcsCode }
   | { readonly kind: "unknown"; readonly code: HcsCode };
 
 export interface VerificationEvidence {

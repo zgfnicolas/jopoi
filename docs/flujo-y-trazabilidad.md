@@ -4,7 +4,7 @@ Estado: decisiones confirmadas hasta Q30; barrido diario aceptado en Q28. Presup
 
 Actualización S08: ya existen [ejecución transaccional con eventos, hashes y pendientes](eventos-y-hashes.md) y [API operativa privada](api-del-recorrido.md) con recuperación e historial. El envío/verificación real corresponde a S09/S10. Las explicaciones siguientes describen el flujo acordado; todavía no acreditan una integración de red funcionando.
 
-Actualización S09: ya está escrito el [adaptador y CLI de testnet](hedera-testnet.md), con preparación persistida, marcador previo al envío, reconciliación y contraste. La migración está aplicada y comprobada localmente; S10 conectará los disparadores, cuotas y leases. No se ha ejecutado una comprobación real de red.
+Actualización S09/S10: están escritos el [adaptador y CLI de testnet](hedera-testnet.md) y el [coordinador durable](cuotas-reintentos-y-mantenimiento.md), con preparación persistida, marcador previo al envío, cuotas, leases, reintento privado, mantenimiento diario, reconciliación y contraste. Las cuatro migraciones están aplicadas y comprobadas localmente. No se ha ejecutado una comprobación real de red ni limpieza de negocio.
 
 ## Acciones representadas
 

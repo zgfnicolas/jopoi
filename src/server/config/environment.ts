@@ -28,6 +28,7 @@ export type ConfigCapability =
   | "origin"
   | "hederaTarget"
   | "hederaOperator"
+  | "hcsQuota"
   | "hedera";
 
 export interface ConfigurationIssue {
@@ -171,6 +172,7 @@ export function createConfigReader(environment: Environment) {
     origin: () => read("origin", originSchema),
     hederaTarget: () => read("hederaTarget", targetSchema),
     hederaOperator: () => read("hederaOperator", operatorSchema),
+    hcsQuota: () => read("hcsQuota", z.object({ HCS_DAILY_LIMIT: dailyLimit }).transform((value) => ({ limit: value.HCS_DAILY_LIMIT }))),
     hedera: () => read("hedera", hederaSchema),
   };
 }

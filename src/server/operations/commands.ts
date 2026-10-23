@@ -11,7 +11,7 @@ import { ApplicationError } from "../application-error";
 import { advanceRunVersion, withTransaction } from "../database";
 import { createPublicEvent, eventTypeForAction, readPublicEvent } from "../events/payload";
 import { configuredTarget } from "../hedera/target";
-import { publicationSummary } from "../hedera/summary";
+import { privatePublicationSummary } from "../hedera/summary";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, receiptResultSchema, runChanges } from "./storage";
@@ -77,7 +77,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         replayed: true,
         applied: { operation: original.data.operation, version: previous.resultingVersion, eventId: original.data.eventId },
         current: { operation: current, version: run.version }, event,
-        publication: publication === null ? null : publicationSummary(publication),
+        publication: publication === null || previous.event === null ? null : await privatePublicationSummary(tx, publication, previous.event, process.env, new Date()),
       };
     }
     if (!allowWrite || run.version !== expectedVersion) throw new ApplicationError("VERSION_CONFLICT");
@@ -125,7 +125,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     return {
       replayed: false, applied: { operation, version: resultingVersion, eventId },
       current: { operation, version: resultingVersion }, event,
-      publication: publication === null ? null : publicationSummary(publication),
+      publication: publication === null || event === null ? null : await privatePublicationSummary(tx, publication, { runId: run.id, ordinal: event.payload.ordinal }, process.env, new Date()),
     };
   }
 

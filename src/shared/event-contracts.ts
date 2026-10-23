@@ -44,6 +44,8 @@ export interface HcsEventEnvelope {
 }
 
 export interface PublicationSummary {
+  readonly blockedBy: string | null;
+  readonly quota: { readonly limit: number | null; readonly used: number; readonly remaining: number | null; readonly resetsAt: string };
   readonly state: "QUEUED" | "IN_FLIGHT" | "UNCERTAIN" | "CONFIRMED" | "FAILED" | "PAUSED_QUOTA" | "PAUSED_CONFIG";
   readonly verificationState: "NOT_CHECKED" | "PENDING" | "MATCHED" | "MISMATCH" | "UNAVAILABLE";
   readonly network: "testnet";
@@ -54,6 +56,11 @@ export interface PublicationSummary {
   readonly confirmedAt: string | null;
   readonly verifiedAt: string | null;
   readonly lastErrorCode: string | null;
+  readonly automaticAttempts: number;
+  readonly manualAttempts: number;
+  readonly manualAuthorized: boolean;
+  readonly manualAvailable: boolean;
+  readonly nextAttemptAt: string | null;
 }
 
 /** Resultado privado: no reutilizar como proyección pública de S11. */
@@ -63,4 +70,17 @@ export interface PersistedCommandResult {
   readonly current: { readonly operation: OperationData; readonly version: number };
   readonly event: PublicEventRecord | null;
   readonly publication: PublicationSummary | null;
+}
+
+export const PUBLICATION_RETRY_OUTCOMES = ["ALREADY_CONFIRMED", "BLOCKED", "RECONCILE_ONLY", "MANUAL_AUTHORIZED", "EXHAUSTED", "AUTOMATIC_PENDING"] as const;
+export type PublicationRetryOutcome = typeof PUBLICATION_RETRY_OUTCOMES[number];
+export interface PublicationRetryInput { readonly requestId: string }
+export interface PublicationRetryResponse {
+  readonly saved: true;
+  readonly replayed: boolean;
+  readonly traceId: string;
+  readonly eventId: string;
+  readonly outcome: PublicationRetryOutcome;
+  readonly publication: PublicationSummary;
+  readonly quota: PublicationSummary["quota"];
 }

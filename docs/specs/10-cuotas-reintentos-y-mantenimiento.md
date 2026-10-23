@@ -1,7 +1,7 @@
 # S10 · Cuotas, recuperación y mantenimiento diario
 
 Área: Backend · coordinación durable. Tamaño relativo: L. Dependencias: S03, S04, S05, S07, S08, S09.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada como base de coordinación durable por instrucción posterior del usuario. Migración aplicada a PostgreSQL local; comportamiento por API y testnet pendiente de S17/S18. Detalle: [implementación y operación](../cuotas-reintentos-y-mantenimiento.md).
 
 ## Problem Statement
 
