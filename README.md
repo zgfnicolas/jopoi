@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Se implementó S01 por instrucción posterior del usuario: configuración privada por capacidad, políticas y contrato común de errores. Todavía no hay una aplicación arrancable, persistencia conectada, integración Hedera ni servicios desplegados. La preparación técnica anterior se revisó para esta base; no equivale a las demás specs implementadas.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Se implementaron S01 (configuración privada, políticas y errores) y S02 (escenario versionado, cálculo económico exacto y recursos ilustrativos locales). Todavía no hay una aplicación arrancable, persistencia conectada, integración Hedera ni servicios desplegados. La preparación técnica anterior se revisó para esta base; no equivale a las demás specs implementadas.
 
 ## Documentación
 
@@ -11,6 +11,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
 | [Specs ordenadas](docs/specs/README.md) | 18 specs desde backend hasta frontend y entrega, con pruebas al final. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
+| [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

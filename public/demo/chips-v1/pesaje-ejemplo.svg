@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="720" viewBox="0 0 1000 720" role="img" aria-labelledby="title description">
+  <title id="title">Comprobante de pesaje de ejemplo — sin validez</title>
+  <desc id="description">Documento ficticio del escenario chips-v1: bruto 18.000 kg, tara 6.000 kg y neto 12.000 kg. No acredita una entrega ni cantidades editadas.</desc>
+  <rect width="1000" height="720" fill="#f3f0e9"/>
+  <rect x="36" y="32" width="928" height="656" rx="16" fill="#ffffff" stroke="#bfc8bd" stroke-width="2"/>
+  <g font-family="Arial, sans-serif" fill="#183b2b">
+    <text x="72" y="88" font-size="28" font-weight="700">Jopói · material de demostración</text>
+    <text x="72" y="127" font-size="20">Comprobante de pesaje ilustrativo · chips-v1</text>
+    <rect x="72" y="155" width="856" height="58" rx="8" fill="#fff2cf"/>
+    <text x="500" y="192" text-anchor="middle" font-size="25" font-weight="700" fill="#704513">EJEMPLO FICTICIO — SIN VALIDEZ</text>
+    <text x="72" y="255" font-size="18">Material: chips forestales sin tratar · ejemplo a granel</text>
+    <text x="72" y="288" font-size="18">Origen ilustrativo: Santa Rosa, Corrientes</text>
+    <text x="72" y="321" font-size="18">Referencia: escenario inicial de 12.000 kg</text>
+    <path d="M72 345H928" stroke="#d9dfd6" stroke-width="2"/>
+    <text x="92" y="392" font-size="22">Peso bruto</text>
+    <text x="908" y="392" text-anchor="end" font-size="26">18.000 kg</text>
+    <text x="92" y="440" font-size="22">Tara</text>
+    <text x="908" y="440" text-anchor="end" font-size="26">6.000 kg</text>
+    <rect x="72" y="463" width="856" height="69" rx="8" fill="#e9f1e7"/>
+    <text x="92" y="507" font-size="24" font-weight="700">Peso neto de ejemplo</text>
+    <text x="908" y="507" text-anchor="end" font-size="30" font-weight="700">12.000 kg</text>
+    <text x="72" y="574" font-size="18">Datos precargados: no provienen de una balanza ni de una entrega real.</text>
+    <text x="72" y="608" font-size="18">Este documento estático no acredita cantidades editadas en la demo.</text>
+    <text x="72" y="649" font-size="16" fill="#546454">Sin firmas, sellos, certificación de calidad ni validez comercial.</text>
+  </g>
+</svg>
