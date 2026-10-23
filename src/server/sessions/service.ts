@@ -14,7 +14,7 @@ type RunSummaryRow = Pick<DemoRun, "traceId" | "state" | "version" | "expiresAt"
 
 const summarySelect = { id: true, traceId: true, state: true, version: true, expiresAt: true } as const;
 
-function sessionSummary(session: DemoSession): DemoSessionSummary {
+export function sessionSummary(session: DemoSession): DemoSessionSummary {
   return {
     expiresAt: session.expiresAt.toISOString(),
     runCount: session.runCount,

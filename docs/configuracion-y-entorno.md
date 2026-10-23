@@ -1,6 +1,6 @@
 # Configuración y entorno de desarrollo
 
-S01 implementada como base reutilizable. Posteriormente S03 incorporó esquema Prisma, migración local y conexión SQL comprobada; ver [persistencia SQL](persistencia-sql.md). S04 añade endpoints de sesión, inicio y reinicio; ver [sesiones y aislamiento](sesiones-y-aislamiento.md). S05 incorpora API de contacto y CLI privado de CSV; ver [contactos y exportación](contactos-y-exportacion.md). S06 implementa reglas operativas puras; ver [reglas de operación](reglas-de-operacion.md). Todavía no hay interfaz, API de comandos operativos, integración Hedera ni despliegue externo. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
+S01 implementada como base reutilizable. Posteriormente S03 incorporó esquema Prisma, migración local y conexión SQL comprobada; ver [persistencia SQL](persistencia-sql.md). S04 añade endpoints de sesión, inicio y reinicio; ver [sesiones y aislamiento](sesiones-y-aislamiento.md). S05 incorpora API de contacto y CLI privado de CSV; ver [contactos y exportación](contactos-y-exportacion.md). S06 implementa reglas operativas puras; ver [reglas de operación](reglas-de-operacion.md). S07/S08 incorporan eventos, persistencia atómica y [API operativa privada](api-del-recorrido.md), sin variables adicionales. Todavía no hay interfaz, integración Hedera ni despliegue externo. Las comprobaciones de comportamiento se crean y ejecutan al llegar a S17 y S18.
 
 ## Versiones y preparación local
 
@@ -111,11 +111,11 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S07 |
+| Comando del manifiesto | Estado actualizado tras S08 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Next.js sirve las API de S04/S05, sin interfaz. SQL es necesario para persistir; SESSION_SECRET corresponde solo a sesión. Producción exige APP_URL HTTPS y build previo. |
-| `build` | Ejecutado correctamente en S07: genera Prisma, comprueba tipos y compila los cuatro paths existentes de API. No verifica atomicidad ni comportamiento HTTP. |
+| `build` | Ejecutado correctamente en S08: genera Prisma, comprueba tipos y compila los siete paths de API, incluidos recuperación actual/por traceId y comandos. No verifica atomicidad ni comportamiento HTTP. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
@@ -129,7 +129,7 @@ S05 añade `DEMO_REQUEST_EXPIRED`/410. La API de contacto exige origen y SQL, si
 
 S06 añade [reglas de dominio puras](reglas-de-operacion.md), sin nuevas capacidades de configuración, errores HTTP, rutas, dependencias o migraciones. Los resultados operativos reutilizan INVALID_INPUT, WRONG_ROLE, STATE_CONFLICT y RULE_VIOLATION. La integración transaccional queda en S07/S08.
 
-S07 incorpora [ejecución transaccional privada y eventos](eventos-y-hashes.md), sin configuración nueva ni migraciones. Añade canonicalize 5.1.0 fijada exactamente para JCS, compatible con Node >=22, y reutiliza SHA-256 de Node. Exige SQL y secreto de sesión al ejecutar comandos, pero no necesita configuración Hedera; el build mantiene carga lazy. S08 expondrá las rutas operativas.
+S07 incorpora [ejecución transaccional privada y eventos](eventos-y-hashes.md), sin configuración nueva ni migraciones. Añade canonicalize 5.1.0 fijada exactamente para JCS, compatible con Node >=22, y reutiliza SHA-256 de Node. Exige SQL y secreto de sesión al ejecutar comandos, pero no necesita configuración Hedera; el build mantiene carga lazy. S08 expone las rutas operativas, con las mismas capacidades SQL/sesión y origen configurado para mutaciones; no requiere nuevas variables.
 
 ## Verificación de S01 y escenarios posteriores
 

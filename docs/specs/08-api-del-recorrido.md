@@ -1,7 +1,7 @@
 # S08 · API privada del recorrido y comandos idempotentes
 
 Área: Backend · interfaz operativa. Tamaño relativo: M. Dependencias: S04, S06, S07.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por instrucción posterior del usuario; verificaciones de preparación documentadas en [API del recorrido](../api-del-recorrido.md). Pruebas de comportamiento pendientes de S17/S18.
 
 ## Problem Statement
 
@@ -36,6 +36,8 @@ Exponer una API operativa bajo sesión anónima que recupere el recorrido, acept
 - Mapear errores con S01; una transición inválida o cuota no cambia el historial. El cliente puede refrescar el estado ante conflicto antes de proponer otra acción.
 - En esta spec la operación solo crea el pendiente de red. S09 aporta el adaptador y S10 conecta intentos durante interacción, manuales y diarios.
 - Limitar el tamaño de entrada y aceptar solo atributos definidos. No confiar en nombres de empresa, importes, estados o rol autenticado enviados por el navegador.
+- Contrato concretado y confirmado al planificar: lecturas con `{ session, run }`, `200` con `run: null` cuando aún no existe; historial completo con payload/hash y publicación. Entrada plana estricta de hasta 4 KiB. POST responde `200` con `{ saved: true, traceId, replayed, applied, current, event, publication }`; saved solo afirma persistencia SQL.
+- Conservar las decisiones de S07: decimales normalizados equivalentes tienen la misma intención y expectedVersion integra su hash. Reutilizar la ejecución transaccional existente, sin migraciones ni dependencias adicionales.
 
 ### Atributos comunes y resultado
 
@@ -67,7 +69,7 @@ Esta API es la frontera principal confirmada por el usuario para S17: se observa
 
 ## Out of Scope
 
-Implementar la API ahora, exponer mutaciones públicas, clientes externos comerciales, endpoints de facturación y autenticación empresarial.
+Mutaciones públicas, clientes externos comerciales, endpoints de facturación, autenticación empresarial, envío HCS, frontend y despliegue. La restricción histórica de no implementar durante la fase documental fue superada por la instrucción posterior de implementar S08.
 
 ## Further Notes
 
