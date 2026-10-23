@@ -1,7 +1,7 @@
 # S03 · Persistencia relacional, precisión y migraciones
 
 Área: Backend · datos persistentes. Tamaño relativo: S. Dependencias: S01, S02.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: base implementada el 2026-10-22 en `feature/s03-persistencia-sql`, según el plan aprobado. PostgreSQL portable preparado, migración local aplicada y conexión comprobada. Servicios de negocio y pruebas pendientes de sus specs. Sin publicar como issue.
 
 ## Problem Statement
 
@@ -24,7 +24,7 @@ Definir PostgreSQL y Prisma como persistencia operativa, con relaciones y restri
 
 ## Implementation Decisions
 
-- PostgreSQL con Prisma y JSONB para metadatos versionados. Sin segunda base NoSQL. No se implementa ni se aplica una migración durante esta fase de specs.
+- PostgreSQL con Prisma y JSONB para metadatos versionados. Sin segunda base NoSQL. La implementación autorizada incorpora una migración inicial aplicada solo al entorno local.
 - Entidades lógicas: sesión anónima privada; recorrido de demo; declaración de lote; operación; recibo de comando idempotente; evento inmutable; publicación HCS con estado mutable; contador de cuota; solicitud de demo. Pueden agruparse físicamente cuando no se pierdan las restricciones descritas.
 - La sesión conserva identidad interna, hash del token, creación, vencimiento y contador de recorridos. El recorrido conserva propietario, identificador público aleatorio, versión, creación, vencimiento y snapshot del escenario.
 - Cada recorrido contiene un lote; una operación asignada referencia ese lote completo, un comprador y un viaje. Los estados previos a asignación pueden representarse sin inventar un acuerdo de transporte ya confirmado.
@@ -50,8 +50,8 @@ La verificación de persistencia y atomicidad se realizará a través de la API 
 
 ## Out of Scope
 
-Implementar el esquema ahora, almacenar archivos subidos, otra base de datos, event sourcing de toda la aplicación, mecanismos de producción de pago y migración de clientes reales.
+Servicios HTTP y reglas de negocio de las siguientes specs, almacenar archivos subidos, otra base de datos, event sourcing de toda la aplicación, mecanismos de producción de pago y migración de clientes reales.
 
 ## Further Notes
 
-Q3, Q7–Q8, Q16, Q18 y Q20–Q25. No hay modelos funcionales ni migraciones previas que deban preservarse como contrato.
+Q3, Q7–Q8, Q16, Q18 y Q20–Q25. La instrucción posterior de implementar autoriza esta base local. El [registro de persistencia](../persistencia-sql.md) documenta el modelo físico agrupado, la migración inicial, restricciones, conexiones y verificaciones. Las suites siguen reservadas a S17/S18; el cierre no incluye HTTP, lógica de sesiones, HCS ni despliegue.

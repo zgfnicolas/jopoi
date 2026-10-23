@@ -1,0 +1,195 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RunState {
+  DRAFT
+  PUBLISHED
+  APPROVED
+  ASSIGNED
+  PICKED_UP
+  RECEIVED
+  REJECTED
+  INCIDENT
+}
+
+enum SimulatedRole {
+  GENERATOR
+  COORDINATOR
+  CARRIER
+  BUYER
+}
+
+enum CommandAction {
+  SAVE
+  PUBLISH
+  APPROVE
+  REJECT
+  ASSIGN
+  PICKUP
+  RECEIVE
+  INCIDENT
+  RETRY_PUBLICATION
+}
+
+enum EventType {
+  LOT_PUBLISHED
+  LOT_APPROVED
+  LOT_REJECTED
+  TRANSPORT_ASSIGNED
+  PICKUP_CONFIRMED
+  RECEIPT_ACCEPTED
+  RECEIPT_ISSUE_REPORTED
+}
+
+enum PublicationState {
+  QUEUED
+  IN_FLIGHT
+  UNCERTAIN
+  CONFIRMED
+  FAILED
+  PAUSED_QUOTA
+  PAUSED_CONFIG
+}
+
+enum VerificationState {
+  NOT_CHECKED
+  PENDING
+  MATCHED
+  MISMATCH
+  UNAVAILABLE
+}
+
+model DemoSession {
+  id          String    @id @default(uuid()) @db.Uuid
+  tokenHash   String    @unique @db.VarChar(64)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt   DateTime  @db.Timestamptz(3)
+  runCount    Int       @default(0) @db.SmallInt
+  runs        DemoRun[]
+
+  @@index([expiresAt])
+}
+
+// Un recorrido contiene exactamente una declaración de lote y una operación.
+model DemoRun {
+  id                    String           @id @default(uuid()) @db.Uuid
+  traceId               String           @unique @default(uuid()) @db.Uuid
+  sessionId             String           @db.Uuid
+  session               DemoSession      @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  creationRequestId     String           @db.Uuid
+  ordinal               Int              @db.SmallInt
+  version               Int              @default(1)
+  state                 RunState         @default(DRAFT)
+  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
+  expiresAt             DateTime         @db.Timestamptz(3)
+  scenarioVersion       String           @db.VarChar(64)
+  scenarioSnapshot      Json             @db.JsonB
+  declaredGrams         BigInt
+  humidityHundredths    Int              @db.SmallInt
+  assignedBuyerId       String?          @db.VarChar(64)
+  assignedTripId        String?          @db.VarChar(64)
+  assignedAt            DateTime?        @db.Timestamptz(3)
+  receivedGrams         BigInt?
+  rejectionReasonCode   String?          @db.VarChar(64)
+  incidentReasonCode    String?          @db.VarChar(64)
+  commands              CommandReceipt[]
+  events                OperationEvent[]
+
+  @@unique([sessionId, creationRequestId])
+  @@unique([sessionId, ordinal])
+  @@index([expiresAt])
+}
+
+model CommandReceipt {
+  id               String          @id @default(uuid()) @db.Uuid
+  runId            String          @db.Uuid
+  run              DemoRun         @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  requestId        String          @db.Uuid
+  intentHash       String          @db.VarChar(64)
+  action           CommandAction
+  resultingVersion Int
+  result           Json            @db.JsonB
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  event            OperationEvent?
+
+  @@unique([runId, requestId])
+  @@unique([id, runId])
+}
+
+model OperationEvent {
+  id             String          @id @default(uuid()) @db.Uuid
+  runId          String          @db.Uuid
+  run            DemoRun         @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  commandId      String          @db.Uuid
+  command        CommandReceipt  @relation(fields: [commandId, runId], references: [id, runId], onDelete: Cascade, onUpdate: NoAction)
+  ordinal        Int
+  type           EventType
+  simulatedRole  SimulatedRole
+  appliedAt      DateTime        @db.Timestamptz(3)
+  payloadVersion Int             @default(1)
+  payload        Json            @db.JsonB
+  digest         String          @db.VarChar(64)
+  publication    HcsPublication?
+
+  @@unique([runId, ordinal])
+  @@unique([commandId, runId])
+}
+
+model HcsPublication {
+  eventId                 String            @id @db.Uuid
+  event                   OperationEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  state                   PublicationState  @default(QUEUED)
+  verificationState       VerificationState @default(NOT_CHECKED)
+  network                 String            @default("testnet") @db.VarChar(16)
+  topicId                 String?           @db.VarChar(64)
+  configurationGeneration String?           @db.VarChar(64)
+  transactionId           String?           @unique @db.VarChar(128)
+  signedTransactionBytes  Bytes?
+  attemptHistory          Json              @default("[]") @db.JsonB
+  automaticAttempts       Int               @default(0) @db.SmallInt
+  manualAttempts          Int               @default(0) @db.SmallInt
+  nextAttemptAt           DateTime?         @db.Timestamptz(3)
+  leaseOwner              String?           @db.Uuid
+  leaseExpiresAt          DateTime?         @db.Timestamptz(3)
+  lastErrorCode           String?           @db.VarChar(64)
+  confirmedAt             DateTime?         @db.Timestamptz(3)
+  sequenceNumber          BigInt?
+  consensusTimestamp      String?           @db.VarChar(30)
+  verifiedAt              DateTime?         @db.Timestamptz(3)
+  createdAt               DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime          @updatedAt @db.Timestamptz(3)
+
+  @@index([state, nextAttemptAt])
+  @@index([leaseExpiresAt])
+}
+
+model DailyQuota {
+  scope     String   @db.VarChar(32)
+  date      DateTime @db.Date
+  used      Int      @default(0)
+
+  @@id([scope, date])
+  @@index([date])
+}
+
+// Datos reales independientes: nunca incluirlos en snapshots, eventos o HCS.
+model DemoRequest {
+  id          String   @id @default(uuid()) @db.Uuid
+  requestId   String   @unique @db.Uuid
+  intentHash  String   @db.VarChar(64)
+  name        String   @db.Text
+  email       String   @db.Text
+  company     String   @db.Text
+  message     String?  @db.Text
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  expiresAt   DateTime @db.Timestamptz(3)
+
+  @@index([expiresAt])
+}

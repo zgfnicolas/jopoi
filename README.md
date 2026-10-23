@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Se implementaron S01 (configuración privada, políticas y errores) y S02 (escenario versionado, cálculo económico exacto y recursos ilustrativos locales). Todavía no hay una aplicación arrancable, persistencia conectada, integración Hedera ni servicios desplegados. La preparación técnica anterior se revisó para esta base; no equivale a las demás specs implementadas.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. Se implementaron S01 (configuración privada, políticas y errores), S02 (escenario y cálculo económico) y S03 (modelo SQL, migraciones y acceso Prisma). PostgreSQL local quedó preparado y migrado, con conexión comprobada; el servidor se detiene al cerrar la preparación y puede arrancarse con su comando local. Todavía no hay aplicación arrancable, servicios HTTP del recorrido, integración Hedera ni despliegue externo.
 
 ## Documentación
 
@@ -12,6 +12,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Specs ordenadas](docs/specs/README.md) | 18 specs desde backend hasta frontend y entrega, con pruebas al final. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
 | [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |
+| [Persistencia SQL](docs/persistencia-sql.md) | Base S03, PostgreSQL portable, modelo, migraciones, transacciones y retención. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

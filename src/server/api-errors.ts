@@ -5,10 +5,11 @@ import { randomUUID } from "node:crypto";
 import {
   API_ERROR_CATALOG,
   type ApiErrorBody,
-  type ApiErrorCode,
   type ApiErrorStatus,
-  type FieldErrors,
 } from "../shared/api-errors";
+import { ApplicationError } from "./application-error";
+
+export { ApplicationError } from "./application-error";
 
 export interface RequestContext {
   readonly requestId: string;
@@ -17,18 +18,6 @@ export interface RequestContext {
 /** Crear una vez por solicitud; nunca copiar identificadores de headers del visitante. */
 export function createRequestContext(): RequestContext {
   return Object.freeze({ requestId: randomUUID() });
-}
-
-export class ApplicationError extends Error {
-  readonly code: ApiErrorCode;
-  readonly fields?: FieldErrors;
-
-  constructor(code: ApiErrorCode, fields?: FieldErrors) {
-    super(API_ERROR_CATALOG[code].message);
-    this.name = "ApplicationError";
-    this.code = code;
-    this.fields = fields;
-  }
 }
 
 /** Solo serializa el contrato público, nunca la excepción o el mensaje del proveedor. */
