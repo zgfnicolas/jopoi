@@ -111,11 +111,11 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S06 |
+| Comando del manifiesto | Estado actualizado tras S07 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Next.js sirve las API de S04/S05, sin interfaz. SQL es necesario para persistir; SESSION_SECRET corresponde solo a sesión. Producción exige APP_URL HTTPS y build previo. |
-| `build` | Ejecutado correctamente en S06: genera Prisma y compila los cuatro paths existentes de API con los tipos de dominio compartidos. No verifica comportamiento HTTP ni las reglas. |
+| `build` | Ejecutado correctamente en S07: genera Prisma, comprueba tipos y compila los cuatro paths existentes de API. No verifica atomicidad ni comportamiento HTTP. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
@@ -128,6 +128,8 @@ S04 añade `REQUEST_FORBIDDEN`/403 al catálogo para rechazos de origen o protec
 S05 añade `DEMO_REQUEST_EXPIRED`/410. La API de contacto exige origen y SQL, sin depender de sesión ni de su secreto. El exportador usa solo la configuración SQL de aplicación y el loader privado de CLI; no requiere origen, cookie, cron ni Hedera. `src/server/http.ts` comparte protección de origen, lectura acotada y errores seguros entre S04 y S05.
 
 S06 añade [reglas de dominio puras](reglas-de-operacion.md), sin nuevas capacidades de configuración, errores HTTP, rutas, dependencias o migraciones. Los resultados operativos reutilizan INVALID_INPUT, WRONG_ROLE, STATE_CONFLICT y RULE_VIOLATION. La integración transaccional queda en S07/S08.
+
+S07 incorpora [ejecución transaccional privada y eventos](eventos-y-hashes.md), sin configuración nueva ni migraciones. Añade canonicalize 5.1.0 fijada exactamente para JCS, compatible con Node >=22, y reutiliza SHA-256 de Node. Exige SQL y secreto de sesión al ejecutar comandos, pero no necesita configuración Hedera; el build mantiene carga lazy. S08 expondrá las rutas operativas.
 
 ## Verificación de S01 y escenarios posteriores
 

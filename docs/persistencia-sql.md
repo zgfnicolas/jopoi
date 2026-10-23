@@ -8,6 +8,8 @@ Actualización S05: la API de solicitud y el exportador privado utilizan `DemoRe
 
 Actualización S06: el límite exacto de gramos de `toStoredGrams` se centraliza en `parseOperationQuantityGrams` del dominio, conservando su contrato. Las decisiones operativas son puras; no se escriben cambios de estado hasta integrarlas con eventos y comandos en S07/S08. Ver [reglas de operación](reglas-de-operacion.md).
 
+Actualización S07: un módulo privado agrupa recibo idempotente, versión/estado, evento y publicación pendiente en la transacción serializable existente. Reutiliza modelos, índices y triggers sin migraciones adicionales; la API corresponde a S08. Ver [eventos y hashes](eventos-y-hashes.md).
+
 ## Preparación local
 
 Se utiliza PostgreSQL **17.11**, empaquetado EDB **17.11-5**, para Windows x64. La distribución portable procede de la [página de binarios EDB](https://www.enterprisedb.com/download-postgresql-binaries). El [checksum publicado por EDB](https://get.enterprisedb.com/postgresql/postgresql-17.11-5-windows-x64-binaries.zip.sha256) es:

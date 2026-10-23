@@ -1,7 +1,7 @@
 # S07 · Eventos inmutables, hash y pendiente transaccional
 
 Área: Backend · trazabilidad local. Tamaño relativo: M. Dependencias: S03, S06.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por autorización posterior del usuario en `feature/s07-eventos-y-hashes`; tipos, schema y compilación comprobados. API operativa pendiente de S08 y pruebas de comportamiento de S17/S18.
 
 ## Problem Statement
 
@@ -28,12 +28,13 @@ Crear por cada hito un evento público inmutable y un pendiente durable dentro d
 - El evento público contiene versión, marca demo, red testnet, identificador público aleatorio de recorrido, identificador de evento, ordinal, tipo, rol simulado, instante de aplicación y detalle del estado resultante.
 - Detalle permitido por lista explícita: material y escenario versionados, cantidad declarada, humedad, comprador ficticio, viaje ficticio si existe, peso recibido si corresponde y motivo precargado. No copiar objetos internos completos ni campos libres de contactos.
 - Fechas de aplicación en UTC e ISO 8601; pesos y humedad como cadenas decimales canónicas con precisión fija. El timestamp de consenso y otros resultados posteriores de red no forman parte del detalle original.
-- Propuesta de representación v1: JSON Canonicalization Scheme de RFC 8785 para el payload y SHA-256 sobre sus bytes UTF-8. Rechazar datos no válidos en vez de modificarlos después de calcular el hash. La normalización de cantidades ocurre antes de crear el evento.
+- Representación v1 implementada: JSON Canonicalization Scheme de RFC 8785 mediante canonicalize 5.1.0 para el payload y SHA-256 sobre sus bytes UTF-8. Rechazar datos no válidos en vez de modificarlos después de calcular el hash. La normalización de cantidades ocurre antes de crear el evento.
 - El hash se conserva en hexadecimal minúsculo. La envoltura HCS contiene versión, demo, identificadores públicos, ordinal, tipo, rol y digest; no el contacto ni el token. El digest no se incluye dentro del objeto del cual se calcula a sí mismo.
 - Guardar estado, versión, evento y pendiente de publicación dentro de una sola transacción SQL. Una excepción revierte el conjunto y no habilita envío externo.
 - Ordinal único y creciente dentro del recorrido; HCS puede intercalar mensajes de distintos recorridos. No exigir secuencias de topic consecutivas para un único recorrido.
 - Datos del evento y hash inmutables después del commit. Estado de envío, intentos, lease, transacción, secuencia y verificación son metadatos mutables de publicación y se conservan separados del payload.
 - Conservar recibo idempotente del comando, incluso si solo guarda borrador. Una respuesta repetida puede informar el evento original junto con el estado actual, sin crear otro evento.
+- Al planificar se confirmó comparar intenciones con decimales normalizados e incluir expectedVersion en su huella. Misma clave con otra versión esperada produce conflicto; una repetición idéntica se resuelve antes de volver a aplicar las reglas de estado.
 - El primer borrador aún puede tener consulta sin eventos; eso se presenta como ausencia de hitos, no como prueba de red.
 
 ### Criterios de aceptación
@@ -54,4 +55,4 @@ Event sourcing completo, certificados ambientales, HTS, IPFS, contratos intelige
 
 ## Further Notes
 
-Q20–Q22 y ADR 0002. Referencia técnica propuesta: [RFC 8785, JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785). Esta spec define contenido para revisión; no ha generado eventos ni hashes reales.
+Q20–Q22 y ADR 0002. Referencia técnica: [RFC 8785, JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785). La [documentación de implementación](../eventos-y-hashes.md) concreta contratos, campos públicos, transacción y verificaciones realizadas. No se generaron eventos de negocio ni transacciones HCS durante S07.
