@@ -96,6 +96,9 @@ model DemoRun {
   expiresAt             DateTime         @db.Timestamptz(3)
   scenarioVersion       String           @db.VarChar(64)
   scenarioSnapshot      Json             @db.JsonB
+  hcsConfigurationGeneration String?      @db.VarChar(64)
+  hcsTopicId            String?           @db.VarChar(64)
+  hcsOperatorId         String?           @db.VarChar(64)
   declaredGrams         BigInt
   humidityHundredths    Int              @db.SmallInt
   assignedBuyerId       String?          @db.VarChar(64)
@@ -183,6 +186,7 @@ model HcsPublication {
   sequenceNumber          BigInt?
   consensusTimestamp      String?           @db.VarChar(30)
   verifiedAt              DateTime?         @db.Timestamptz(3)
+  verificationEvidence    Json?             @db.JsonB
   createdAt               DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime          @updatedAt @db.Timestamptz(3)
 

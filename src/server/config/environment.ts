@@ -15,6 +15,7 @@ const ENVIRONMENT_VARIABLES = [
   "HEDERA_OPERATOR_ID",
   "HEDERA_OPERATOR_KEY",
   "HEDERA_TOPIC_ID",
+  "HCS_CONFIGURATION_GENERATION",
   "HCS_DAILY_LIMIT",
 ] as const;
 
@@ -25,6 +26,8 @@ export type ConfigCapability =
   | "session"
   | "maintenance"
   | "origin"
+  | "hederaTarget"
+  | "hederaOperator"
   | "hedera";
 
 export interface ConfigurationIssue {
@@ -54,7 +57,7 @@ const postgresUrl = z.string().refine((value) => {
 });
 
 const secret = z.string().min(32).regex(/^\S+$/);
-const hederaId = z.string().regex(/^0\.0\.[1-9]\d*$/);
+const hederaId = z.string().max(64).regex(/^0\.0\.[1-9]\d*$/);
 const dailyLimit = z.string().regex(/^[1-9]\d*$/).transform(Number)
   .pipe(z.number().int().min(1).max(DEMO_POLICY.hcsDailyLimitMaximum))
   .default(DEMO_POLICY.hcsDailyLimitDefault);
@@ -67,16 +70,31 @@ const sessionSchema = z.object({ SESSION_SECRET: secret })
   .transform((value) => ({ secret: value.SESSION_SECRET }));
 const maintenanceSchema = z.object({ CRON_SECRET: secret })
   .transform((value) => ({ secret: value.CRON_SECRET }));
-const hederaSchema = z.object({
+const operatorFields = {
   HEDERA_OPERATOR_ID: hederaId,
-  HEDERA_OPERATOR_KEY: z.string().min(1),
+  HEDERA_OPERATOR_KEY: z.string().min(1).max(512).regex(/^[a-fA-F0-9]+$/),
+};
+const targetFields = {
+  HEDERA_OPERATOR_ID: hederaId,
   HEDERA_TOPIC_ID: hederaId,
+  HCS_CONFIGURATION_GENERATION: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),
+};
+const operatorSchema = z.object(operatorFields).transform((value) => ({
+  network: HEDERA_NETWORK, operatorId: value.HEDERA_OPERATOR_ID, operatorKey: value.HEDERA_OPERATOR_KEY,
+}));
+const targetSchema = z.object(targetFields).transform((value) => ({
+  network: HEDERA_NETWORK, operatorId: value.HEDERA_OPERATOR_ID, topicId: value.HEDERA_TOPIC_ID,
+  generationLabel: value.HCS_CONFIGURATION_GENERATION,
+}));
+const hederaSchema = z.object({
+  ...operatorFields, ...targetFields,
   HCS_DAILY_LIMIT: dailyLimit,
 }).transform((value) => ({
   network: HEDERA_NETWORK,
   operatorId: value.HEDERA_OPERATOR_ID,
   operatorKey: value.HEDERA_OPERATOR_KEY,
   topicId: value.HEDERA_TOPIC_ID,
+  generationLabel: value.HCS_CONFIGURATION_GENERATION,
   dailyLimit: value.HCS_DAILY_LIMIT,
 }));
 
@@ -151,6 +169,8 @@ export function createConfigReader(environment: Environment) {
     session: () => read("session", sessionSchema),
     maintenance: () => read("maintenance", maintenanceSchema),
     origin: () => read("origin", originSchema),
+    hederaTarget: () => read("hederaTarget", targetSchema),
+    hederaOperator: () => read("hederaOperator", operatorSchema),
     hedera: () => read("hedera", hederaSchema),
   };
 }

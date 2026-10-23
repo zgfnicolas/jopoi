@@ -7,6 +7,7 @@ import type { DemoRunDetail, DemoRunResponse } from "../../shared/run-contracts"
 import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { readPublicEvent } from "../events/payload";
+import { publicationSummary, publicationSummarySelect } from "../hedera/summary";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun, requireSession, sessionSummary } from "../sessions/service";
 import { readRunOperation, readRunSnapshot } from "./storage";
@@ -19,13 +20,13 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
   if (!compatibility.ok || !economics.ok) throw new ApplicationError("INTERNAL_ERROR");
   const rows = await tx.operationEvent.findMany({
     where: { runId: run.id }, orderBy: { ordinal: "asc" },
-    include: { publication: { select: { state: true, verificationState: true } } },
+    include: { publication: { select: publicationSummarySelect } },
   });
   const events = rows.map((row) => {
     if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
     return {
       event: readPublicEvent(row, run.traceId),
-      publication: { state: row.publication.state, verificationState: row.publication.verificationState },
+      publication: publicationSummary(row.publication),
     };
   });
   return {
