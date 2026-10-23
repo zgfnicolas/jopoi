@@ -1,7 +1,7 @@
 # S04 · Sesiones anónimas, propiedad y límite de recorridos
 
 Área: Backend · acceso. Tamaño relativo: S. Dependencias: S03.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por autorización posterior del usuario en `feature/s04-sesiones-y-aislamiento`; migración aplicada a PostgreSQL local y compilación comprobada. Suites pendientes de S17/S18.
 
 ## Problem Statement
 
@@ -26,7 +26,7 @@ Definir una sesión anónima privada de 24 horas y operaciones de inicio, recupe
 
 - Token aleatorio de alta entropía en cookie HttpOnly, SameSite y Secure en publicación. Guardar solo su hash en SQL. No incluir el token en URLs, respuestas JSON públicas, QR, logs ni eventos HCS.
 - La duración es 24 horas desde crear la sesión, sin renovación deslizante por actividad o reinicio. Una nueva sesión no recupera permiso para modificar recorridos de una sesión anterior.
-- API propuesta: GET /api/demo/session recupera estado de sesión y recorrido activo, sin crear recorridos; POST /api/demo/runs inicia o retoma con intención explícita; POST /api/demo/runs/reset crea otro recorrido. No usar GET para mutaciones.
+- API implementada: POST /api/demo/session establece la cookie sin consumir recorridos; GET /api/demo/session recupera estado de sesión y recorrido activo, sin crear datos; POST /api/demo/runs inicia o retoma con intención explícita; POST /api/demo/runs/reset crea otro recorrido. El bootstrap separado y el nuevo inicio explícito después del vencimiento fueron confirmados al planificar S04. No usar GET para mutaciones.
 - Inicio e intento repetido con la misma clave idempotente devuelven el mismo recorrido. Recargar no consume un nuevo cupo. Reinicio explícito sí consume uno y conserva la fecha de expiración de la sesión.
 - Tres recorridos totales por sesión, incluido el inicial. Contador y creación deben ser atómicos. El cuarto inicio se rechaza con límite visible y sin crear datos parciales.
 - El servidor comprueba propietario y vigencia en cada mutación y consulta privada. No basta con ocultar controles. Recurso ajeno e inexistente no revelan datos privados diferentes.
@@ -52,3 +52,5 @@ Registro, login empresarial, recuperación de cuentas, wallets, sincronización 
 ## Further Notes
 
 Q3, Q8–Q9, Q17–Q18 y Q24. Conocer la URL de trazabilidad nunca sustituye al token de sesión.
+
+La [documentación de implementación](../sesiones-y-aislamiento.md) concreta contratos, protección de origen/CSRF, recibos de intención y verificaciones realizadas. Las guardas privadas de S04 serán utilizadas por S08; no se adelantaron sus consultas completas ni comandos operativos.
