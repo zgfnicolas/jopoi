@@ -1,0 +1,17 @@
+.button { display: inline-flex; align-items: center; justify-content: center; gap: .5rem; min-height: 2.75rem; padding: .65rem 1rem; border: 1px solid var(--action); border-radius: .35rem; background: var(--action); color: #fff; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; }
+.button:hover { background: var(--action-hover); }
+.button:disabled { background: var(--muted); border-color: var(--muted); cursor: wait; }
+.secondary { background: transparent; color: var(--action); }
+.secondary:hover { background: var(--subtle); }
+.field { display: grid; gap: .4rem; max-width: 40rem; }
+.label { font-weight: 650; }
+.input { width: 100%; min-height: 2.75rem; padding: .7rem; border: 1px solid var(--muted); border-radius: .3rem; font: inherit; background: var(--surface); color: var(--ink); caret-color: var(--action); }
+.input[aria-invalid="true"] { border-color: var(--danger); }
+.help { margin: 0; font-size: .9rem; color: var(--muted); }
+.error { margin: 0; color: var(--danger); }
+.notice { display: grid; gap: .4rem; padding: 1.2rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--subtle); }
+.notice p { margin: 0; }
+.notice strong { color: var(--ink); }
+.notice[data-tone="error"] { border-color: var(--danger); }
+.status { display: inline-flex; align-items: center; gap: .4rem; margin: 0; font-weight: 600; }
+.status svg { flex: 0 0 auto; }

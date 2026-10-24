@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-22. Base: alcance confirmado en Q31 y aclaración posterior de trabajar en specs antes de escribir código.
 
-Estado: 18 specs documentadas; S01–S11 implementadas como bases de configuración, escenario/cálculo, SQL, sesiones, contactos, reglas, eventos/transacción, API privada, adaptador HCS, coordinación durable y consulta pública por instrucciones posteriores del usuario. Las cuatro migraciones están aplicadas a PostgreSQL local; S12–S18 siguen sin implementar. El usuario confirmó API pública más navegador como límites de prueba. S02–S10 se integraron mediante PR #1–#9; este trabajo no publica nuevas issues ni PRs.
+Estado: 18 specs documentadas; S01–S11 implementan backend y S12 añade una base provisional del frontend con rutas mínimas y lecturas reales. La revisión visual de S12 está pendiente por falta de navegador conectado. Las cuatro migraciones están aplicadas a PostgreSQL local; S13–S18 siguen sin implementar. El usuario confirmó API pública más navegador como límites de prueba. S02–S11 se integraron mediante PR #1–#10; este trabajo no publica nuevas issues ni PRs.
 
 ## Orden de trabajo
 
@@ -35,7 +35,7 @@ Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spe
 
 ## Estado real y precedencia
 
-- El repositorio conserva la documentación de alcance y las bases S01–S11. Hay cuatro migraciones aplicadas a PostgreSQL local, API privada y pública de trazabilidad, reintento privado y cron diario, CLI administrativos, eventos/hashes, adaptador HCS y coordinación durable; todavía no hay interfaz, comprobación real de testnet o despliegue terminado.
+- El repositorio conserva la documentación de alcance y las bases S01–S12. Hay cuatro migraciones aplicadas a PostgreSQL local, backend de la demo y estructuras mínimas de inicio/demo/trazabilidad. Las superficies completas, revisión visual, comprobación real de testnet y despliegue siguen pendientes.
 - S01 incorpora configuración privada, políticas y errores compartidos; su [documentación de entorno](../configuracion-y-entorno.md) distingue lo implementado de las conexiones y funcionalidades pendientes. Su cierre incluye comprobación TypeScript y revisión estática; las suites siguen reservadas a S17 y S18.
 - S02 incorpora `chips-v1`, snapshots independientes, cálculo exacto y recursos locales con atribución. Su [documentación de escenario](../escenario-y-calculo.md) registra contratos y verificaciones de tipos/recursos, sin adelantar persistencia, reglas de asignación ni suites.
 - S03 incorpora esquema, migración y acceso SQL. Su [documentación de persistencia](../persistencia-sql.md) registra PostgreSQL portable y comprobación de conexión, sin adelantar servicios HTTP, HCS ni suites.
@@ -47,6 +47,7 @@ Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spe
 - S09 añade [adaptador y CLI HCS testnet](../hedera-testnet.md), namespace SDK oficial, vinculación por recorrido y evidencia de verificación. Su migración está aplicada y comprobada localmente; no se ha creado topic ni comprobado testnet.
 - S10 conecta [cuotas, reintentos y mantenimiento diario](../cuotas-reintentos-y-mantenimiento.md): historial de intentos, leases, 3+1 envíos, activación posterior a SQL, API privada de reintento y cron/CLI compartidos con limpieza acotada. Migración local, tipos, Prisma, ayuda y build comprobados; comportamiento y red pendientes de S17/S18.
 - S11 añade [API pública de trazabilidad](../api-publica-de-trazabilidad.md): contexto ficticio mínimo para borradores, historial sin cookie, integridad por hito, evidencia histórica y contraste remoto transitorio sin escrituras. Tipos, Prisma y build comprobados; sin nuevas migraciones ni comprobación real de red. Página y QR corresponden a S15.
+- S12 incorpora [base del frontend](../base-del-frontend.md), presentación provisional, navegación, componentes y lecturas acotadas sin mutaciones. Tipos, Prisma y build comprobados. No hubo navegador disponible para la revisión visual; no se acredita aún responsive/teclado observado. S13–S15 completarán las superficies y S18 creará la suite.
 - La fuente de requisitos es el alcance confirmado, su glosario y sus ADR. Bocetos exploratorios, dependencias instaladas y el código intentado antes de la aclaración no son requisitos aprobados.
 - Estas specs detallan contratos técnicos para revisión. Las elecciones nuevas —por ejemplo, rutas HTTP, precisión decimal, semilla v1, canonicalización y límite manual de reintento— se presentan como propuestas de implementación, sin reabrir el producto.
 - Los documentos describen interfaces HTTP y comportamiento. La estructura de archivos, los snippets y la implementación quedan para otra fase.

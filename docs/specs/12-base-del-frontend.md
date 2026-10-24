@@ -1,7 +1,7 @@
 # S12 · Base del frontend, navegación y estados compartidos
 
 Área: Frontend · base. Tamaño relativo: S. Dependencias: S01, S08, S11.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada como base provisional por instrucción posterior del usuario. Tipos, Prisma y build comprobados; revisión visual manual pendiente por falta de navegador conectado. Suites y aceptación de navegador en S18. Ver [base del frontend](../base-del-frontend.md).
 
 ## Problem Statement
 
@@ -49,7 +49,7 @@ S18 cubrirá comportamiento visible en navegador, teclado, carga, errores y móv
 
 ## Out of Scope
 
-Diseño definitivo en esta fase, código UI, nuevas pantallas, internacionalización completa, modo offline, aplicación nativa y adopción de bocetos no aprobados.
+Diseño definitivo, flujos completos de S13–S15, nuevas pantallas, internacionalización completa, modo offline, aplicación nativa y adopción de bocetos no aprobados. La exclusión original de código UI correspondía a la fase documental; la instrucción posterior del usuario autoriza implementar la base con rutas mínimas y lecturas reales, sin acciones de negocio.
 
 ## Further Notes
 
