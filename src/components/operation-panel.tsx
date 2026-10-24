@@ -6,31 +6,27 @@ import type { SimulatedRole } from "@/shared/operation-contracts";
 import type { PublicEventType } from "@/shared/event-contracts";
 import { useOperationPanel } from "@/frontend/use-operation-panel";
 import { formatArs, formatDate, formatHumidity, formatKg } from "@/frontend/format";
-import { ActionButton, ActionLink, Notice } from "./ui/primitives";
+import { ActionButton, Notice } from "./ui/primitives";
 import { OperationalStatus, PublicationStatus, VerificationStatus } from "./ui/status";
 import { nextRoles, OperationTask, roleLabels } from "./operation-task";
+import { TraceShare } from "./trace-share";
 import styles from "./operation-panel.module.css";
 
 const eventLabels: Record<PublicEventType, string> = { LOT_PUBLISHED: "Lote publicado", LOT_APPROVED: "Lote aprobado", LOT_REJECTED: "Lote rechazado",
   TRANSPORT_ASSIGNED: "Transporte asignado", PICKUP_CONFIRMED: "Retiro confirmado", RECEIPT_ACCEPTED: "Recepción conforme", RECEIPT_ISSUE_REPORTED: "Incidencia de recepción" };
 const progressLabels = ["Declaración", "Revisión", "Transporte", "Retiro", "Recepción"];
 const progressIndex = { DRAFT: 0, PUBLISHED: 1, APPROVED: 2, ASSIGNED: 3, PICKED_UP: 4, RECEIVED: 5, REJECTED: 1, INCIDENT: 4 };
-export function OperationPanel() {
+export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }) {
   const panel = useOperationPanel();
   const [role, setRole] = useState<SimulatedRole>("generator");
-  const [confirmReset, setConfirmReset] = useState(false), [copyMessage, setCopyMessage] = useState("");
+  const [confirmReset, setConfirmReset] = useState(false);
   const feedback = useRef<HTMLDivElement>(null);
   const run = panel.data?.run;
   useEffect(() => { if (!panel.busy && (panel.message || panel.error || panel.conflict)) feedback.current?.focus(); }, [panel.busy, panel.message, panel.error, panel.conflict]);
-  useEffect(() => { setConfirmReset(false); setCopyMessage(""); }, [run?.traceId]);
+  useEffect(() => { setConfirmReset(false); }, [run?.traceId]);
   const fields = panel.error && "fields" in panel.error ? panel.error.fields : {};
   const requiredRole = run && run.operation.state in nextRoles ? nextRoles[run.operation.state as keyof typeof nextRoles] : null;
   const startAllowed = !panel.data && (panel.error?.code === "SESSION_REQUIRED" || panel.error?.code === "SESSION_EXPIRED") || panel.data?.run === null;
-  async function copy() {
-    if (!run) return;
-    try { await navigator.clipboard.writeText(new URL(`/trazabilidad/${run.traceId}`, window.location.origin).href); setCopyMessage("Enlace de consulta copiado. No incluye tu sesión."); }
-    catch { setCopyMessage("No pudimos copiarlo. Podés usar el enlace textual o copiar su dirección desde el navegador."); }
-  }
   return <div className="stack">
     <div ref={feedback} tabIndex={-1} className="stack">
       {panel.busy && <Notice title="Procesando…" announce><p>Esperamos la respuesta del servidor. No cierres la página si querés conservar una intención pendiente.</p></Notice>}
@@ -87,7 +83,7 @@ export function OperationPanel() {
           {publication.state === "FAILED" && publication.manualAttempts >= 1 && <p>Intentos de envío agotados. El cierre operativo permanece registrado.</p>}
         </li>)}</ol>}</details>
       </section>
-      <section className="content-section stack" aria-labelledby="share-title"><h2 id="share-title">Consultar y compartir</h2><p>El enlace público solo permite leer. Consultarlo o escanear un QR no confirma retiro ni entrega y no concede permisos.</p><div className="actions"><ActionLink href={`/trazabilidad/${run.traceId}`}>Abrir trazabilidad pública</ActionLink><ActionButton type="button" secondary onClick={copy}>Copiar enlace</ActionButton></div>{copyMessage && <p role="status">{copyMessage}</p>}</section>
+      <section className="content-section stack" aria-labelledby="share-title"><h2 id="share-title">Consultar y compartir</h2><TraceShare key={run.traceId} traceId={run.traceId} expiresAt={run.expiresAt} publicOrigin={publicOrigin} /></section>
       <section className="content-section stack" aria-labelledby="reset-title"><h2 id="reset-title">Explorar otro resultado</h2><p>Crear otro recorrido consume una exploración. El anterior conserva su historial y su fecha de vencimiento. Los cambios locales sin guardar se perderán.</p>
         {panel.data && panel.data.session.remainingRuns > 0 ? confirmReset ? <Notice title="¿Crear otro recorrido?" announce><p>Quedan {panel.data.session.remainingRuns} exploraciones. Esta acción no reabre ni modifica el recorrido anterior.</p><div className="actions"><ActionButton type="button" disabled={panel.blocked} onClick={() => { setConfirmReset(false); panel.reset(); }}>Confirmar nuevo recorrido</ActionButton><ActionButton type="button" secondary disabled={panel.busy} onClick={() => setConfirmReset(false)}>Cancelar</ActionButton></div></Notice> : <div><ActionButton type="button" secondary disabled={panel.blocked} onClick={() => setConfirmReset(true)}>Nuevo recorrido</ActionButton></div> : <Notice title="Usaste las tres exploraciones"><p>Podés consultar los recorridos existentes. Recargar no renueva el cupo.</p></Notice>}
       </section>

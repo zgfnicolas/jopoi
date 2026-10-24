@@ -54,7 +54,7 @@ El propietario puede autorizar el adicional cuando `manualAvailable` lo permite.
 
 Las lecturas se realizan al abrir, después de acciones o con **Actualizar lectura**. No hay polling ni reintento automático de escritura desde el navegador. El procesamiento HCS y mantenimiento diario siguen en el servidor S10.
 
-El enlace público es interno y validado por UUID; copiar usa el mismo origen y no incluye cookies ni parámetros privados. Si el portapapeles falla, queda el enlace textual. El QR, la página pública completa y el contraste remoto interactivo siguen en S15. La navegación sin JavaScript muestra una explicación: la operación interactiva requiere JavaScript.
+Al cerrar S14, el enlace público era interno y validado por UUID; copiar usaba el origen de la página, sin cookies ni parámetros privados. S15 sustituye esa sección por el [componente compartido de enlace y QR](trazabilidad-publica-y-qr.md), basado en el origen configurado, y completa la página pública y contraste remoto explícito. La navegación sin JavaScript muestra una explicación: la operación interactiva requiere JavaScript.
 
 ## Direction contract
 

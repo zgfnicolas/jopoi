@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { TraceReader } from "@/components/trace-reader";
+import { getPublicOrigin } from "@/server/public-origin";
 export const metadata: Metadata = { title: "Consulta de trazabilidad", robots: { index: false, follow: false } };
 export default async function TracePage({ params }: { params: Promise<{ traceId: string }> }) {
   const parsed = z.uuid().safeParse((await params).traceId);
   if (!parsed.success) notFound();
-  return <div className="stack"><h1>Consulta de trazabilidad</h1><p>Una lectura pública del recorrido y sus estados guardados. Este enlace no otorga permisos de operación.</p><p className="muted identifier">Recorrido: {parsed.data.toLowerCase()}</p><TraceReader traceId={parsed.data.toLowerCase()} /></div>;
+  return <div className="stack"><h1>Consulta de trazabilidad</h1><p>Una lectura pública del recorrido y su evidencia. Este enlace no otorga permisos de operación.</p><p className="muted identifier">Recorrido: {parsed.data.toLowerCase()}</p><noscript>La consulta interactiva requiere JavaScript para recuperar el historial y contrastar sus hitos.</noscript><TraceReader traceId={parsed.data.toLowerCase()} publicOrigin={getPublicOrigin()} /></div>;
 }

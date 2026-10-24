@@ -8,6 +8,8 @@ Implementada en `feature/s12-base-del-frontend`, desde `main` con S11 integrado 
 
 **Actualización S14:** `/demo` incorpora ahora el [panel operativo guiado](panel-operativo-guiado.md), con inicio y escrituras privadas explícitas sobre S04/S08/S10. La descripción de consulta provisional de este documento es histórica. `/trazabilidad` conserva la base de lectura S12 hasta S15; las API públicas no ganan permisos operativos.
 
+**Actualización S15:** la [consulta pública completa y QR](trazabilidad-publica-y-qr.md) sustituyen la proyección mínima de trazabilidad. Sus GET omiten cookies; el transporte privado conserva el valor anterior. El recurso compartido permite invalidar y retirar el DTO al vencer o desaparecer el recorrido. El QR del panel y la consulta usan un único componente con origen público configurado, sin cambiar tokens globales ni contratos API.
+
 El usuario confirmó una base provisional accesible: tema claro, superficies neutras, énfasis azul de interacción y tipografía del sistema. Los tokens CSS se concentran en `globals.css` y los componentes usan CSS Modules. No se adoptan los bocetos anteriores ni las fuentes instaladas como identidad aprobada. No hay logo, imágenes nuevas ni dependencia de un CDN de fuentes. La identidad definitiva se resolverá en S13; `.impeccable/config.json` registra la preferencia confirmada `buildPath: code` para esa futura landing.
 
 El layout raíz declara `es-AR`, título/description, navegación, enlace para saltar al contenido, main y pie. Jopói conserva su nombre y lenguaje del glosario. La leyenda de prototipo personal, datos ficticios y testnet es visible en las tres superficies. Los metadatos de demo/trazabilidad indican no indexar esos datos.
