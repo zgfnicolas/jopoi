@@ -1,4 +1,4 @@
-/** Límites técnicos para API y futuro formulario; longitudes en unidades UTF-16. */
+/** Límites técnicos para API y formulario; longitudes en unidades UTF-16. */
 export const DEMO_REQUEST_LIMITS = Object.freeze({
   name: 120,
   email: 254,

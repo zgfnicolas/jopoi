@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan las bases de backend, API privada/pública y coordinación HCS. S12 añade una base visual provisional con inicio, recuperación de demo y consulta pública mediante lecturas reales, sin acciones de negocio. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. La revisión visual sigue pendiente por falta de navegador conectado; las páginas completas, comprobación real de red y despliegue externo todavía no están terminados. Las suites de comportamiento quedan para S17/S18.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan las bases de backend, API privada/pública y coordinación HCS. S12 añade recuperación de demo y consulta pública mediante lecturas reales. S13 incorpora la landing, comparación económica ilustrativa, sistema visual compartido y formulario real conectado a S05. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. La revisión visual sigue pendiente por falta de navegador conectado; panel operativo, página completa de trazabilidad, comprobación real de red y despliegue externo todavía no están terminados. Las suites de comportamiento quedan para S17/S18.
 
 ## Documentación
 
@@ -22,6 +22,8 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Cuotas, reintentos y mantenimiento](docs/cuotas-reintentos-y-mantenimiento.md) | S10, coordinación durable, 3+1 intentos, cron diario y limpieza acotada. |
 | [API pública de trazabilidad](docs/api-publica-de-trazabilidad.md) | S11, historial sin sesión, integridad, contraste remoto transitorio y caducidad. |
 | [Base del frontend](docs/base-del-frontend.md) | S12, superficies mínimas, componentes accesibles, lecturas y estados compartidos. |
+| [Landing y solicitud de demo](docs/landing-y-solicitud-de-demo.md) | S13, escenario, formulario real, reintento idempotente y revisión visual pendiente. |
+| [Sistema de diseño](DESIGN.md) | Ficha de abastecimiento industrial, tokens y componentes compartidos. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
 | [Infraestructura](docs/infraestructura-demo.md) | Vercel Hobby, Neon Free, testnet, tareas diarias y fuentes oficiales. |

@@ -1,6 +1,6 @@
 # Contactos y exportación privada
 
-S05 implementa solicitudes reales para conocer el prototipo y su recuperación mediante CSV interno. Se desarrolló en `feature/s05-contactos-y-exportacion`, desde `main` con S04 integrada. Reutiliza `DemoRequest` de S03; no añade migraciones ni dependencias. El formulario visual corresponde a S13.
+S05 implementa solicitudes reales para conocer el prototipo y su recuperación mediante CSV interno. Se desarrolló en `feature/s05-contactos-y-exportacion`, desde `main` con S04 integrada. Reutiliza `DemoRequest` de S03; no añade migraciones ni dependencias. S13 conecta el [formulario visual real](landing-y-solicitud-de-demo.md) en la landing. Su validación se comparte ahora en `src/shared/demo-request-schema.ts`, manteniendo el contrato S05.
 
 ## Preparación y contrato HTTP
 
