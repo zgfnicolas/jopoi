@@ -1,14 +1,14 @@
-:root { color-scheme: light; --surface: #fff; --subtle: #f5f6f8; --ink: #20252b; --muted: #525c69; --line: #d2d7df; --action: #234fc4; --action-hover: #183b98; --danger: #a82424; --content: 72rem; }
+:root { color-scheme: light; --surface: #fafbf8; --subtle: #edf1eb; --ink: #192e2e; --muted: #526462; --line: #c8d2ca; --action: #145b58; --action-hover: #0c403e; --signal: #efd45c; --danger: #a82424; --content: 72rem; }
 * { box-sizing: border-box; }
 html { scroll-padding-top: 1rem; }
 body { margin: 0; background: var(--surface); color: var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 1rem; line-height: 1.6; }
-::selection { background: #dce6ff; color: var(--ink); }
+::selection { background: var(--signal); color: var(--ink); }
 a { color: var(--action); text-underline-offset: .2em; }
 a:hover { text-decoration-thickness: 2px; }
 :focus-visible { outline: 3px solid var(--action); outline-offset: 4px; }
-button, input { font: inherit; }
+button, input, textarea { font: inherit; }
 button { touch-action: manipulation; }
-h1, h2, h3 { line-height: 1.2; text-wrap: balance; overflow-wrap: anywhere; }
+h1, h2, h3 { font-family: var(--font-heading), "Arial Narrow", sans-serif; font-weight: 600; line-height: 1.2; text-wrap: balance; overflow-wrap: anywhere; }
 h1 { font-size: clamp(2rem, 4vw, 3.4rem); letter-spacing: -.025em; max-width: 24ch; margin: 0; }
 h2 { font-size: clamp(1.4rem, 2.2vw, 1.9rem); margin: 0; }
 h3 { font-size: 1.1rem; margin: 0; }
@@ -24,7 +24,7 @@ section + section { margin-top: clamp(2.5rem, 5vw, 4rem); }
 .skip-link:focus { transform: translateY(0); }
 .site-header { border-bottom: 1px solid var(--line); }
 .header-content { max-width: var(--content); padding: 1.2rem 1.5rem; margin: auto; display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; justify-content: space-between; }
-.wordmark { font-weight: 750; font-size: 1.65rem; color: var(--ink); text-decoration: none; }
+.wordmark { font-family: var(--font-heading), sans-serif; font-weight: 600; font-size: 2rem; letter-spacing: -.03em; color: var(--ink); text-decoration: none; }
 nav { display: flex; flex-wrap: wrap; gap: .25rem 1.15rem; }
 nav a { padding: .65rem .1rem; text-decoration: none; }
 nav a[aria-current] { text-decoration: underline; font-weight: 650; }

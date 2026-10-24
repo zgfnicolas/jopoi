@@ -4,6 +4,8 @@ Implementada en `feature/s12-base-del-frontend`, desde `main` con S11 integrado 
 
 ## Presentación provisional y navegación
 
+**Actualización S13:** la descripción provisional de esta sección conserva el cierre histórico de S12. El estado vigente usa el sistema compartido de [DESIGN.md](../DESIGN.md), y `/` tiene la [landing y formulario real](landing-y-solicitud-de-demo.md). `/demo` y `/trazabilidad` mantienen la estructura y alcance de lectura aquí descritos. S13 agrega un transporte POST separado para contactos; el lector GET sigue intacto.
+
 El usuario confirmó una base provisional accesible: tema claro, superficies neutras, énfasis azul de interacción y tipografía del sistema. Los tokens CSS se concentran en `globals.css` y los componentes usan CSS Modules. No se adoptan los bocetos anteriores ni las fuentes instaladas como identidad aprobada. No hay logo, imágenes nuevas ni dependencia de un CDN de fuentes. La identidad definitiva se resolverá en S13; `.impeccable/config.json` registra la preferencia confirmada `buildPath: code` para esa futura landing.
 
 El layout raíz declara `es-AR`, título/description, navegación, enlace para saltar al contenido, main y pie. Jopói conserva su nombre y lenguaje del glosario. La leyenda de prototipo personal, datos ficticios y testnet es visible en las tres superficies. Los metadatos de demo/trazabilidad indican no indexar esos datos.

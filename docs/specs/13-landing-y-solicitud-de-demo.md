@@ -1,7 +1,7 @@
 # S13 · Landing del prototipo y formulario Book a demo
 
 Área: Frontend · entrada al producto. Tamaño relativo: M. Dependencias: S02, S05, S12.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada; revisión visual pendiente por falta de navegador conectado. Ver [implementación y límites](../landing-y-solicitud-de-demo.md). Pruebas de comportamiento reservadas a S17/S18.
 
 ## Problem Statement
 

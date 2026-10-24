@@ -19,6 +19,14 @@ export function Field({ id, label, help, error, ...props }: ComponentProps<"inpu
     {error && <p id={`${id}-error`} className={styles.error} role="alert">{error}</p>}
   </div>;
 }
+export function TextAreaField({ id, label, help, error, ...props }: ComponentProps<"textarea"> & { id: string; label: string; help?: string; error?: string }) {
+  const description = [help ? `${id}-help` : null, error ? `${id}-error` : null].filter(Boolean).join(" ");
+  return <div className={styles.field}><label className={styles.label} htmlFor={id}>{label}</label>
+    <textarea {...props} id={id} className={styles.input} aria-invalid={error ? true : undefined} aria-describedby={description || undefined} />
+    {help && <p id={`${id}-help`} className={styles.help}>{help}</p>}
+    {error && <p id={`${id}-error`} className={styles.error} role="alert">{error}</p>}
+  </div>;
+}
 export type FeedbackState = "idle" | "editing" | "saving" | "saved" | "field-error" | "conflict" | "session-expired" | "quota-exhausted" | "unavailable";
 export function Notice({ title, children, tone = "info", announce = false }: { title: string; children?: ReactNode; tone?: "info" | "error"; announce?: boolean }) {
   return <div className={styles.notice} data-tone={tone} role={announce ? tone === "error" ? "alert" : "status" : undefined}>
