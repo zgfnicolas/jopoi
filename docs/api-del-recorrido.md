@@ -6,6 +6,8 @@ Actualización S09/S10: [el adaptador HCS](hedera-testnet.md) amplía publicatio
 
 ## Acceso y recuperación
 
+S14 conecta el [panel operativo guiado](panel-operativo-guiado.md) con estas rutas sin cambiar sus contratos. El cliente captura intención/versión, distingue confirmación SQL de red y refresca el detalle después de escribir; las verificaciones de comportamiento siguen en S17/S18.
+
 S11 incorpora una [API pública separada](api-publica-de-trazabilidad.md), sin cookie ni permisos operativos. Sus DTO no reutilizan los contadores/cuotas del resumen privado; este documento sigue describiendo exclusivamente el acceso privado de S08.
 
 Todos los endpoints usan Node.js y la cookie HttpOnly `jopoi_session`. El token nunca se recibe en el cuerpo. Las respuestas correctas y los errores de aplicación llevan `Cache-Control: private, no-store` y `Vary: Cookie`; no se habilita CORS.

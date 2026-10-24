@@ -1,7 +1,7 @@
 # S14 · Panel guiado del recorrido completo
 
 Área: Frontend · operación integrada. Tamaño relativo: L. Dependencias: S04, S06, S08, S10, S12.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada; revisión visual pendiente por falta de navegador conectado. Ver [implementación y límites](../panel-operativo-guiado.md). Pruebas de comportamiento reservadas a S17/S18.
 
 ## Problem Statement
 
