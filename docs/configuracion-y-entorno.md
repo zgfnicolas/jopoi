@@ -115,8 +115,8 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 | Comando del manifiesto | Estado actualizado tras S10 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
-| `dev`, `start` | Next.js sirve las once API, landing S13, panel operativo S14 y consulta pública mínima. El contenido estático no exige SQL; contactos requieren SQL y origen permitido, el panel SQL/SESSION_SECRET y la consulta pública solo SQL. El envío real de hitos requiere además configuración testnet S09/S10. Producción exige APP_URL HTTPS para mutaciones y build previo. |
-| `build` | Ejecutado correctamente en S14: genera Prisma, comprueba tipos y compila las API y las tres superficies. No verifica atomicidad, render visual ni integración real de red. |
+| `dev`, `start` | Next.js sirve las once API, landing, panel operativo y trazabilidad pública/QR S15. El contenido estático no exige SQL; contactos requieren SQL y origen permitido, el panel SQL/SESSION_SECRET y la consulta pública solo SQL. Compartir enlace absoluto y QR usa APP_URL validado; el contraste remoto necesita acceso al mirror, sin claves de firma. El envío real de hitos requiere configuración S09/S10. Producción exige APP_URL HTTPS para mutaciones y build previo. |
+| `build` | Ejecutado correctamente en S15: genera Prisma, comprueba tipos y compila las API y las tres superficies. No verifica atomicidad, render visual, escaneo QR ni integración real de red. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
@@ -143,6 +143,8 @@ S12 incorpora [base provisional del frontend](base-del-frontend.md), sin configu
 S13 sustituye la entrada provisional por [landing y formulario real](landing-y-solicitud-de-demo.md). Conserva GET para las lecturas y agrega POST exclusivo para contactos. La validación compartida no cambia el contrato S05. No añade variables, paquetes, migraciones, sesiones ni llamadas testnet. Foto y fuente se sirven localmente. Build/tipos/Prisma comprobados; revisión visual y comprobación de envíos pendientes.
 
 S14 conecta el [panel guiado](panel-operativo-guiado.md) con las rutas privadas de sesión, recorrido, comandos y reintento. No añade configuración pública, endpoints ni secretos. El navegador nunca importa el SDK Hedera ni el acceso SQL. El schema del snapshot se comparte como dominio puro sin cambiar la validación del servidor. Tipos, Prisma y build comprobados; no se ejecutaron escrituras SQL ni transacciones testnet para esta verificación. Revisión visual pendiente por navegador ausente.
+
+S15 conecta [trazabilidad y QR](trazabilidad-publica-y-qr.md) con la API de S11. Solo el origen público `string | null` cruza desde servidor a la interfaz, nunca el objeto de configuración. Sin origen válido se conserva la consulta y el enlace interno, sin QR/copia absoluta. En producción APP_URL debe estar disponible durante el build para la sección estática de compartir en `/demo`; reconstruir tras cambiarlo. No hay nuevas variables, paquetes, endpoints ni migraciones. Build/tipos/Prisma comprobados; contraste real, escaneo y revisión visual siguen pendientes.
 
 ## Verificación de S01 y escenarios posteriores
 

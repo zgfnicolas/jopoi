@@ -4,6 +4,8 @@ Implementada en `feature/s11-api-publica-de-trazabilidad`, desde `main` con S10 
 
 ## Historial público
 
+Actualización S15: la [página pública y el QR](trazabilidad-publica-y-qr.md) consumen estos contratos sin modificarlos. El navegador omite cookies, muestra detalle/JCS/hashes y consulta el contraste solo por clic. Compartir usa el origen configurado de la interfaz; las API de S11 siguen sin requerir `APP_URL` ni crear escrituras.
+
 ```text
 GET /api/traces/{traceId}
 ```

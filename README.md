@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan las bases de backend, API privada/pública y coordinación HCS. S12 añade recuperación de demo y consulta pública mediante lecturas reales. S13 incorpora landing, economía ilustrativa, sistema visual y contacto real; S14 conecta el panel guiado con inicio, roles, tres resultados operativos y reintentos de publicación. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. La revisión visual sigue pendiente por falta de navegador conectado; página completa de trazabilidad, comprobación real de red y despliegue externo todavía no están terminados. Las suites de comportamiento quedan para S17/S18.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S14 incorporan la base visual, landing, contacto real y panel operativo guiado. S15 completa la consulta pública con detalle verificable, contraste explícito y QR compartido. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. La revisión visual sigue pendiente por falta de navegador conectado; comprobación real de red, aceptación funcional y despliegue externo todavía no están terminados. Las suites de comportamiento quedan para S17/S18.
 
 ## Documentación
 
@@ -24,6 +24,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Base del frontend](docs/base-del-frontend.md) | S12, superficies mínimas, componentes accesibles, lecturas y estados compartidos. |
 | [Landing y solicitud de demo](docs/landing-y-solicitud-de-demo.md) | S13, escenario, formulario real, reintento idempotente y revisión visual pendiente. |
 | [Panel operativo guiado](docs/panel-operativo-guiado.md) | S14, inicio explícito, roles, tres ramas, intenciones y publicación separada de SQL. |
+| [Trazabilidad pública y QR](docs/trazabilidad-publica-y-qr.md) | S15, detalle, contraste explícito, origen configurado y QR compartido. |
 | [Sistema de diseño](DESIGN.md) | Ficha de abastecimiento industrial, tokens y componentes compartidos. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |

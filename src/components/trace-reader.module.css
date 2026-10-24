@@ -1,0 +1,12 @@
+.overview { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
+.timeline { list-style: none; margin: 0; padding: 0; }
+.event { padding-block: 1.75rem; border-top: 1px solid var(--line); display: grid; gap: .9rem; }
+.details { margin-top: .5rem; min-width: 0; }
+.details summary { cursor: pointer; min-height: 2.75rem; padding-block: .7rem; font-weight: 650; }
+.details > div { padding-top: .8rem; }
+.payload { max-width: 100%; overflow: auto; max-height: 32rem; margin: 0; padding: 1rem; background: var(--subtle); border: 1px solid var(--line); font-size: .88rem; line-height: 1.6; tab-size: 2; }
+.digests { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-block: 0; }
+.digests dt { color: var(--muted); font-size: .9rem; }
+.digests dd { margin: .25rem 0 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.subheading { font-family: var(--font-heading), "Arial Narrow", sans-serif; font-weight: 600; font-size: 1.2rem; margin: 0; }
+@media (max-width: 48rem) { .overview { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; } }

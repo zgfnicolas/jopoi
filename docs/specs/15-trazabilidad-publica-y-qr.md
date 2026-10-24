@@ -1,7 +1,7 @@
 # S15 · Página pública de trazabilidad y QR
 
 Área: Frontend · lectura verificable. Tamaño relativo: L. Dependencias: S11, S12, S14.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada; revisión visual pendiente por falta de navegador conectado. Ver [implementación y límites](../trazabilidad-publica-y-qr.md). Pruebas de comportamiento reservadas a S17/S18.
 
 ## Problem Statement
 
