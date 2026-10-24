@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
-import { DemoReader } from "@/components/demo-reader";
-import { Notice } from "@/components/ui/primitives";
+import { OperationPanel } from "@/components/operation-panel";
 export const metadata: Metadata = { title: "Demo", robots: { index: false, follow: false } };
 export default function DemoPage() {
   return <div className="stack"><h1>Tu recorrido de demostración</h1>
-    <p>Un lote, un comprador y un viaje. Esta consulta recupera lo que ya está guardado en tu sesión, sin crear otra exploración.</p>
-    <Notice title="Por ahora, una vista de consulta"><p>Los controles para iniciar, editar y completar el recorrido se habilitarán en una etapa posterior. Esta versión no realiza acciones operativas.</p></Notice>
-    <DemoReader />
+    <p>Un lote, un comprador y un viaje. Representá cada participante y completá una entrega, un rechazo o una incidencia con datos ficticios.</p>
+    <noscript>La demo interactiva requiere JavaScript para recuperar tu sesión y enviar las acciones. La landing y la explicación del caso siguen disponibles desde Inicio.</noscript>
+    <OperationPanel />
   </div>;
 }

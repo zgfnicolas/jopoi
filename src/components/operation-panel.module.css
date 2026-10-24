@@ -1,0 +1,31 @@
+.workspace { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
+.task { min-width: 0; }
+.statusHeader { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: space-between; align-items: baseline; }
+.statusHeader > span:last-child { color: var(--muted); font-size: .88rem; }
+.progress { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0; margin: 0 0 1rem; list-style: none; gap: 1rem; }
+.progress li { border-top: 2px solid var(--line); padding-top: .6rem; }
+.progress li[aria-current] { border-color: var(--action); }
+.progress span { display: block; font-size: .85rem; color: var(--muted); }
+.fields { display: grid; gap: 1.25rem; border: 0; padding: 0; margin: 0; min-width: 0; }
+.legend { font-size: .88rem; color: var(--muted); padding: 0; margin-bottom: 1rem; }
+.workspace select { font: inherit; min-height: 2.75rem; padding: .65rem; border: 1px solid var(--muted); border-radius: .3rem; background: var(--surface); color: var(--ink); max-width: 100%; width: 100%; }
+.workspace select:disabled { opacity: 1; color: var(--muted); background: var(--subtle); }
+.workspace input:disabled { opacity: 1; color: var(--muted); background: var(--subtle); }
+.workspace select[aria-invalid="true"] { border-color: var(--danger); }
+.error { color: var(--danger); }
+.trip { padding-block: 1.25rem; border-top: 1px solid var(--line); }
+.trip h4 { font-family: var(--font-heading), "Arial Narrow", sans-serif; font-weight: 600; font-size: 1.1rem; margin: 0 0 .5rem; }
+.trip li { margin-block: .4rem; }
+.detail { border-top: 1px solid var(--line); padding-block: .5rem; }
+.detail summary { cursor: pointer; min-height: 2.75rem; padding-block: .65rem; font-weight: 650; }
+.economics { margin: 0 0 1rem; }
+.economics > div { display: flex; flex-wrap: wrap; gap: .25rem 1rem; justify-content: space-between; padding: .7rem 0; border-bottom: 1px solid var(--line); }
+.economics dd { margin: 0; font-variant-numeric: tabular-nums; }
+.detail > p, .detail figcaption { font-size: .88rem; color: var(--muted); }
+.evidence { margin: 1.25rem 0; }
+.evidence img { width: 100%; height: auto; display: block; margin-bottom: .75rem; }
+.history { list-style: none; padding: 0; margin: 0; }
+.history li { display: grid; gap: .65rem; border-top: 1px solid var(--line); padding-block: 1.5rem; }
+.history p { font-size: .92rem; }
+.networkStates { display: flex; flex-wrap: wrap; gap: .75rem 1.5rem; }
+@media (max-width: 52rem) { .workspace { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; } .progress { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; } .progress li { flex: 1 1 8rem; } }
