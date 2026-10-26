@@ -1,7 +1,7 @@
 # S17 · Pruebas de API pública e integración
 
 Área: Pruebas · backend integrado. Tamaño relativo: L. Dependencias: S01–S11, S16.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: implementada por autorización posterior del usuario en `feature/s17-pruebas-de-api-e-integracion`; ver [ejecución y evidencia](../pruebas-api-e-integracion.md). La aceptación de navegador y testnet real permanece en S18.
 
 ## Problem Statement
 
@@ -85,4 +85,4 @@ Tests de funciones privadas, cobertura porcentual como sustituto de comportamien
 
 ## Further Notes
 
-Ordenada al final por instrucción explícita del usuario. La ejecución se realizará después de autorizar implementación; esta entrega contiene únicamente la spec.
+Ordenada al final por instrucción explícita del usuario. La implementación fue autorizada posteriormente: suite HTTP con PostgreSQL local exclusivo, control privado de reloj/HCS/mirror y exportación real del CLI contra datos sintéticos. No se crearon recursos externos ni se consumió testnet.

@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -49,10 +50,10 @@ export async function retryPublicationHttp(request: NextRequest, context: { para
           const outcome = row.state === "CONFIRMED" ? "ALREADY_CONFIRMED" : blockedBy ? "BLOCKED" : uncertain ? "RECONCILE_ONLY"
             : grant || row.manualAuthorizedAt !== null && last?.state === "RESERVED" ? "MANUAL_AUTHORIZED" : row.manualAttempts > 0 ? "EXHAUSTED" : "AUTOMATIC_PENDING";
           result = { version: 1, eventId, outcome };
-          if (grant && row.manualAuthorizedAt === null) row = { ...row, ...await tx.hcsPublication.update({ where: { eventId }, data: { manualAuthorizedAt: new Date(), nextAttemptAt: new Date() } }) };
+          if (grant && row.manualAuthorizedAt === null) row = { ...row, ...await tx.hcsPublication.update({ where: { eventId }, data: { manualAuthorizedAt: wallNow(), nextAttemptAt: wallNow() } }) };
           await tx.commandReceipt.create({ data: { ...key, intentHash, action: "RETRY_PUBLICATION", resultingVersion: run.version, result } });
         }
-        const quota = await quotaSummary(tx, process.env, new Date());
+        const quota = await quotaSummary(tx, process.env, wallNow());
         return { saved: true, replayed: previous !== null, traceId, eventId, outcome: result.outcome,
           publication: publicationSummary(row, { blockedBy, quota }), quota };
       });

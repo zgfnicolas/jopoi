@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import { createHash } from "node:crypto";
@@ -19,7 +20,7 @@ export async function submitDemoRequest(input: NormalizedDemoRequestInput) {
 
   return withDatabase(async (db) => {
     try {
-      const now = new Date();
+      const now = wallNow();
       const row = await db.demoRequest.create({
         data: {
           ...input,
@@ -38,7 +39,7 @@ export async function submitDemoRequest(input: NormalizedDemoRequestInput) {
         select: { id: true, createdAt: true, expiresAt: true, intentHash: true },
       });
       if (row === null) throw new ApplicationError("VERSION_CONFLICT");
-      if (row.expiresAt.getTime() <= Date.now()) throw new ApplicationError("DEMO_REQUEST_EXPIRED");
+      if (row.expiresAt.getTime() <= wallNow().getTime()) throw new ApplicationError("DEMO_REQUEST_EXPIRED");
       if (row.intentHash !== intentHash) throw new ApplicationError("IDEMPOTENCY_CONFLICT");
       return { body: confirmation(row), created: false };
     }

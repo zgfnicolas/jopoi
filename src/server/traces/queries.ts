@@ -1,10 +1,11 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PublicTraceResponse, PublicTraceVerificationResponse } from "../../shared/trace-contracts";
 import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { createHcsEnvelope } from "../events/payload";
-import { verifyMessage } from "../hedera/mirror";
+import { verifyMessage } from "@/server/runtime/network";
 import { readRunSnapshot } from "../operations/storage";
 import { hasSubmittedAttempt, projectTraceEvent, publicEventSelect, traceLinks } from "./projection";
 
@@ -104,5 +105,5 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
 }
 
 export function publicTraceReader() {
-  return createTraceReader({ transaction: withTransaction, verify: verifyMessage, now: () => new Date() });
+  return createTraceReader({ transaction: withTransaction, verify: verifyMessage, now: () => wallNow() });
 }

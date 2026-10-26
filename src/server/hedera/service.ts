@@ -1,11 +1,12 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 import { after } from "next/server";
 import { withTransaction } from "../database";
 import { createCoordinator, type CoordinationContext } from "./coordinator";
-import { createHcsProvider } from "./provider";
+import { createHcsProvider } from "@/server/runtime/network";
 
 export function serverCoordinationContext(): CoordinationContext {
-  return { transaction: withTransaction, provider: createHcsProvider(process.env), environment: process.env, now: () => new Date() };
+  return { transaction: withTransaction, provider: createHcsProvider(process.env), environment: process.env, now: () => wallNow() };
 }
 
 /** A committed command remains saved even if background registration/work fails. */
