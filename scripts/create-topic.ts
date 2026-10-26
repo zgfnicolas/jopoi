@@ -3,7 +3,7 @@ import { lstat, mkdir, open, readFile, realpath, unlink } from "node:fs/promises
 import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
-import { loadCliEnvironment } from "../src/server/config/cli-environment";
+import { CliEnvironmentError, environmentOption, loadCliEnvironment } from "../src/server/config/cli-environment";
 import { HcsError, type NetworkOutcome } from "../src/server/hedera/contracts";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -56,12 +56,13 @@ function printStatus(transactionId: string, outcome: NetworkOutcome): void {
 }
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  if (args.length === 0 || args.includes("--help")) {
+  const { args, file } = environmentOption(process.argv.slice(2));
+  if (args.length === 0 || args.length === 1 && args[0] === "--help") {
     console.log([
       "Uso: npm run hedera:topic -- prepare",
       "     npm run hedera:topic -- submit --file .cache/hedera/topic-UUID.json",
       "     npm run hedera:topic -- status --file .cache/hedera/topic-UUID.json",
+      "Todos aceptan --env-file ARCHIVO; selección explícita sin fallback al entorno local.",
       "Solo testnet. Prepare firma y guarda; submit envía una única vez el archivo persistido.",
       "Requiere operador privado con clave DER y saldo ficticio; nunca compra HBAR.",
       "Submit debe ejecutarse antes del vencimiento de 120 segundos; no cambia el ID al vencer.",
@@ -73,9 +74,9 @@ async function main(): Promise<void> {
   const command = args[0];
   if (!(command === "prepare" && args.length === 1)
     && !((command === "submit" || command === "status") && args.length === 3 && args[1] === "--file")) {
-    throw new HcsError("HCS_INVALID_PREPARATION");
+    throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   }
-  loadCliEnvironment(ROOT);
+  loadCliEnvironment(ROOT, file);
   if (command === "prepare") {
     const { prepareTopic } = await import("../src/server/hedera/sdk");
     const prepared = await prepareTopic(process.env);
@@ -114,6 +115,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error(error instanceof HcsError ? error.code : "HCS_ADMIN_OPERATION_FAILED");
-  process.exitCode = 1;
+  console.error(error instanceof CliEnvironmentError ? error.code : error instanceof HcsError ? error.code : "HCS_ADMIN_OPERATION_FAILED");
+  process.exitCode = error instanceof CliEnvironmentError && error.code === "INVALID_CLI_ARGUMENTS" ? 2 : 1;
 });

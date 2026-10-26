@@ -5,7 +5,7 @@ import { DEMO_POLICY, HEDERA_NETWORK } from "../../shared/demo-policy";
 /** Parser privado sin acceso a process.env: también reutilizable por futuros CLI. */
 export type Environment = Readonly<Record<string, string | undefined>>;
 
-const ENVIRONMENT_VARIABLES = [
+export const ENVIRONMENT_VARIABLES = [
   "NODE_ENV",
   "DATABASE_URL",
   "DIRECT_URL",

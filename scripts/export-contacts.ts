@@ -1,7 +1,7 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ApplicationError } from "../src/server/application-error";
-import { loadCliEnvironment } from "../src/server/config/cli-environment";
+import { CliEnvironmentError, environmentOption, loadCliEnvironment } from "../src/server/config/cli-environment";
 import { createConfigReader } from "../src/server/config/environment";
 import { ContactExportCleanupError, exportContacts } from "../src/server/contacts/export";
 import { mapDatabaseError } from "../src/server/database/errors";
@@ -9,15 +9,15 @@ import { mapDatabaseError } from "../src/server/database/errors";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  if (args.some((arg) => arg !== "--help" && arg !== "--local-only")) {
+  const { args, file } = environmentOption(process.argv.slice(2));
+  if (args.some((arg) => arg !== "--help" && arg !== "--local-only") || new Set(args).size !== args.length) {
     console.error("INVALID_EXPORT_ARGUMENTS");
     process.exitCode = 2;
     return;
   }
   if (args.includes("--help")) {
     console.log([
-      "Uso: npm run contacts:export -- [--local-only]",
+      "Uso: npm run contacts:export -- [--env-file ARCHIVO] [--local-only]",
       "Exporta contactos vigentes al corte inicial a un archivo nuevo en .cache/exports/.",
       "Excel: UTF-8 con BOM, separador ; y filas CRLF. No imprime datos personales.",
       "Requiere DATABASE_URL privada. No necesita sesión de demo, cron ni Hedera.",
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     ].join("\n"));
     return;
   }
-  loadCliEnvironment(ROOT);
+  loadCliEnvironment(ROOT, file);
   const database = createConfigReader(process.env).database();
   if (database.status !== "configured") throw new ApplicationError("DATABASE_UNAVAILABLE");
   if (args.includes("--local-only")) {
@@ -48,8 +48,8 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   const mapped = mapDatabaseError(error);
-  console.error(error instanceof ContactExportCleanupError
+  console.error(error instanceof CliEnvironmentError ? error.code : error instanceof ContactExportCleanupError
     ? "CONTACT_EXPORT_CLEANUP_REQUIRED"
     : mapped instanceof ApplicationError ? mapped.code : "INTERNAL_ERROR");
-  process.exitCode = 1;
+  process.exitCode = error instanceof CliEnvironmentError && error.code === "INVALID_CLI_ARGUMENTS" ? 2 : 1;
 });

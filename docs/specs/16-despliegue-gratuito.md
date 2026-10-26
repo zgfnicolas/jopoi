@@ -1,7 +1,7 @@
 # S16 · Preparación de entrega, despliegue gratuito y operación
 
 Área: Entrega · integración de backend y frontend. Tamaño relativo: L. Dependencias: S01–S15.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: preparación implementada; publicación y aceptación pendientes de configuración externa y S17/S18. Ver [implementación, guía y evidencia](../despliegue-gratuito.md). No se provisionaron ni desplegaron recursos.
 
 ## Problem Statement
 
