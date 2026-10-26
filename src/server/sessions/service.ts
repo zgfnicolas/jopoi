@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import { Prisma, type DemoRun, type DemoSession, type SessionIntentKind } from "../../generated/prisma/client";
@@ -28,7 +29,7 @@ function runSummary(run: RunSummaryRow): DemoRunSummary {
 
 async function activeRun(tx: Transaction, sessionId: string) {
   return tx.demoRun.findFirst({
-    where: { sessionId, expiresAt: { gt: new Date() } },
+    where: { sessionId, expiresAt: { gt: wallNow() } },
     orderBy: { ordinal: "desc" },
     select: summarySelect,
   });
@@ -44,7 +45,7 @@ export async function requireSession(tx: Transaction, tokenHash: string | undefi
   if (tokenHash === undefined) throw new ApplicationError("SESSION_REQUIRED");
   const session = await tx.demoSession.findUnique({ where: { tokenHash } });
   if (session === null) throw new ApplicationError("SESSION_REQUIRED");
-  if (session.expiresAt.getTime() <= Date.now()) throw new ApplicationError("SESSION_EXPIRED");
+  if (session.expiresAt.getTime() <= wallNow().getTime()) throw new ApplicationError("SESSION_EXPIRED");
   return session;
 }
 
@@ -52,7 +53,7 @@ export async function requireSession(tx: Transaction, tokenHash: string | undefi
 export async function requireOwnedRun(tx: Transaction, tokenHash: string | undefined, traceId: string) {
   const session = await requireSession(tx, tokenHash);
   const run = await tx.demoRun.findFirst({
-    where: { traceId, sessionId: session.id, expiresAt: { gt: new Date() } },
+    where: { traceId, sessionId: session.id, expiresAt: { gt: wallNow() } },
   });
   if (run === null) throw new ApplicationError("NOT_FOUND");
   return { session, run };
@@ -68,13 +69,13 @@ export async function beginSession(token: string | undefined) {
   const hash = sessionTokenHash(token);
   return withTransaction(async (tx) => {
     const existing = hash === undefined ? null : await tx.demoSession.findUnique({ where: { tokenHash: hash } });
-    if (existing !== null && existing.expiresAt.getTime() > Date.now()) {
+    if (existing !== null && existing.expiresAt.getTime() > wallNow().getTime()) {
       return { body: await sessionResponse(tx, existing), token: undefined, created: false };
     }
     const freshToken = newSessionToken();
     const freshHash = sessionTokenHash(freshToken);
     if (freshHash === undefined) throw new ApplicationError("INTERNAL_ERROR");
-    const now = new Date();
+    const now = wallNow();
     const session = await tx.demoSession.create({
       data: {
         tokenHash: freshHash,
@@ -93,7 +94,7 @@ async function replayIntent(tx: Transaction, session: DemoSession, requestId: st
   });
   if (intent === null) return null;
   if (intent.kind !== kind) throw new ApplicationError("IDEMPOTENCY_CONFLICT");
-  if (intent.run.expiresAt.getTime() <= Date.now()) throw new ApplicationError("NOT_FOUND");
+  if (intent.run.expiresAt.getTime() <= wallNow().getTime()) throw new ApplicationError("NOT_FOUND");
   return { session: sessionSummary(session), run: runSummary(intent.run), created: false, replayed: true };
 }
 
@@ -109,7 +110,7 @@ export async function resolveRunIntent(token: string | undefined, requestId: str
       if (created) {
         if (session.runCount >= DEMO_POLICY.maxRunsPerSession) throw new ApplicationError("RUN_LIMIT_REACHED");
         const reserved = await tx.demoSession.updateMany({
-          where: { id: session.id, runCount: session.runCount, expiresAt: { gt: new Date() } },
+          where: { id: session.id, runCount: session.runCount, expiresAt: { gt: wallNow() } },
           data: { runCount: { increment: 1 } },
         });
         if (reserved.count !== 1) throw new ApplicationError("VERSION_CONFLICT");
@@ -117,7 +118,7 @@ export async function resolveRunIntent(token: string | undefined, requestId: str
         const grams = toStoredGrams(snapshot.initialLot.quantityKg);
         const humidity = toStoredHumidity(snapshot.initialLot.humidityPercent);
         if (!grams.ok || !humidity.ok) throw new ApplicationError("INTERNAL_ERROR");
-        const now = new Date();
+        const now = wallNow();
         run = await tx.demoRun.create({
           data: {
             sessionId: session.id,

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "incremental": false,
+    "paths": {
+      "@/server/runtime/clock": ["./tests/support/clock.ts"],
+      "@/server/runtime/network": ["./tests/support/network.ts"],
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "src/**/*.ts", "src/**/*.tsx", ".cache/api-tests/next/dev/types/**/*.ts"],
+  "exclude": ["node_modules", ".tools"]
+}

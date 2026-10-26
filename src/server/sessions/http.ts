@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -34,7 +35,7 @@ export async function postSession(request: NextRequest): Promise<NextResponse> {
         secure: process.env.NODE_ENV === "production",
         path: "/",
         expires,
-        maxAge: Math.max(0, Math.floor((expires.getTime() - Date.now()) / 1000)),
+        maxAge: Math.max(0, Math.floor((expires.getTime() - wallNow().getTime()) / 1000)),
       });
     }
     return response;

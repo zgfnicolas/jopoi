@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
@@ -77,7 +78,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         replayed: true,
         applied: { operation: original.data.operation, version: previous.resultingVersion, eventId: original.data.eventId },
         current: { operation: current, version: run.version }, event,
-        publication: publication === null || previous.event === null ? null : await privatePublicationSummary(tx, publication, previous.event, process.env, new Date()),
+        publication: publication === null || previous.event === null ? null : await privatePublicationSummary(tx, publication, previous.event, process.env, wallNow()),
       };
     }
     if (!allowWrite || run.version !== expectedVersion) throw new ApplicationError("VERSION_CONFLICT");
@@ -87,7 +88,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     const operation = decision.value.operation;
     const type = eventTypeForAction(command.action);
     if (decision.value.createsMilestone !== (type !== null)) throw new ApplicationError("INTERNAL_ERROR");
-    const appliedAt = new Date();
+    const appliedAt = wallNow();
     if (session.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("SESSION_EXPIRED");
     if (run.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("NOT_FOUND");
     const eventId = type === null ? null : randomUUID();
@@ -125,7 +126,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     return {
       replayed: false, applied: { operation, version: resultingVersion, eventId },
       current: { operation, version: resultingVersion }, event,
-      publication: publication === null || event === null ? null : await privatePublicationSummary(tx, publication, { runId: run.id, ordinal: event.payload.ordinal }, process.env, new Date()),
+      publication: publication === null || event === null ? null : await privatePublicationSummary(tx, publication, { runId: run.id, ordinal: event.payload.ordinal }, process.env, wallNow()),
     };
   }
 

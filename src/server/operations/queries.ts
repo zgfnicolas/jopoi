@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import type { DemoRun, DemoSession, Prisma } from "../../generated/prisma/client";
@@ -23,7 +24,7 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
     where: { runId: run.id }, orderBy: { ordinal: "asc" },
     include: { publication: { select: publicationSummarySelect } },
   });
-  const quota = await quotaSummary(tx, process.env, new Date());
+  const quota = await quotaSummary(tx, process.env, wallNow());
   const events = rows.map((row) => {
     if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
     return {
@@ -39,7 +40,7 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
 }
 
 function requireReadValidity(session: DemoSession, run: DemoRun | null): void {
-  const now = Date.now();
+  const now = wallNow().getTime();
   if (session.expiresAt.getTime() <= now) throw new ApplicationError("SESSION_EXPIRED");
   if (run !== null && run.expiresAt.getTime() <= now) throw new ApplicationError("NOT_FOUND");
 }
@@ -50,7 +51,7 @@ export async function getCurrentRun(token: string | undefined): Promise<DemoRunR
   return withTransaction(async (tx) => {
     const session = await requireSession(tx, hash);
     const run = await tx.demoRun.findFirst({
-      where: { sessionId: session.id, expiresAt: { gt: new Date() } }, orderBy: { ordinal: "desc" },
+      where: { sessionId: session.id, expiresAt: { gt: wallNow() } }, orderBy: { ordinal: "desc" },
     });
     const detail = run === null ? null : await runDetail(tx, run);
     requireReadValidity(session, run);

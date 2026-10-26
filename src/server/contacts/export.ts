@@ -1,3 +1,4 @@
+import { now as wallNow } from "@/server/runtime/clock";
 // Núcleo privado de CLI: cliente y raíz explícitos, sin HTTP, entorno ni marcador server-only.
 import { randomUUID } from "node:crypto";
 import { mkdir, open, unlink } from "node:fs/promises";
@@ -26,7 +27,7 @@ function csvRow(values: readonly string[]): string {
 }
 
 export async function exportContacts(client: PrismaClient, root: string): Promise<{ count: number; file: string }> {
-  const cutoff = new Date();
+  const cutoff = wallNow();
   const directory = resolve(root, ".cache", "exports");
   const file = resolve(directory, `contacts-${cutoff.toISOString().replace(/[:.]/g, "-")}-${randomUUID()}.csv`);
   await mkdir(directory, { recursive: true, mode: 0o700 });
