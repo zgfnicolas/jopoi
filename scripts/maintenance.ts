@@ -1,15 +1,15 @@
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CliEnvironmentError, environmentOption, loadCliEnvironment } from "../src/server/config/cli-environment";
 
 async function main() {
-  const args = process.argv.slice(2);
+  const { args, file } = environmentOption(process.argv.slice(2));
   if (args.length === 1 && args[0] === "--help") {
-    console.log("maintenance --run [--local-only]\nEjecuta limpieza y recuperación acotadas; modifica SQL y puede enviar a Hedera testnet.\n--local-only exige PostgreSQL 127.0.0.1:54321/jopoi; no desactiva Hedera.");
+    console.log("maintenance --run [--env-file ARCHIVO] [--local-only]\nEjecuta limpieza y recuperación acotadas; modifica SQL y puede enviar a Hedera testnet.\n--local-only exige PostgreSQL 127.0.0.1:54321/jopoi; no desactiva Hedera.\nArchivo explícito sin fallback. --help no carga entorno ni conecta.");
     return;
   }
-  if (!args.includes("--run") || args.some(a => !["--run", "--local-only"].includes(a)) || new Set(args).size !== args.length) throw new Error("INVALID_MAINTENANCE_ARGUMENTS");
-  const { loadCliEnvironment } = await import("../src/server/config/cli-environment");
-  loadCliEnvironment(resolve(dirname(fileURLToPath(import.meta.url)), ".."));
+  if (!args.includes("--run") || args.some(a => !["--run", "--local-only"].includes(a)) || new Set(args).size !== args.length) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+  loadCliEnvironment(resolve(dirname(fileURLToPath(import.meta.url)), ".."), file);
   const { createConfigReader } = await import("../src/server/config/environment");
   const config = createConfigReader(process.env).database();
   if (config.status !== "configured") throw new Error("DATABASE_UNAVAILABLE");
@@ -30,4 +30,4 @@ async function main() {
     console.log(JSON.stringify(result));
   } finally { await client.$disconnect(); }
 }
-main().catch(() => { console.error("MAINTENANCE_FAILED"); process.exitCode = 1; });
+main().catch(error => { console.error(error instanceof CliEnvironmentError ? error.code : "MAINTENANCE_FAILED"); process.exitCode = error instanceof CliEnvironmentError && error.code === "INVALID_CLI_ARGUMENTS" ? 2 : 1; });

@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ApplicationError } from "../src/server/application-error";
-import { loadCliEnvironment } from "../src/server/config/cli-environment";
+import { CliEnvironmentError, environmentOption, loadCliEnvironment } from "../src/server/config/cli-environment";
 import { createConfigReader } from "../src/server/config/environment";
 import { mapDatabaseError } from "../src/server/database/errors";
 
@@ -17,8 +17,14 @@ function requireLocalTarget(url: string): void {
 }
 
 async function main(): Promise<void> {
-  loadCliEnvironment(ROOT);
-  const command = process.argv[2];
+  const { args, file } = environmentOption(process.argv.slice(2));
+  const command = args[0];
+  if (!['migrate', 'status', 'check'].includes(command)) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+  if (args.length === 2 && args[1] === "--help") {
+    console.log("db:migrate | db:status | db:check -- [--env-file ARCHIVO] [--local-only]\nMigrar modifica SQL; status/check solo consultan. No ejecuta Hedera.\n--local-only exige 127.0.0.1:54321/jopoi. Archivo explícito sin fallback; ayuda sin entorno ni conexiones."); return;
+  }
+  if (args.slice(1).some(arg => arg !== "--local-only") || args.length > 2) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+  loadCliEnvironment(ROOT, file);
   const config = createConfigReader(process.env);
   if (command === "check") {
     const database = config.database();
@@ -50,6 +56,6 @@ async function main(): Promise<void> {
 
 main().catch((error: unknown) => {
   const mapped = mapDatabaseError(error);
-  console.error(mapped instanceof ApplicationError ? mapped.code : "INTERNAL_ERROR");
-  process.exitCode = 1;
+  console.error(error instanceof CliEnvironmentError ? error.code : mapped instanceof ApplicationError ? mapped.code : "INTERNAL_ERROR");
+  process.exitCode = error instanceof CliEnvironmentError && error.code === "INVALID_CLI_ARGUMENTS" ? 2 : 1;
 });

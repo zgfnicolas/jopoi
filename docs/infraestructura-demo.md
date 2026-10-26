@@ -1,6 +1,6 @@
 # Infraestructura de la demo Jopói
 
-Estado: presupuesto cero y Vercel Free/Hobby exigidos en Q26; ajustes Q27–Q30 aceptados. Hechos verificados el 2026-10-22. No se han creado cuentas, contratado planes ni desplegado recursos.
+Estado: presupuesto cero y Vercel Free/Hobby exigidos en Q26; ajustes Q27–Q30 aceptados. Condiciones principales de Vercel/Neon y resets de testnet revisadas nuevamente el 2026-10-26 para S16. La [preparación de entrega](despliegue-gratuito.md) está implementada; no se han creado cuentas, contratado planes ni desplegado recursos durante estas entregas.
 
 ## Presupuesto y finalidad de uso
 
@@ -43,6 +43,8 @@ Q25 confirmó distinguir vencimiento de acceso y borrado físico en la siguiente
 Hedera testnet usa HBAR de prueba gratuitos. Las transacciones HCS consumen ese saldo ficticio; no requieren comprar HBAR reales para esta demo. Se contempla saldo agotado y disponibilidad del faucet, sin autorizar recargas pagas. Fuentes: [redes y ciclo de lanzamiento de Hedera](https://hedera.com/blog/hedera-release-cycle-overview/) y [crear y financiar una cuenta de prueba](https://docs.hedera.com/native/tutorials/getting-started/create-fund-account).
 
 ## Estado de autorización
+
+S16 implementa preparación local y guía reproducible. El usuario confirmó que esta etapa no provisiona ni publica. El perfil candidato exige archivo privado explícito, mientras que las pruebas deterministas futuras usan PostgreSQL local aislado. Se conserva pool de dos conexiones por instancia, cron diario y presupuesto cero; ayudas/validación offline/build no prueban planes en cuenta ni conectividad. La publicación y aceptación S17/S18 siguen pendientes.
 
 - Acordado: prototipo personal, presupuesto cero, Vercel Free/Hobby, Neon Free con Prisma, HCS testnet, cuotas y política de vencimiento con barrido y limpieza diarios.
 - Rechazado: prever Pro para la publicación. No hay autorización para pagar.

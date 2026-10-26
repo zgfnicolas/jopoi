@@ -5,6 +5,7 @@ import { createConfigReader } from "@/server/config/environment";
 import { apiBoundary } from "@/server/http";
 import { runMaintenance } from "@/server/hedera/maintenance-core";
 import { serverCoordinationContext } from "@/server/hedera/service";
+import { logMaintenanceResult } from "@/server/hedera/maintenance-log";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +17,11 @@ export async function GET(request: NextRequest) {
     const expected = Buffer.from(`Bearer ${config.config.secret}`);
     const actual = Buffer.from(request.headers.get("authorization") ?? "");
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new ApplicationError("MAINTENANCE_UNAUTHORIZED");
-    return NextResponse.json(await runMaintenance(serverCoordinationContext()), { headers: { "Cache-Control": "private, no-store", Vary: "Authorization" } });
+    const result = await runMaintenance(serverCoordinationContext());
+    logMaintenanceResult(result);
+    return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store", Vary: "Authorization" } });
   });
   response.headers.set("Vary", "Authorization");
+  if (response.status >= 500) console.error(JSON.stringify({ code: "MAINTENANCE_FAILED", status: response.status }));
   return response;
 }

@@ -112,16 +112,18 @@ Se conservan los códigos de S01 y se concretan `TRACE_EXPIRED`/410, `CONFIGURAT
 
 ## Comandos existentes y estado real
 
-| Comando del manifiesto | Estado actualizado tras S10 |
+| Comando del manifiesto | Estado actualizado tras S16 |
 | --- | --- |
 | `typecheck` | Disponible y ejecutado sobre la base de S01. |
 | `dev`, `start` | Next.js sirve las once API, landing, panel operativo y trazabilidad pública/QR S15. El contenido estático no exige SQL; contactos requieren SQL y origen permitido, el panel SQL/SESSION_SECRET y la consulta pública solo SQL. Compartir enlace absoluto y QR usa APP_URL validado; el contraste remoto necesita acceso al mirror, sin claves de firma. El envío real de hitos requiere configuración S09/S10. Producción exige APP_URL HTTPS para mutaciones y build previo. |
-| `build` | Ejecutado correctamente en S15: genera Prisma, comprueba tipos y compila las API y las tres superficies. No verifica atomicidad, render visual, escaneo QR ni integración real de red. |
+| `build` | Ejecutado correctamente en S16: genera Prisma, comprueba tipos y compila las API y las tres superficies. No migra ni acredita integración real o revisión visual. |
 | `db:generate`, `db:migrate` | Implementados en S03; cliente generado y migración aplicada a PostgreSQL local. |
 | `db:local` | Implementado en S03 con PostgreSQL portable; setup, arranque y parada documentados por separado. |
 | `contacts:export` | Implementado en S05 para CSV privado; `--help` comprobado sin conectar SQL. Exportación de datos pendiente de S17. |
 | `hedera:topic` | S09 implementa prepare/submit/status con journal privado. Solo se ejecutó `--help`, sin cargar secretos ni contactar la red. |
 | `maintenance` | Implementado en S10: `--help` comprobado; `--run [--local-only]` ejecuta limpieza y recuperación reales, sin haberse ejecutado durante esta entrega. |
+| `delivery:check`, `delivery:build` | S16: validación offline por perfil y build candidato con archivo explícito. Ayudas, perfil local y bloqueo del candidato vacío comprobados; no verifican proveedores ni migran. |
+| `ops:status` | S16: agrega conteos privados mediante SQL de solo lectura. Ayuda y archivo obligatorio comprobados; no se ejecutó la consulta. |
 | `test`, `test:e2e` | Lanzadores preliminares; suites pendientes de S17 y S18. No se ejecutan en S01. |
 
 S04 añade `REQUEST_FORBIDDEN`/403 al catálogo para rechazos de origen o protección CSRF. El token opaco de sesión se guarda como HMAC-SHA-256 mediante `SESSION_SECRET`; cambiar ese secreto invalida las cookies existentes. La configuración sigue siendo lazy y el build no necesita credenciales de sesión ni Hedera.
@@ -147,6 +149,8 @@ S14 conecta el [panel guiado](panel-operativo-guiado.md) con las rutas privadas 
 S15 conecta [trazabilidad y QR](trazabilidad-publica-y-qr.md) con la API de S11. Solo el origen público `string | null` cruza desde servidor a la interfaz, nunca el objeto de configuración. Sin origen válido se conserva la consulta y el enlace interno, sin QR/copia absoluta. En producción APP_URL debe estar disponible durante el build para la sección estática de compartir en `/demo`; reconstruir tras cambiarlo. No hay nuevas variables, paquetes, endpoints ni migraciones. Build/tipos/Prisma comprobados; contraste real, escaneo y revisión visual siguen pendientes.
 
 ## Verificación de S01 y escenarios posteriores
+
+Actualización S16: los [CLI de entrega y selección de entorno](despliegue-gratuito.md) aceptan `--env-file` en los comandos administrativos. Ese archivo reemplaza las variables de aplicación conocidas y sella las ausentes sin fallback; el modo predeterminado mantiene la precedencia anterior. Los lanzadores `node --import tsx --` impiden que Node consuma esa opción antes del script. La plantilla candidata vacía se versiona; su copia privada no se crea automáticamente. No se añadieron variables runtime ni capacidades públicas.
 
 Se ejecutaron comprobación TypeScript y revisión estática del diff, dependencias, fronteras de importación y tratamiento del entorno. No se crearon ni ejecutaron suites, conexiones SQL, transacciones testnet, build Next.js ni despliegues.
 
