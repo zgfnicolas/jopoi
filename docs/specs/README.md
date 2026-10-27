@@ -29,6 +29,12 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 | S17 | [Pruebas de API pública e integración](17-pruebas-de-api-e-integracion.md) | Pruebas · backend integrado | L | S01–S11, S16 |
 | S18 | [Pruebas de navegador y aceptación final](18-pruebas-e2e-y-aceptacion.md) | Pruebas · sistema completo | XL | S12–S17 |
 
+## Cambio de infraestructura solicitado posteriormente
+
+[S19 · Persistencia y despliegue gestionados desde Vercel](19-persistencia-gestionada-desde-vercel.md) recoge la solicitud y su aclaración del 2026-10-27: el responsable acepta proveedores externos por detrás y quiere aprovisionar y gestionar la base desde Vercel mediante una integración nativa del Marketplace, sin cuentas independientes ni configuración habitual fuera de Vercel. El bloqueo anterior por exigir productos exclusivamente propios queda retirado. Neon puede seguir siendo el proveedor subyacente; se mantienen PostgreSQL y presupuesto cero. La implementación y validación del plan gratuito están pendientes, con los límites de API y navegador existentes. Su publicación requiere configurar el tracker. Las referencias anteriores a Neon Free describen el plan original; S19 añade el requisito de gestionarlo desde Vercel y permite otra integración nativa compatible si fuera necesaria.
+
+## Continuidad del plan original
+
 S01–S05 preparan capacidades acotadas; S06–S11 integran las reglas y la trazabilidad de backend; S12–S15 construyen la experiencia; S16 prepara la entrega gratuita; S17–S18 crean y ejecutan las verificaciones finales.
 
 Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spec. En S01–S16 ese apartado remite a la etapa final; no autoriza escribir tests antes ni implementar código durante esta fase documental.
