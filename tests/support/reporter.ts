@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Reporter, TestModule } from "vitest/node";
+import { evidenceRevision } from "../../scripts/lib/evidence";
 
 export default class ApiReporter implements Reporter {
   onTestRunEnd(modules: ReadonlyArray<TestModule>, errors: ReadonlyArray<unknown>) {
@@ -18,7 +19,7 @@ export default class ApiReporter implements Reporter {
     });
     const directory = resolve(".cache", "api-tests", "results");
     mkdirSync(directory, { recursive: true });
-    writeFileSync(resolve(directory, "report.json"), JSON.stringify({ generatedAt: new Date().toISOString(), evidence: "HEDERA_CONTROLADO_NO_TESTNET_REAL", startupErrors: errors.length, cases }, null, 2));
+    writeFileSync(resolve(directory, "report.json"), JSON.stringify({ generatedAt: new Date().toISOString(), ...evidenceRevision(), evidence: "HEDERA_CONTROLADO_NO_TESTNET_REAL", startupErrors: errors.length, cases }, null, 2));
     writeFileSync(resolve(directory, "report.md"), "# S17 · Hedera controlado (no testnet real)\n\n| Caso | Resultado |\n| --- | --- |\n" + cases.map(item => `| ${item.id} | ${item.result} |`).join("\n") + "\n");
     const selected = process.argv.some(argument => argument === "-t" || argument.startsWith("--testNamePattern") || /tests[\\/]api[\\/].*\.test\.ts$/.test(argument));
     if (!selected && cases.some(item => item.result !== "APROBADO")) process.exitCode = 1;

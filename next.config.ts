@@ -21,7 +21,7 @@ export default function configuration(phase: string): NextConfig {
   }
   return {
     ...config,
-    distDir: ".cache/api-tests/next",
+    distDir: process.env.JOPOI_E2E_BUNDLER === "webpack" ? ".cache/e2e/next" : ".cache/api-tests/next",
     typescript: { tsconfigPath: "tsconfig.api.json" },
     turbopack: { resolveAlias: {
       "@/server/runtime/clock": "./tests/support/clock.ts",

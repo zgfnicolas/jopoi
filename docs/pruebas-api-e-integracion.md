@@ -30,7 +30,7 @@ Los escenarios concurrentes coordinan solicitudes y barreras de red explícitas.
 
 ## Evidencia
 
-El informe se escribe en `.cache/api-tests/results/report.json` y `report.md`. Relaciona API-01–API-26 con nombres de pruebas y distingue APROBADO, FALLIDO y BLOQUEADO. Los logs privados de arranque están en el directorio de cada ejecución. No se deben publicar archivos de entorno, credenciales ni archivos de exportación.
+El informe se escribe en `.cache/api-tests/results/report.json` y `report.md`. Relaciona API-01–API-26 con nombres de pruebas y distingue APROBADO, FALLIDO y BLOQUEADO. S18 añade fecha, revisión y huella de fuentes para agregar únicamente evidencia vigente. Los logs privados de arranque están en el directorio de cada ejecución. No se deben publicar archivos de entorno, credenciales ni archivos de exportación.
 
 La matriz normativa y sus resultados esperados están en [S17](specs/17-pruebas-de-api-e-integracion.md). Los importes de referencia provienen de S02; los hashes esperados se contrastan con vectores independientes de la canonicalización del producto.
 
@@ -38,4 +38,4 @@ La matriz normativa y sus resultados esperados están en [S17](specs/17-pruebas-
 
 Comprobado el 26 de octubre de 2026: cuatro archivos, **28 pruebas aprobadas**, que cubren los 26 casos API-01–API-26. La ejecución completa se comprobó desde clústeres nuevos; el informe final no contiene casos fallidos o bloqueados. También pasaron TypeScript, validación Prisma y el build normal de producción.
 
-Se verificó la eliminación del clúster, su archivo de contraseña temporal y el lock al finalizar. No se añadieron migraciones, dependencias, endpoints de control, cuentas ni servicios externos. La integración real del SDK con testnet y el navegador siguen pendientes de S18.
+Se verificó la eliminación del clúster, su archivo de contraseña temporal y el lock al finalizar. No se añadieron migraciones, dependencias, endpoints de control, cuentas ni servicios externos durante S17. La comprobación posterior de navegador y las condiciones de aceptación real se registran en [S18](pruebas-e2e-y-aceptacion.md).

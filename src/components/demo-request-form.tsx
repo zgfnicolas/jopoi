@@ -12,6 +12,7 @@ const emptyDraft = { name: "", email: "", company: "", message: "" };
 type Phase = "editing" | "sending" | "uncertain" | "conflict" | "expired" | "saved";
 export function DemoRequestForm() {
   const [draft, setDraft] = useState(emptyDraft);
+  const [ready, setReady] = useState(false);
   const [phase, setPhase] = useState<Phase>("editing");
   const [fields, setFields] = useState<Record<string, readonly string[]>>({});
   const [error, setError] = useState<ContactFailure | null>(null);
@@ -19,7 +20,7 @@ export function DemoRequestForm() {
   const intent = useRef<string | null>(null), busy = useRef(false), active = useRef(false);
   const controller = useRef<AbortController | null>(null);
   const form = useRef<HTMLFormElement>(null), feedback = useRef<HTMLDivElement>(null);
-  useEffect(() => { active.current = true; return () => { active.current = false; controller.current?.abort(); }; }, []);
+  useEffect(() => { active.current = true; setReady(true); return () => { active.current = false; controller.current?.abort(); }; }, []);
   useEffect(() => { if (phase !== "sending" && phase !== "editing") feedback.current?.focus(); }, [phase]);
   function focusField(name: string) {
     const element = form.current?.elements.namedItem(name);
@@ -77,8 +78,8 @@ export function DemoRequestForm() {
     {phase === "saved" && saved ? <div ref={feedback} tabIndex={-1} className="stack"><Notice title={saved.message} announce>
       <p>Guardada el {formatDate(saved.createdAt)}.</p><p>No se reservó un horario ni se envió un correo automático.</p>
     </Notice><div><ActionButton type="button" secondary onClick={() => newIntent(true)}>Enviar otra solicitud</ActionButton></div></div> :
-      <form ref={form} method="post" action="/api/demo-requests" noValidate onSubmit={submit} className="stack" aria-busy={phase === "sending"}>
-        <fieldset disabled={phase !== "editing"} className={styles.fields}><legend>Datos para conocer el prototipo</legend>
+      <form ref={form} method="post" action="/api/demo-requests" noValidate onSubmit={submit} className="stack" aria-busy={!ready || phase === "sending"}>
+        <fieldset disabled={!ready || phase !== "editing"} className={styles.fields}><legend>Datos para conocer el prototipo</legend>
           <Field id="contact-name" name="name" label="Nombre" autoComplete="name" required maxLength={DEMO_REQUEST_LIMITS.name} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} error={fields.name?.[0]} />
           <Field id="contact-email" name="email" label="Email" type="email" inputMode="email" autoComplete="email" required maxLength={DEMO_REQUEST_LIMITS.email} value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} help="No hace falta un dominio empresarial." error={fields.email?.[0]} />
           <Field id="contact-company" name="company" label="Empresa" autoComplete="organization" required maxLength={DEMO_REQUEST_LIMITS.company} value={draft.company} onChange={e => setDraft({ ...draft, company: e.target.value })} error={fields.company?.[0]} />
@@ -92,7 +93,7 @@ export function DemoRequestForm() {
           {error.diagnosticId && <p>Referencia: <span className="identifier">{error.diagnosticId}</span></p>}
         </Notice></div>}
         <div>{phase === "expired" || phase === "conflict" ? <ActionButton type="button" onClick={() => newIntent(false)}>Iniciar otra solicitud</ActionButton> :
-          <ActionButton type="submit" busy={phase === "sending"} busyLabel="Guardando solicitud…">{phase === "uncertain" ? "Reintentar guardado" : "Solicitar conocer el prototipo"}</ActionButton>}</div>
+          <ActionButton type="submit" disabled={!ready} busy={phase === "sending"} busyLabel="Guardando solicitud…">{phase === "uncertain" ? "Reintentar guardado" : "Solicitar conocer el prototipo"}</ActionButton>}</div>
       </form>}
   </div>;
 }

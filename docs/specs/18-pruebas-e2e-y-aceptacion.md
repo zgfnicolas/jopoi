@@ -1,7 +1,7 @@
 # S18 · Pruebas de navegador y aceptación final
 
 Área: Pruebas · sistema completo. Tamaño relativo: XL. Dependencias: S12–S17.
-Estado: especificada para revisión; sin implementar. Etiqueta prevista al publicar: ready-for-agent.
+Estado: suite local y herramientas de aceptación implementadas. La aceptación del candidato publicado, planes gratuitos y cinco hitos reales de testnet requiere evidencia externa; permanece bloqueada hasta obtenerla. Ejecución y resultados: [documentación S18](../pruebas-e2e-y-aceptacion.md). Etiqueta prevista al publicar: ready-for-agent.
 
 ## Problem Statement
 
@@ -48,7 +48,7 @@ Ejecutar al final recorridos de navegador y una aceptación controlada del candi
 
 ## Testing Decisions
 
-Confirmado: API pública en S17 y navegador aquí. No hay pruebas E2E previas en el repositorio. Se propone una herramienta gratuita de automatización de navegador compatible con el proyecto; la elección concreta se realiza al implementar y no concede permiso para instalar ahora.
+Confirmado: API pública en S17 y navegador aquí. La implementación usa Playwright con Chromium de escritorio y WebKit móvil emulado, PostgreSQL aislado y HCS/mirror controlados. La comprobación real permanece separada y exige candidato y evidencia explícitos.
 
 ### Matriz de casos
 
@@ -76,4 +76,4 @@ Pruebas de carga masivas, certificación de accesibilidad, auditoría de carbono
 
 ## Further Notes
 
-Cierra la secuencia backend → frontend → entrega → pruebas. Esta spec no ejecutó un navegador, un despliegue ni transacciones de testnet.
+Cierra la secuencia backend → frontend → entrega → pruebas. S18 incorpora ejecución local de navegador; no se ha desplegado ni enviado transacciones reales de testnet durante esta implementación. El informe agregado conserva esos bloqueos.

@@ -2,7 +2,7 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S15 incorporan interfaz, contacto, panel y trazabilidad/QR. S16 prepara la entrega con validación offline, entorno explícito, observación privada y guía de publicación/recuperación. S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Revisión visual, navegador, comprobación real de testnet y despliegue externo siguen pendientes de S18 y de la configuración externa.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S15 incorporan interfaz, contacto, panel y trazabilidad/QR. S16 prepara la entrega con validación offline, entorno explícito, observación privada y guía de publicación/recuperación. S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 añade recorridos de navegador en Chromium y WebKit móvil emulado, evidencia y aceptación separada del candidato publicado. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Despliegue, planes gratuitos y cinco hitos reales de testnet requieren configuración y evidencia externas; no se declaran aprobados por pasar pruebas locales.
 
 ## Documentación
 
@@ -27,6 +27,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Trazabilidad pública y QR](docs/trazabilidad-publica-y-qr.md) | S15, detalle, contraste explícito, origen configurado y QR compartido. |
 | [Preparación del despliegue gratuito](docs/despliegue-gratuito.md) | S16, comandos offline, selección de entorno, operación y publicación futura sin gasto. |
 | [Pruebas de API e integración](docs/pruebas-api-e-integracion.md) | S17, ejecución aislada, matriz API-01–API-26 y evidencia con red controlada. |
+| [Pruebas E2E y aceptación](docs/pruebas-e2e-y-aceptacion.md) | S18, navegador, QR, teclado/móvil, informes y aceptación externa con bloqueos explícitos. |
 | [Sistema de diseño](DESIGN.md) | Ficha de abastecimiento industrial, tokens y componentes compartidos. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
