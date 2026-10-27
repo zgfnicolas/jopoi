@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "observedAt": "COMPLETAR_ISO_UTC",
+  "candidateUrl": "https://COMPLETAR.vercel.app",
+  "deploymentRevision": "COMPLETAR_SHA_DEL_COMMIT_PUBLICADO",
+  "reviewMethod": "provider-dashboard",
+  "reviewed": false,
+  "vercel": {
+    "plan": "Hobby",
+    "noPaymentMethod": true,
+    "noAutomaticUpgrade": true,
+    "source": { "file": ".cache/acceptance/evidence/vercel.png", "sha256": "COMPLETAR_SHA256_DEL_ARCHIVO_REVISADO" }
+  },
+  "neon": {
+    "plan": "Free",
+    "noPaymentMethod": true,
+    "noAutomaticUpgrade": true,
+    "source": { "file": ".cache/acceptance/evidence/neon.png", "sha256": "COMPLETAR_SHA256_DEL_ARCHIVO_REVISADO" }
+  },
+  "cron": {
+    "schedule": "0 3 * * *",
+    "executedAt": "COMPLETAR_ISO_UTC_DE_EJECUCION_DEL_PROGRAMADOR",
+    "result": "MAINTENANCE_COMPLETE",
+    "source": { "file": ".cache/acceptance/evidence/cron.png", "sha256": "COMPLETAR_SHA256_DEL_ARCHIVO_REVISADO" }
+  }
+}

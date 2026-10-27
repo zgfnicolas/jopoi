@@ -1,5 +1,5 @@
 import { resolve } from "node:path";
-import type { TestResources } from "./global-setup";
+import type { TestResources } from "./runtime-provision";
 
 export function sealedEnvironment(resources: TestResources): NodeJS.ProcessEnv {
   return {

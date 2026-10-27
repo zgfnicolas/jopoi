@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-22. Base: alcance confirmado en Q31 y aclaración posterior de trabajar en specs antes de escribir código.
 
-Estado: 18 specs documentadas; S01–S15 implementan backend e interfaz, S16 añade preparación de entrega y S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. La revisión visual de S12–S15 está pendiente por falta de navegador conectado. Las cuatro migraciones están aplicadas a PostgreSQL local; S18, publicación y aceptación real de testnet siguen pendientes. El usuario confirmó API pública más navegador como límites de prueba. S02–S16 se integraron mediante PR #1–#15; este trabajo no publica nuevas issues ni PRs.
+Estado: 18 specs documentadas; S01–S15 implementan backend e interfaz, S16 añade preparación de entrega y S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 implementa navegador, capturas, teclado/móvil y herramientas de aceptación externa. Las cuatro migraciones están aplicadas a PostgreSQL local; publicación y aceptación real de testnet siguen pendientes de evidencia externa. El usuario confirmó API pública más navegador como límites de prueba. S02–S17 se integraron mediante PR #1–#16; este trabajo no publica nuevas issues ni PRs.
 
 ## Orden de trabajo
 
@@ -35,7 +35,7 @@ Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spe
 
 ## Estado real y precedencia
 
-- El repositorio conserva la documentación de alcance y las bases S01–S15. Hay cuatro migraciones aplicadas a PostgreSQL local, backend, landing con contacto, panel operativo y consulta pública con detalle/contraste/QR. Revisión visual, aceptación funcional, comprobación real de testnet y despliegue siguen pendientes.
+- El repositorio conserva la documentación de alcance, backend, landing con contacto, panel operativo y consulta pública con detalle/contraste/QR. Hay cuatro migraciones aplicadas a PostgreSQL local. S17/S18 incorporan evidencia local de API y navegador; la aceptación del despliegue y testnet real requiere evidencia externa. Los estados históricos de S12–S15 describen la comprobación disponible al implementar cada spec; S18 registra la verificación posterior.
 - S01 incorpora configuración privada, políticas y errores compartidos; su [documentación de entorno](../configuracion-y-entorno.md) distingue lo implementado de las conexiones y funcionalidades pendientes. Su cierre incluye comprobación TypeScript y revisión estática; las suites siguen reservadas a S17 y S18.
 - S02 incorpora `chips-v1`, snapshots independientes, cálculo exacto y recursos locales con atribución. Su [documentación de escenario](../escenario-y-calculo.md) registra contratos y verificaciones de tipos/recursos, sin adelantar persistencia, reglas de asignación ni suites.
 - S03 incorpora esquema, migración y acceso SQL. Su [documentación de persistencia](../persistencia-sql.md) registra PostgreSQL portable y comprobación de conexión, sin adelantar servicios HTTP, HCS ni suites.
@@ -53,6 +53,7 @@ Cada documento conserva Testing Decisions porque lo exige la plantilla de to-spe
 - S15 incorpora [trazabilidad pública y QR](../trazabilidad-publica-y-qr.md), payload/digests, evidencia histórica separada de observación actual, contraste GET explícito y QR compartido con origen configurado. Tipos, Prisma y build comprobados; revisión visual `recapture` por navegador ausente. No cambia contratos S11 ni crea escrituras públicas, y no se ejecutaron suites o llamadas testnet para verificarlo.
 - S16 incorpora [preparación de despliegue](../despliegue-gratuito.md), check offline local/candidato, build estricto, archivo explícito sin fallback, estado operativo SQL privado y logs acotados de cron. Tipos/Prisma/build, ayudas y rechazos offline comprobados; sin recursos, consultas operativas, migraciones o envíos externos. La publicación y aceptación siguen pendientes de S17/S18 y configuración.
 - S17 incorpora [pruebas de API e integración](../pruebas-api-e-integracion.md), con Next.js real por HTTP, PostgreSQL exclusivo, reloj y proveedor HCS/mirror controlados. La matriz API-01–API-26 observa contratos públicos y exportación autorizada; no satisface la aceptación de navegador o testnet real de S18.
+- S18 incorpora [pruebas E2E y aceptación](../pruebas-e2e-y-aceptacion.md), Chromium de escritorio, WebKit móvil emulado, QR decodificado, teclado/táctil, capturas y matriz de los 14 criterios. El CLI prepara cinco hitos reales y evidencia del candidato gratuito; sin esas comprobaciones la aceptación global permanece bloqueada.
 - La fuente de requisitos es el alcance confirmado, su glosario y sus ADR. Bocetos exploratorios, dependencias instaladas y el código intentado antes de la aclaración no son requisitos aprobados.
 - Estas specs detallan contratos técnicos para revisión. Las elecciones nuevas —por ejemplo, rutas HTTP, precisión decimal, semilla v1, canonicalización y límite manual de reintento— se presentan como propuestas de implementación, sin reabrir el producto.
 - Los documentos describen interfaces HTTP y comportamiento. La estructura de archivos, los snippets y la implementación quedan para otra fase.
