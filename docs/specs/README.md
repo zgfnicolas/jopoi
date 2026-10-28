@@ -33,6 +33,10 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 [S19 · Persistencia y despliegue gestionados desde Vercel](19-persistencia-gestionada-desde-vercel.md) recoge la solicitud y su aclaración del 2026-10-27: el responsable acepta proveedores externos por detrás y quiere aprovisionar y gestionar la base desde Vercel mediante una integración nativa del Marketplace, sin cuentas independientes ni configuración habitual fuera de Vercel. El bloqueo anterior por exigir productos exclusivamente propios queda retirado. Neon puede seguir siendo el proveedor subyacente; se mantienen PostgreSQL y presupuesto cero. La configuración nativa, herramientas y evidencia v2 están implementadas; ver [procedimiento S19](../persistencia-gestionada-desde-vercel.md). Aprovisionamiento, plan en la cuenta, publicación y aceptación remota siguen pendientes de acceso y evidencia externa, conservando los límites de API y navegador existentes. Su publicación requiere configurar el tracker. Las referencias anteriores a Neon Free describen el plan original; S19 añade el requisito de gestionarlo desde Vercel y permite otra integración nativa compatible si fuera necesaria.
 
+## Mejora integral de UI solicitada posteriormente
+
+[S20 · Interfaz coherente, inicio descriptivo, accesibilidad y SEO](20-sistema-ui-accesibilidad-y-seo.md) define una propuesta para toda la UI: portada orientada al público de Jopói, sistema visual y componentes reutilizables, temas claro/oscuro, HTML semántico, responsive, WCAG 2.2 AA y política de indexación. Conserva identidad industrial, dominio y finalidad de prototipo; no implementa ni publica cambios de interfaz. Pruebas propuestas sobre navegador y HTTP existentes, pendientes de confirmación. Publicación pendiente de configuración del tracker.
+
 ## Continuidad del plan original
 
 S01–S05 preparan capacidades acotadas; S06–S11 integran las reglas y la trazabilidad de backend; S12–S15 construyen la experiencia; S16 prepara la entrega gratuita; S17–S18 crean y ejecutan las verificaciones finales.
