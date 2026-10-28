@@ -5,12 +5,12 @@ import { createConfigReader } from "../src/server/config/environment";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 async function main() {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   if (args.length === 1 && args[0] === "--help") {
-    console.log("ops:status -- --env-file ARCHIVO\nSolo lectura SQL explícita: conteos, códigos seguros y fecha del último mantenimiento completo.\nNo muestra contactos, IDs, conexiones, bytes, claves ni leases privados. No ejecuta mantenimiento ni Hedera."); return;
+    console.log("ops:status -- --env-file ARCHIVO (o --vercel-env-file ARCHIVO)\nSolo lectura SQL explícita: conteos, códigos seguros y fecha del último mantenimiento completo.\nNo muestra contactos, IDs, conexiones, bytes, claves ni leases privados. No ejecuta mantenimiento ni Hedera."); return;
   }
   if (args.length !== 0 || file === undefined) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
-  loadCliEnvironment(ROOT, file);
+  loadCliEnvironment(ROOT, file, format);
   const configuration = createConfigReader(process.env).database();
   if (configuration.status !== "configured") { console.error("DATABASE_UNAVAILABLE"); process.exitCode = 1; return; }
   const { createDatabaseClient } = await import("../src/server/database/client");

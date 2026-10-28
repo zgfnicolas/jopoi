@@ -56,13 +56,13 @@ function printStatus(transactionId: string, outcome: NetworkOutcome): void {
 }
 
 async function main(): Promise<void> {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   if (args.length === 0 || args.length === 1 && args[0] === "--help") {
     console.log([
       "Uso: npm run hedera:topic -- prepare",
       "     npm run hedera:topic -- submit --file .cache/hedera/topic-UUID.json",
       "     npm run hedera:topic -- status --file .cache/hedera/topic-UUID.json",
-      "Todos aceptan --env-file ARCHIVO; selección explícita sin fallback al entorno local.",
+      "Todos aceptan --env-file ARCHIVO (o --vercel-env-file ARCHIVO); selección explícita sin fallback al entorno local.",
       "Solo testnet. Prepare firma y guarda; submit envía una única vez el archivo persistido.",
       "Requiere operador privado con clave DER y saldo ficticio; nunca compra HBAR.",
       "Submit debe ejecutarse antes del vencimiento de 120 segundos; no cambia el ID al vencer.",
@@ -76,7 +76,7 @@ async function main(): Promise<void> {
     && !((command === "submit" || command === "status") && args.length === 3 && args[1] === "--file")) {
     throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   }
-  loadCliEnvironment(ROOT, file);
+  loadCliEnvironment(ROOT, file, format);
   if (command === "prepare") {
     const { prepareTopic } = await import("../src/server/hedera/sdk");
     const prepared = await prepareTopic(process.env);

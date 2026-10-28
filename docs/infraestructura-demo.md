@@ -1,5 +1,7 @@
 # Infraestructura de la demo Jopói
 
+Actualización S19: la [gestión de persistencia desde Vercel](persistencia-gestionada-desde-vercel.md) sustituye el alta independiente de Neon por su integración nativa del Marketplace. Se conservan presupuesto cero y PostgreSQL. Las herramientas locales están adaptadas; aprovisionamiento, plan en la cuenta, publicación y aceptación remota siguen sin acreditarse.
+
 Estado: presupuesto cero y Vercel Free/Hobby exigidos en Q26; ajustes Q27–Q30 aceptados. Condiciones principales de Vercel/Neon y resets de testnet revisadas nuevamente el 2026-10-26 para S16. La [preparación de entrega](despliegue-gratuito.md) está implementada; no se han creado cuentas, contratado planes ni desplegado recursos durante estas entregas.
 
 ## Presupuesto y finalidad de uso

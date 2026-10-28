@@ -50,18 +50,18 @@ En este workspace se puede anteponer temporalmente `.tools/node/node-v24.22.1-wi
 
 Se conservan Prisma CLI, Client y `@prisma/adapter-pg` **7.10.1**, `pg` **8.23.1** y las demás versiones existentes. No se acepta la actualización a Prisma 8 ofrecida por el CLI como parte de S03.
 
-`prisma.config.ts` configura el schema, directorio de migraciones y `DIRECT_URL`, según el [contrato de configuración de Prisma 7](https://www.prisma.io/docs/orm/v7/reference/prisma-config-reference). El cliente se genera con `prisma-client`, ESM, en `src/generated/prisma`, ignorado por Git. No hay URL de conexión dentro del schema.
+`prisma.config.ts` configura el schema, directorio de migraciones y conexión administrativa, según el [contrato de configuración de Prisma 7](https://www.prisma.io/docs/orm/v7/reference/prisma-config-reference). S19 admite `DATABASE_URL_UNPOOLED`, sincronizada por Vercel, o `DIRECT_URL` para compatibilidad; si ambas tienen valor deben coincidir. El cliente se genera con `prisma-client`, ESM, en `src/generated/prisma`, ignorado por Git. No hay URL de conexión dentro del schema.
 
 El loader privado de CLI respeta primero las variables del proceso, después `.env.local` y finalmente `.env`, sin sobrescribir valores previos ni imprimirlos. No importa el marcador de React `server-only`. En Next.js sigue aplicando la carga de entorno propia del framework.
 
 - `db:validate` y `db:generate` no necesitan una conexión SQL configurada.
-- `db:migrate` y `db:status` exigen `DIRECT_URL` válida antes de invocar Prisma; no usan una base por defecto si falta configuración.
+- `db:migrate` y `db:status` exigen una conexión administrativa válida (`DIRECT_URL` o `DATABASE_URL_UNPOOLED`) antes de invocar Prisma; no usan una base por defecto si falta configuración.
 - `db:check` exige `DATABASE_URL` y ejecuta un `SELECT 1` mediante el cliente generado; solo informa disponibilidad si la consulta terminó correctamente.
 - `--local-only` en esos tres comandos limita el destino a `127.0.0.1:54321/jopoi`. Se utilizó ese límite para la migración inicial. No es un mecanismo de autorización HTTP.
 
 El engine instalado necesita datasource configurada para `migrate diff`, incluso al comparar un schema con vacío. La generación inicial del SQL se realizó después de preparar la conexión local; no se introdujo una URL ficticia como fallback. La ruta documentada de aplicación es `db:migrate`, no una ejecución de Prisma sin validar su configuración.
 
-En la publicación posterior, la aplicación utilizará `DATABASE_URL` pooled y el CLI `DIRECT_URL` directa. S03 no provisiona Neon ni aplica migraciones remotas. [Referencia de conexiones y pool de Prisma](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/databases-connections).
+En la publicación, la integración nativa de Vercel sincroniza `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directa para los CLI. El [procedimiento S19](persistencia-gestionada-desde-vercel.md) evita el alta independiente y la copia manual de conexiones. S03 no provisionó Neon ni aplicó migraciones remotas. [Referencia de conexiones y pool de Prisma](https://www.prisma.io/docs/orm/v7/prisma-client/setup-and-configuration/databases-connections).
 
 ## Modelo físico
 

@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:api": "vitest run",
+    "test:cli": "node --import tsx --test --test-concurrency=1 tests/cli/entrega.test.ts",
     "test:e2e": "playwright test",
     "acceptance:check": "node --import tsx -- scripts/acceptance.ts check",
     "acceptance:live": "node --import tsx -- scripts/acceptance.ts live",

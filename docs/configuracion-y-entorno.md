@@ -48,7 +48,8 @@ Todas estas variables se consumen en servidor; ninguna se exporta con `NEXT_PUBL
 | Variable | Finalidad y requisito | Tratamiento |
 | --- | --- | --- |
 | `DATABASE_URL` | SQL de aplicación; obligatoria solo al solicitar esa capacidad. Admite `postgres:` o `postgresql:` con host. En Neon se utilizará la conexión pooled. | Privada; puede contener credenciales. |
-| `DIRECT_URL` | Conexión directa, requerida solo por la capacidad de migraciones. No se exige para leer configuración de aplicación. | Privada; puede contener credenciales. |
+| `DIRECT_URL` | Alternativa directa para migraciones y archivos locales anteriores; si también existe `DATABASE_URL_UNPOOLED`, deben coincidir. | Privada; puede contener credenciales. |
+| `DATABASE_URL_UNPOOLED` | Conexión directa sincronizada por la integración nativa Vercel/Neon; evita duplicarla en `DIRECT_URL`. | Privada; puede contener credenciales. |
 | `SESSION_SECRET` | Secreto de sesión, mínimo 32 caracteres sin espacios. | Secreto privado, independiente de cron. |
 | `CRON_SECRET` | Secreto del trabajo diario, mínimo 32 caracteres sin espacios. | Secreto privado, independiente de sesión. |
 | `APP_URL` | Origen público. En desarrollo/test, ausente utiliza `http://127.0.0.1:3000`. En producción es obligatorio y HTTPS. | No confidencial, pero leído en servidor; no se publica el objeto de configuración. |
@@ -151,6 +152,8 @@ S15 conecta [trazabilidad y QR](trazabilidad-publica-y-qr.md) con la API de S11.
 ## Verificación de S01 y escenarios posteriores
 
 Actualización S16: los [CLI de entrega y selección de entorno](despliegue-gratuito.md) aceptan `--env-file` en los comandos administrativos. Ese archivo reemplaza las variables de aplicación conocidas y sella las ausentes sin fallback; el modo predeterminado mantiene la precedencia anterior. Los lanzadores `node --import tsx --` impiden que Node consuma esa opción antes del script. La plantilla candidata vacía se versiona; su copia privada no se crea automáticamente. No se añadieron variables runtime ni capacidades públicas.
+
+Actualización S19: `--vercel-env-file` acepta exportaciones Vercel y selecciona solo las variables reconocidas, conservando el sellado de ausencias y sin modificar `.env.local`. Es excluyente con `--env-file`, que sigue rechazando claves adicionales. La capacidad administrativa admite `DATABASE_URL_UNPOOLED` nativa o `DIRECT_URL` anterior, sin abrir conexiones al leer la configuración; valores distintos entre ambas invalidan esa capacidad. Ver [preparación desde Vercel](persistencia-gestionada-desde-vercel.md).
 
 Se ejecutaron comprobación TypeScript y revisión estática del diff, dependencias, fronteras de importación y tratamiento del entorno. No se crearon ni ejecutaron suites, conexiones SQL, transacciones testnet, build Next.js ni despliegues.
 

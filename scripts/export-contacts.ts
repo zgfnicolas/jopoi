@@ -9,7 +9,7 @@ import { mapDatabaseError } from "../src/server/database/errors";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 async function main(): Promise<void> {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   if (args.some((arg) => arg !== "--help" && arg !== "--local-only") || new Set(args).size !== args.length) {
     console.error("INVALID_EXPORT_ARGUMENTS");
     process.exitCode = 2;
@@ -17,7 +17,7 @@ async function main(): Promise<void> {
   }
   if (args.includes("--help")) {
     console.log([
-      "Uso: npm run contacts:export -- [--env-file ARCHIVO] [--local-only]",
+      "Uso: npm run contacts:export -- [--env-file ARCHIVO (o --vercel-env-file ARCHIVO)] [--local-only]",
       "Exporta contactos vigentes al corte inicial a un archivo nuevo en .cache/exports/.",
       "Excel: UTF-8 con BOM, separador ; y filas CRLF. No imprime datos personales.",
       "Requiere DATABASE_URL privada. No necesita sesión de demo, cron ni Hedera.",
@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     ].join("\n"));
     return;
   }
-  loadCliEnvironment(ROOT, file);
+  loadCliEnvironment(ROOT, file, format);
   const database = createConfigReader(process.env).database();
   if (database.status !== "configured") throw new ApplicationError("DATABASE_UNAVAILABLE");
   if (args.includes("--local-only")) {

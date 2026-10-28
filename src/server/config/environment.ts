@@ -9,6 +9,7 @@ export const ENVIRONMENT_VARIABLES = [
   "NODE_ENV",
   "DATABASE_URL",
   "DIRECT_URL",
+  "DATABASE_URL_UNPOOLED",
   "SESSION_SECRET",
   "CRON_SECRET",
   "APP_URL",
@@ -65,8 +66,16 @@ const dailyLimit = z.string().regex(/^[1-9]\d*$/).transform(Number)
 
 const databaseSchema = z.object({ DATABASE_URL: postgresUrl })
   .transform((value) => ({ url: value.DATABASE_URL }));
-const migrationsSchema = z.object({ DIRECT_URL: postgresUrl })
-  .transform((value) => ({ url: value.DIRECT_URL }));
+const migrationsSchema = z.object({ DIRECT_URL: postgresUrl.optional(), DATABASE_URL_UNPOOLED: postgresUrl.optional() })
+  .superRefine((value, context) => {
+    if (!value.DIRECT_URL && !value.DATABASE_URL_UNPOOLED) {
+      context.addIssue({ code: "custom", path: ["DIRECT_URL"], message: "Conexión administrativa requerida." });
+    }
+    if (value.DIRECT_URL && value.DATABASE_URL_UNPOOLED && value.DIRECT_URL !== value.DATABASE_URL_UNPOOLED) {
+      context.addIssue({ code: "custom", path: ["DATABASE_URL_UNPOOLED"], message: "Conexiones administrativas diferentes." });
+    }
+  })
+  .transform((value) => ({ url: (value.DIRECT_URL ?? value.DATABASE_URL_UNPOOLED)! }));
 const sessionSchema = z.object({ SESSION_SECRET: secret })
   .transform((value) => ({ secret: value.SESSION_SECRET }));
 const maintenanceSchema = z.object({ CRON_SECRET: secret })

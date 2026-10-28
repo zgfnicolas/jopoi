@@ -1,18 +1,27 @@
 {
-  "version": 1,
+  "version": 2,
   "observedAt": "COMPLETAR_ISO_UTC",
   "candidateUrl": "https://COMPLETAR.vercel.app",
   "deploymentRevision": "COMPLETAR_SHA_DEL_COMMIT_PUBLICADO",
-  "reviewMethod": "provider-dashboard",
+  "reviewMethod": "vercel-dashboard",
   "reviewed": false,
   "vercel": {
+    "projectId": "COMPLETAR_ID_DEL_PROYECTO_VERCEL",
     "plan": "Hobby",
     "noPaymentMethod": true,
     "noAutomaticUpgrade": true,
     "source": { "file": ".cache/acceptance/evidence/vercel.png", "sha256": "COMPLETAR_SHA256_DEL_ARCHIVO_REVISADO" }
   },
-  "neon": {
+  "database": {
+    "provider": "neon",
     "plan": "Free",
+    "projectId": "COMPLETAR_ID_DEL_MISMO_PROYECTO_VERCEL",
+    "resourceId": "COMPLETAR_ID_DEL_RECURSO_DESDE_VERCEL",
+    "integrationMode": "native",
+    "provisioning": "vercel-marketplace",
+    "environments": ["production"],
+    "noIndependentAccount": true,
+    "credentialsSynced": true,
     "noPaymentMethod": true,
     "noAutomaticUpgrade": true,
     "source": { "file": ".cache/acceptance/evidence/neon.png", "sha256": "COMPLETAR_SHA256_DEL_ARCHIVO_REVISADO" }
