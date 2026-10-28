@@ -35,7 +35,7 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 ## Mejora integral de UI solicitada posteriormente
 
-[S20 · Interfaz coherente, inicio descriptivo, accesibilidad y SEO](20-sistema-ui-accesibilidad-y-seo.md) define una propuesta para toda la UI: portada orientada al público de Jopói, sistema visual y componentes reutilizables, temas claro/oscuro, HTML semántico, responsive, WCAG 2.2 AA y política de indexación. Conserva identidad industrial, dominio y finalidad de prototipo; no implementa ni publica cambios de interfaz. Pruebas propuestas sobre navegador y HTTP existentes, pendientes de confirmación. Publicación pendiente de configuración del tracker.
+[S20 · Interfaz coherente, inicio descriptivo, accesibilidad y SEO](20-sistema-ui-accesibilidad-y-seo.md) define la mejora de toda la UI: portada orientada al público de Jopói, sistema visual y componentes reutilizables, temas claro/oscuro, HTML semántico, responsive, objetivo WCAG 2.2 AA y política de indexación. Conserva identidad industrial, dominio y finalidad de prototipo. La implementación y sus comprobaciones locales se registran en [validación S20](../s20-validacion.md); los límites de navegador, HTTP/HTML y API están confirmados. Lector de pantalla, datos de campo y despliegue tienen evidencia separada. Publicación pendiente de configuración del tracker.
 
 ## Continuidad del plan original
 

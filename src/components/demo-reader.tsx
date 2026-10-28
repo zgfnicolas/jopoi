@@ -19,6 +19,6 @@ export function DemoReader() {
       <dl className="facts"><div><dt>Cantidad declarada</dt><dd>{formatKg(run.operation.quantityKg)}</dd></div><div><dt>Humedad</dt><dd>{formatHumidity(run.operation.humidityPercent)}</dd></div><div><dt>Datos disponibles hasta</dt><dd>{formatDate(run.expiresAt)}</dd></div></dl>
       <div><ActionLink href={`/trazabilidad/${run.traceId}`}>Abrir consulta pública</ActionLink></div>
     </section>}
-    <div><ActionButton onClick={refresh} secondary>Actualizar lectura</ActionButton></div>
+    <div><ActionButton onClick={refresh} variant="secondary">Actualizar lectura</ActionButton></div>
   </div>;
 }

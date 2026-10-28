@@ -45,7 +45,7 @@ export function TraceShare({ traceId, expiresAt, publicOrigin }: { traceId: stri
   if (!path || unavailable) return <p>El enlace ya no está disponible para compartir.</p>;
   return <div className={styles.share}>
     <div className="stack"><p>El QR y el enlace abren únicamente la consulta pública. No confirman retiro ni entrega y no otorgan permisos de operación.</p>
-      <div className="actions"><ActionLink href={url ?? path}>Abrir trazabilidad pública</ActionLink>{url && <ActionButton type="button" secondary onClick={copyLink}>Copiar enlace</ActionButton>}</div>
+      <div className="actions"><ActionLink href={url ?? path}>Abrir trazabilidad pública</ActionLink>{url && <ActionButton type="button" variant="secondary" onClick={copyLink}>Copiar enlace</ActionButton>}</div>
       {url ? <a className="identifier" href={url}>{url}</a> : <p>No está disponible el origen público configurado. Podés consultar mediante el enlace interno; el QR y la copia absoluta no están disponibles.</p>}
       {copy?.url === url && <p role="status">{copy.message}</p>}
     </div>

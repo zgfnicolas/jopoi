@@ -1,6 +1,6 @@
 # S20 · Interfaz coherente, inicio descriptivo, accesibilidad y SEO
 
-Estado: especificación propuesta; sin implementación de UI ni publicación en tracker. Alcance derivado de la conversación y de la evaluación del código y las capturas existentes. Límites de prueba pendientes de confirmación. Depende de las capacidades y contratos actuales de la demo; no requiere aprovisionar infraestructura para definirla.
+Estado: implementación local de S20 completada y validaciones automáticas aprobadas. Límites confirmados: Playwright para UI, HTTP/HTML para SEO y regresión API para contratos. Evidencia y pendientes manuales/remotos en [validación S20](../s20-validacion.md). La revisión visual y de lector de pantalla se registra por separado. Sin publicación en tracker ni despliegue; conserva las capacidades y contratos actuales de la demo.
 
 ## Problem Statement
 
@@ -194,7 +194,7 @@ Inventario y matriz de estados; consolidación de tokens y tema; primitivas y es
 
 ## Out of Scope
 
-- Implementar la UI, elegir visualmente entre prototipos renderizados o desplegar durante esta fase de especificación.
+- Aprovisionar infraestructura o desplegar como efecto de esta implementación local.
 - Reemplazar la identidad existente sin una decisión posterior; crear marca nueva, investigación comercial ficticia o activos que aparenten operaciones reales.
 - Modificar modelos SQL, reglas de negocio, cuotas, contratos de datos, firma HCS o infraestructura acordada en S19.
 - Convertir el prototipo en lanzamiento comercial, introducir servicios pagos o nuevos flujos de ventas, autenticación, pagos, correos o calendarios.
@@ -213,10 +213,10 @@ Inventario y matriz de estados; consolidación de tokens y tema; primitivas y es
 - **A conservar:** main, salto al contenido, navegación activa, labels y errores asociados, controles con altura mínima, datos semánticos, imágenes locales con atribución y pruebas E2E por roles y comportamiento.
 - **Pendiente de medición:** contraste efectivo de estados, lector de pantalla, rendimiento de producción y matriz visual nueva. No se asigna una puntuación de conformidad a partir de una lectura estática.
 
-Se inspeccionaron código, documento de producto, sistema de diseño, glosario, ADR y capturas E2E existentes. La última modificación del código visual corresponde a S18; las capturas muestran inicio y trazabilidad claros y son referencia de la implementación, no aprobación del nuevo diseño. Una captura del inicio presenta un área de imagen vacía: requiere comprobar carga/render en implementación antes de atribuirle una causa. No se ejecutó un nuevo servidor ni una auditoría DOM completa en esta tarea.
+El diagnóstico inicial se basó en código, documento de producto, sistema de diseño, glosario, ADR y capturas E2E existentes de S18. Una captura del inicio mostraba un área de imagen vacía y motivó comprobar su carga. Durante la implementación S20 se verificó la fotografía cargada y se revisaron nuevos renders claros/oscuros, además de ejecutar axe, pruebas de navegador y comprobaciones sobre builds normales de producción. Los resultados y límites están en la validación enlazada.
 
-El detector estático de Impeccable emitió avisos de tamaños fuera de su rampa documentada. Parte de esos tamaños está descrita en la prosa del diseño, por lo que no se consideran automáticamente defectos: hay que unificar la especificación normativa y verificar cada contexto. El contexto también informa que el sidecar del diseño está desactualizado respecto al documento; no se repara como efecto lateral de esta spec.
+El detector inicial de Impeccable emitió avisos de tamaños fuera de su rampa documentada y el contexto informó un sidecar desactualizado. S20 consolidó la escala normativa, los tokens consumidos por CSS y la representación derivada dentro de su alcance autorizado. La revisión de capturas y las comprobaciones automáticas complementan ese diagnóstico estático.
 
 Fuentes normativas: [WCAG 2.2](https://www.w3.org/TR/WCAG22/), [contraste](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html), [tamaño mínimo de objetivos](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum), [foco no oculto](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum) y [noindex de Google](https://developers.google.com/search/docs/crawling-indexing/block-indexing). La implementación deberá consultar además las guías incluidas en la versión instalada de Next.js.
 
-La documentación del proyecto mantiene el tracker sin configurar. Publicación y etiqueta `ready-for-agent` pendientes, no aplicadas. Ejecutar `/setup-matt-pocock-skills` para configurar el destino. La propuesta de límites de prueba se somete a confirmación conforme a to-spec; la identidad visual se conserva como base de la propuesta, sin sustituir ni reescribir todavía el documento de diseño.
+La documentación del proyecto mantiene el tracker sin configurar. Publicación y etiqueta `ready-for-agent` pendientes, no aplicadas. Ejecutar `/setup-matt-pocock-skills` para configurar el destino. Los límites de prueba fueron confirmados al planificar la implementación. La identidad industrial se conserva; S20 actualiza su documento de diseño y representación derivada junto con el código.

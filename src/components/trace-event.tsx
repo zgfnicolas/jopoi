@@ -72,5 +72,5 @@ function CopyText({ text, label }: { text: string; label: string }) {
     try { await navigator.clipboard.writeText(text); if (active.current) setMessage("Contenido copiado."); }
     catch { if (active.current) setMessage("No pudimos copiarlo. Podés seleccionar el texto visible y copiarlo manualmente."); }
   }
-  return <div className="stack"><div><ActionButton type="button" secondary onClick={copy}>{label}</ActionButton></div>{message && <p role="status">{message}</p>}</div>;
+  return <div className="stack"><div><ActionButton type="button" variant="secondary" onClick={copy}>{label}</ActionButton></div>{message && <p role="status">{message}</p>}</div>;
 }

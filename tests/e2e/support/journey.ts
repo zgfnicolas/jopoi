@@ -58,7 +58,10 @@ export class Journey {
     return new URL(value, this.origin).href;
   }
   async refresh() { await this.action("Actualizar lectura"); }
-  async screenshot(info: TestInfo, name: string) {
-    await info.attach(name, { body: await this.page.screenshot({ fullPage: true }), contentType: "image/png" });
+  async screenshot(info: TestInfo, name: string, page = this.page) {
+    await page.evaluate(async () => { await document.fonts.ready; await Promise.all(Array.from(document.images).filter(image => image.loading !== "lazy").map(image => image.decode().catch(() => undefined))); });
+    const path = info.outputPath(`${name}.png`);
+    await page.screenshot({ path, fullPage: true });
+    await info.attach(name, { path, contentType: "image/png" });
   }
 }

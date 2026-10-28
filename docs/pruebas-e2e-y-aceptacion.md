@@ -35,6 +35,12 @@ Actualización S19: la preparación de Webpack también compila las entradas API
 
 ## Evidencia local
 
+Actualización S20: la matriz conserva los proyectos claros `chromium-desktop` y `webkit-mobile` y añade sus variantes `-dark`. Los recorridos existentes se ejecutan en los cuatro proyectos. `S20-01` añade axe, semántica, formularios y temas sobre inicio/panel/traza; `S20-02` comprueba fallback sin JavaScript, Storage bloqueado, sincronización entre pestañas y bootstrap sin hidratación. Reportero y agregador exigen las cuatro variantes y los dos casos nuevos para la comprobación UI automática; una ejecución parcial no aprueba la matriz. Esto no acredita lector de pantalla ni conformidad WCAG completa.
+
+La precarga del harness incluye también los scripts, CSS y fuentes locales enlazados por el HTML; termina compilando las entradas API después del grafo cliente. Una precarga inicial se ejecuta en setup global y cada página se crea después del reinicio aislado. La configuración de pruebas activa la optimización de memoria de Webpack documentada por la versión instalada de Next; no se activa en producción. Las capturas se adjuntan mediante archivos; la traza retiene red y DOM, sin filmstrip ni copias de fuentes. Las capturas visuales explícitas y de fallo permanecen disponibles.
+
+La máquina de validación dispone de 3,8 GB de RAM y se observaron cancelaciones del cliente con unos 380 MB libres. Se mantienen todos los presupuestos de S19 y la política de no reintentar escrituras inciertas. Resultados y limitaciones: [validación S20](s20-validacion.md).
+
 - `.cache/e2e/report.json` y `report.md`: E2E-01–E2E-15, entorno, fecha, revisión, huella de fuentes y resultados por navegador.
 - `.cache/e2e/html/index.html`: informe con capturas de los recorridos y tamaños observados.
 - `.cache/e2e/artifacts/`: capturas y trazas de fallos para diagnóstico. Contienen datos de prueba y pueden contener cookies sintéticas; son archivos privados ignorados por Git.

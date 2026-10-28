@@ -57,14 +57,32 @@ export class TestRuntime {
       // Compile every UI entry before the browser's 15s request budget starts.
       // GETs without cookies use protected/unknown resources or unsupported methods; no commands run.
       const sample = "00000000-0000-4000-8000-000000000000";
-      for (const path of ["/", "/demo", "/trazabilidad/00000000-0000-4000-8000-000000000000",
-        "/api/demo/session", "/api/demo/runs/current", "/api/demo/runs", "/api/demo/runs/reset",
+      const assets = new Set<string>();
+      for (const path of ["/", "/demo", `/trazabilidad/${sample}`]) {
+        const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
+        const html = await response.text();
+        if (response.headers.get("content-type")?.includes("text/html")) {
+          for (const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="([^" ]+)"/g)) {
+            if (match[1].startsWith("/_next/static/")) assets.add(match[1].replaceAll("&amp;", "&"));
+          }
+        }
+        if (response.status >= 500) throw new Error("BLOCKED_NEXT_PAGE_FAILED; revisar next.log");
+      }
+      // HTML prewarming alone leaves dev JS/CSS cold. Complete those read-only
+      // downloads before the browser's navigation and action budgets begin.
+      for (const asset of assets) {
+        const response = await fetch(this.origin + asset, { signal: AbortSignal.timeout(60000) });
+        await response.arrayBuffer();
+        if (!response.ok) throw new Error("BLOCKED_NEXT_ASSET_FAILED; revisar next.log");
+      }
+      // Compile API entries last: creating the client graph can invalidate dev entries.
+      for (const path of ["/api/demo/session", "/api/demo/runs/current", "/api/demo/runs", "/api/demo/runs/reset",
         `/api/demo/runs/${sample}`, `/api/demo/runs/${sample}/commands`,
         `/api/demo/runs/${sample}/events/${sample}/retry`, "/api/demo-requests",
         `/api/traces/${sample}`, `/api/traces/${sample}/events/${sample}/verification`, "/api/cron"]) {
         const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
         await response.text();
-        if (response.status >= 500) throw new Error("BLOCKED_NEXT_PAGE_FAILED; revisar next.log");
+        if (response.status >= 500) throw new Error("BLOCKED_NEXT_API_FAILED; revisar next.log");
       }
     }
   }

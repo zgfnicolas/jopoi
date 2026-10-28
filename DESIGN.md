@@ -1,206 +1,168 @@
-﻿---
+---
 name: Jopói
-description: Ficha de abastecimiento industrial clara, regional y verificable.
+description: Ficha de abastecimiento industrial, regional y verificable.
 colors:
   surface: "#fafbf8"
+  panel: "#ffffff"
   subtle: "#edf1eb"
   ink: "#192e2e"
   muted: "#526462"
   line: "#c8d2ca"
+  control-border: "#6b7e76"
   action: "#145b58"
   action-hover: "#0c403e"
-  signal: "#efd45c"
+  on-action: "#ffffff"
   danger: "#a82424"
-  white: "#fff"
+  warning: "#7a4b00"
+  success: "#1d6b45"
+  info: "#1d587d"
+  signal: "#efd45c"
+  dark-surface: "#111c1b"
+  dark-panel: "#182826"
+  dark-subtle: "#203531"
+  dark-ink: "#edf4ef"
+  dark-muted: "#b6c7bf"
+  dark-line: "#3a5149"
+  dark-control-border: "#7f9d91"
+  dark-action: "#81d1bd"
+  dark-action-hover: "#a0e0d0"
+  dark-on-action: "#101f1c"
+  dark-danger: "#ffaaa4"
+  dark-warning: "#f2ce79"
+  dark-success: "#8dd8b0"
+  dark-info: "#9acbf0"
 typography:
-  display:
-    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
-    fontSize: "clamp(2.75rem, 4.5vw, 4.5rem)"
-    fontWeight: 600
-    lineHeight: 1.02
-    letterSpacing: "-.025em"
-  headline:
-    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
-    fontSize: "clamp(2rem, 4vw, 3.4rem)"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "-.025em"
-  title:
-    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
-    fontSize: "clamp(1.4rem, 2.2vw, 1.9rem)"
-    fontWeight: 600
-    lineHeight: 1.2
+  caption:
+    fontFamily: 'system-ui, sans-serif'
+    fontSize: ".875rem"
+    fontWeight: 400
+    lineHeight: 1.6
   body:
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontFamily: 'system-ui, sans-serif'
     fontSize: "1rem"
+    fontWeight: 400
     lineHeight: 1.6
   label:
-    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+    fontFamily: 'system-ui, sans-serif'
     fontSize: "1rem"
     fontWeight: 650
+    lineHeight: 1.6
+  lead:
+    fontFamily: 'system-ui, sans-serif'
+    fontSize: "1.125rem"
+    fontWeight: 400
+    lineHeight: 1.6
+  title:
+    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
+    fontSize: "1.5rem"
+    fontWeight: 600
+    lineHeight: 1.2
+  section:
+    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
+    fontSize: "2rem"
+    fontWeight: 600
+    lineHeight: 1.2
+  page:
+    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
+    fontSize: "2.5rem"
+    fontWeight: 600
+    lineHeight: 1.2
+  display:
+    fontFamily: '"Barlow Semi Condensed", "Arial Narrow", sans-serif'
+    fontSize: "clamp(2.5rem, 4.5vw, 4.5rem)"
+    fontWeight: 600
+    lineHeight: 1.15
 rounded:
-  button: ".35rem"
-  input: ".3rem"
-  notice: ".4rem"
+  sm: ".25rem"
+  md: ".5rem"
 spacing:
-  inline: ".75rem"
-  stack: "1.25rem"
-  section: "clamp(2.5rem, 5vw, 4rem)"
+  space-1: ".25rem"
+  space-2: ".5rem"
+  space-3: ".75rem"
+  space-4: "1rem"
+  space-5: "1.25rem"
+  space-6: "1.5rem"
+  space-8: "2rem"
+  space-10: "2.5rem"
+  space-12: "3rem"
+  space-16: "4rem"
+  space-24: "6rem"
 components:
   button-primary:
     backgroundColor: "{colors.action}"
-    textColor: "{colors.white}"
-    rounded: "{rounded.button}"
-    padding: ".65rem 1rem"
-  button-primary-hover:
-    backgroundColor: "{colors.action-hover}"
+    textColor: "{colors.on-action}"
+    rounded: "{rounded.sm}"
+    padding: ".5rem 1rem"
+    height: "2.75rem"
   button-secondary:
     backgroundColor: "transparent"
     textColor: "{colors.action}"
-    rounded: "{rounded.button}"
-    padding: ".65rem 1rem"
-  button-secondary-hover:
-    backgroundColor: "{colors.subtle}"
+    rounded: "{rounded.sm}"
   input:
-    backgroundColor: "{colors.surface}"
+    backgroundColor: "{colors.panel}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.input}"
-    padding: ".7rem"
-    width: "100%"
+    rounded: "{rounded.sm}"
+    padding: ".75rem"
   notice:
     backgroundColor: "{colors.subtle}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.notice}"
-    padding: "1.2rem"
-  ledger:
-    backgroundColor: "{colors.subtle}"
-    textColor: "{colors.ink}"
-    padding: "1.5rem"
+    rounded: "{rounded.md}"
+    padding: "1.25rem"
 ---
 
 # Design System: Jopói
 
 ## Overview
 
-**Creative North Star: "Ficha de abastecimiento industrial"**
+La identidad se conserva: una ficha de abastecimiento industrial, con petróleo, neutros vegetales, amarillo señal localizado, títulos condensados y fotografía de referencia con atribución. La portada presenta la propuesta y orienta; la demo permite operar; la trazabilidad permite leer y contrastar. No trasladar la composición promocional al panel operativo.
 
-Superficie clara, petróleo/teal y amarillo señal. La voz visual es concreta y regional: títulos condensados, datos ordenados y divisores precisos hacen legible una operación industrial. La fotografía local de chips aporta materia; la información explica qué se compara y qué evidencia existe.
-
-La landing integra la comparación económica al inicio. Esa composición pertenece a esa superficie: `/demo` y `/trazabilidad/[traceId]` comparten tipografía, navegación, colores, formularios y estados sin adoptar la estructura promocional. Los importes y el escenario se identifican como ilustrativos; el registro testnet no se presenta como certificación física.
-
-Extracción S13 del código, con dirección cualitativa confirmada por el usuario. Fuentes: `src/app/globals.css`, `src/app/page.module.css`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/components/ui/ui.module.css`, `src/components/navigation.tsx`, `src/components/demo-request-form.module.css`, formulario y páginas de demo/trazabilidad. No se dispuso de navegador: no hay aprobación visual observada ni verificación de render, contraste calculado o tamaños reales en pantalla. Los tokens representan la implementación leída.
-
-**Key Characteristics:**
-
-- Claridad industrial sobre fondo claro.
-- Títulos condensados y lectura en system-ui.
-- Petróleo para acción y amarillo para señal.
-- Datos tabulares y evidencia con contexto explícito.
-- Profundidad por tono y divisores.
+S20 amplía esta identidad a Sistema, Claro y Oscuro. Este documento define las reglas normativas; las variables compartidas de globals.css las materializan. El sidecar contiene extensiones derivadas, sin otra paleta independiente. Los importes se calculan en el dominio y los formatos se comparten; el diseño no inventa precios, empresas, beneficios ni capacidades.
 
 ## Colors
 
-La paleta combina verdes neutros de baja saturación con petróleo y una señal amarilla localizada. Los valores normativos están en el frontmatter y corresponden a las variables homónimas de `:root`, salvo `white`, literal usado sobre fondos oscuros.
+Los tokens sin prefijo corresponden a Claro; dark-* sustituye el rol homónimo en Oscuro. Surface es el fondo general, panel el plano de control, subtle el fondo secundario. Ink y muted siempre se leen sobre esos fondos. Line es decorativo; control-border identifica límites interactivos. Action/on-action forman un par inseparable, también en hover. Amarillo no significa éxito y la selección siempre usa tinta oscura fija.
 
-### Primary
+Danger, warning, success e info identifican estados junto con texto explícito. Avisos: fondo subtle, texto ink y título/borde del rol semántico. Nunca aplicar blanco literal a una acción oscura. El QR conserva píxeles y placa blanca propios; no aplicar filtros a fotos ni códigos.
 
-- **Petróleo de acción** (`action`): enlaces, botones principales, marcadores y bordes de énfasis.
-- **Petróleo profundo** (`action-hover`): hover principal y fondo del pie fotográfico.
-
-### Secondary
-
-- **Amarillo señal** (`signal`): selección de texto.
-
-### Neutral
-
-- **Superficie clara** (`surface`): fondo general e inputs.
-- **Plano suave** (`subtle`): avisos, desglose económico y hover secundario.
-- **Tinta petróleo** (`ink`): lectura principal y divisores de mayor jerarquía.
-- **Texto secundario** (`muted`): ayudas, notas, límites e información complementaria.
-- **Línea vegetal** (`line`): separadores, bordes de avisos y estructura documental.
-- **Blanco** (`white`): texto de acciones principales y pie de fotografía.
-
-`danger` es el rojo semántico de error: borde de campo inválido, mensaje y aviso de error. No se usa como acento de marca.
-
-**The Señal con contexto Rule.** El amarillo aparece en la selección de texto; no comunica por sí solo una confirmación operativa.
+Medir contraste efectivo: texto normal 4,5:1; texto grande y límites/indicadores requeridos 3:1. No sustituir estas comprobaciones por la legibilidad de una captura. Los bordes decorativos tienen otra función. Colores forzados conservan foco y controles nativos.
 
 ## Typography
 
-**Display Font:** Barlow Semi Condensed, peso local 600, con Arial Narrow y sans-serif como fallback. `next/font/local` carga `src/app/fonts/BarlowSemiCondensed-SemiBold.ttf` con `display: swap` y expone `--font-heading`.
+Barlow Semi Condensed 600 se sirve localmente para títulos y marca. System-ui sirve lectura y controles. El rol visual no determina el nivel HTML: un h1 por página y jerarquía lógica. Usar los tamaños del frontmatter y sus variables --text-*. El display es exclusivo del inicio, con interlineado 1,15; títulos generales 1,2 y lectura 1,6. Mantener 60–72ch de lectura continua y texto ampliable sin recortes.
 
-**Body Font:** system-ui y los fallbacks del frontmatter. No se carga una fuente de texto remota.
-
-El contraste entre títulos condensados y texto familiar permite reconocer encabezados sin endurecer la lectura. Encabezados balanceados y palabras largas ajustables protegen títulos e identificadores.
-
-### Hierarchy
-
-- **Display:** título de landing, máximo 18ch.
-- **Headline:** h1 compartido de demo y trazabilidad, máximo 24ch.
-- **Title:** h2 de secciones; h3 usa 1.1rem y la misma familia/peso.
-- **Body:** párrafos de hasta 72ch; introducción de landing a 1.13rem y máximo 46ch.
-- **Label:** etiquetas de campos en system-ui con peso 650; el interlineado hereda del body.
-- **Datos:** importes, cantidades e identificadores usan números tabulares. Las cantidades destacadas de la comparación usan la familia de títulos.
-
-**The Dos voces Rule.** Reservar Barlow Semi Condensed para títulos, marca y cantidades destacadas; mantener controles y lectura continua en system-ui.
+Usar cifras tabulares para kg, ARS y fechas comparables. Reservar monoespaciado para identificadores/payloads cuando ayude a contrastarlos. No reducir tipografía para encajar datos largos: envolver o habilitar desplazamiento local rotulado.
 
 ## Layout
 
-El contenido tiene un máximo de 72rem. El ancho general es `min(72rem, calc(100% - 3rem))`; baja a `calc(100% - 2rem)` hasta 42rem. El padding vertical del main es `clamp(2rem, 5vw, 4.5rem)`. Secciones sucesivas usan el ritmo fluido del frontmatter; las secciones documentales agregan borde superior y padding.
+Escala base 4 px: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 96, expresada en rem. Agrupar con 8–12 px; campos y bloques internos con 16–24; módulos con 32–48; secciones con 40–64. Contenedor máximo 72rem, margen móvil 16px y margen amplio hasta 32px. Los cortes de composición implementados son 40rem y 64rem. Hay ajustes de contenido en 25rem para roles/desglose económico y en 42rem para los campos de contacto; no se necesita otra recomposición a 80rem.
 
-La landing abre con columnas 1.1fr/1fr y una ficha comparativa que ocupa ambas. Las parejas de explicación y detalle usan 1fr/1.15fr con separación de 4rem, reducida a 2rem hasta 60rem. Hasta 48rem, pasan a una columna; la fotografía adopta proporción 16/10 y la ficha apila su contenido. La fotografía usa `public/demo/chips-v1/chips-pile.jpg` con recorte cover en escritorio; su pie identifica que es material de referencia y la página conserva los créditos/licencia.
+Stack y actions son patrones compartidos; facts/record-facts son listas de datos. Campos alineados, leyendas persistentes y acciones en orden DOM. Tablas y payloads pueden desplazarse dentro de regiones accesibles, nunca toda la página a 320px equivalentes. No ocultar acciones en hover ni añadir menú móvil si los enlaces pueden envolver.
 
-Los cuatro roles pasan a dos columnas hasta 60rem y a una hasta 25rem. El desglose económico apila etiquetas/valores hasta 60rem, los vuelve a alinear hasta 48rem y los apila nuevamente hasta 25rem. El formulario tiene dos columnas y empresa/mensaje a ancho completo; hasta 42rem usa una. Las listas de hechos usan auto-fit con mínimos limitados al ancho disponible. La navegación se envuelve y hasta 42rem ocupa su propia fila; no hay menú oculto.
+Validar 320/360/390/768/1024/1440 px, ampliación 200 %, reflow 400 %, teclado, tacto y ambas apariencias. La matriz de evidencia y las limitaciones manuales se registran en docs/s20-validacion.md.
 
 ## Elevation & Depth
 
-El código no define sombras. La profundidad proviene de planos suaves, fotografía, bordes y cambios de grosor. El desglose lleva una línea superior de acción; la ficha inicia con una línea de tinta más fuerte. No hay transición animada en los controles documentados. La preferencia de movimiento reducido desactiva animaciones/transiciones; no implica que existan animaciones en reposo.
-
-**The Profundidad documental Rule.** Construir jerarquía con superficie, espacio y divisores antes de introducir elevación.
+Profundidad documental: planos de tono, espaciado y divisores antes que sombras. Foco de 3px con separación de 4px, visible sin depender del color del fondo. El enlace de salto usa la capa 20; no introducir una escala abierta de z-index. No hay animación decorativa ni tarea que dependa de movimiento; respetar la preferencia reducida.
 
 ## Shapes
 
-Fotografía, ficha y desglose conservan geometría rectangular. Los controles tienen radios pequeños diferenciados, definidos en el frontmatter; los avisos son apenas más suaves. Los bordes corrientes son de 1px; líneas de 2px o 3px jerarquizan casos concretos. No se observa un sistema de chips interactivos ni de tarjetas redondeadas genéricas.
+Radios pequeños de 4 y 8px para controles y avisos. Controles independientes de al menos 44px; CTA destacados de 48px. No convertir todos los datos en tarjetas. Los enlaces dentro de texto conservan su comportamiento nativo; la meta táctil de producto no reemplaza las excepciones de WCAG.
 
 ## Components
 
-### Buttons
+ActionButton y ActionLink comparten variant primary|secondary|quiet y size default|large. La variante es exclusiva. Extienden propiedades nativas, ref y className. Los enlaces navegan; los botones ejecutan. Default, hover, focus-visible y active mantienen contraste; disabled muestra cursor not-allowed, busy aria-busy y cursor progress, con etiqueta de progreso explícita.
 
-Acciones firmes, compactas y legibles. Alto mínimo de 2.75rem, peso 650 y borde de acción de 1px. La variante primaria usa texto blanco; la secundaria fondo transparente y texto de acción. Hover cambia el fondo según los tokens. Deshabilitado usa muted para fondo y borde y cursor de espera. El estado ocupado comunica el progreso con texto.
+Field, TextAreaField y SelectField conservan labels, props nativas, errores e instrucciones mediante aria-describedby. Los controladores mantienen valores y claves de intención; las primitivas no consultan APIs. La validación mueve foco al primer campo pertinente y los errores asociados no generan una cascada de alertas repetidas. Resúmenes y confirmaciones importantes reciben foco; las lecturas rutinarias no lo roban.
 
-### Inputs / Fields
+Notice admite info|success|warning|error, con anuncios optativos. Error urgente usa alert; el resto status cuando corresponde. Advertencias de cupo o conflicto no implican pérdida de los datos guardados. Separar estado operativo, publicación y verificación; conservar las etiquetas explícitas existentes. Details/summary resuelven expansión sin controles de teclado propios.
 
-Campos claros, borde muted de 1px y alto mínimo de 2.75rem. Etiqueta de peso 650, ayuda debajo y error textual en danger. `aria-invalid` cambia el borde a danger. En el formulario bloqueado, campos y textarea usan subtle/muted, opacidad completa y cursor no permitido. Conservar valores y estados de reintento forma parte de la experiencia del formulario.
-
-### Cards / Containers
-
-El aviso es el contenedor compartido: fondo subtle, borde line de 1px, separación interna .4rem; error cambia el borde a danger. No usa sombra. El desglose económico rectangular separa filas con líneas, alinea importes y resalta el total con peso 700 y borde de acción de 2px. Son patrones diferentes, no variantes de una tarjeta universal.
-
-### Navigation
-
-Marca tipográfica condensada; enlaces de texto sin decoración en reposo y espaciado envolvente. `aria-current` activa subrayado y peso 650, incluido el enlace de consulta en rutas públicas de trazabilidad. Los enlaces conservan los mismos destinos y comportamiento compartido entre superficies.
-
-### Comparación económica
-
-Bloque de ficha con cifra condensada y números tabulares. Presentar al lado del importe el carácter ilustrativo y la alternativa comparada. No extraer los importes del escenario como constantes de diseño.
-
-### Foco y estados
-
-Todo elemento enfocable usa el foco global: contorno de acción de 3px con separación de 4px; en colores forzados usa Highlight. El enlace de salto aparece al enfocarse. Los indicadores de estado combinan texto e icono; no dependen solamente del color. Las muestras del sidecar reproducen estados existentes: no añaden animación ni un efecto activo que el código no define.
+Apariencia usa select nativo Sistema/Claro/Oscuro. Sistema es el valor inicial y CSS sigue cambios de prefers-color-scheme sin listeners innecesarios. Una elección explícita se conserva en jopoi.theme; ignorar valores inválidos y tolerar almacenamiento bloqueado. El bootstrap estático se ejecuta antes de pintar; únicamente html admite la diferencia de atributo. Sin JavaScript permanece el contenido y el tema del sistema. El layout sigue en servidor. La recuperación global comparte tema y acciones.
 
 ## Do's and Don'ts
 
-### Do:
-
-- **Do** reutilizar los tokens compartidos en landing, demo y trazabilidad.
-- **Do** mantener visibles los límites del escenario ilustrativo y del registro testnet.
-- **Do** conservar foco visible, etiquetas, ayudas y mensajes de error textuales.
-- **Do** mantener fotografía de referencia y créditos unidos a su contexto.
-- **Do** alinear importes con números tabulares y conservar sus supuestos.
-
-### Don't:
-
-- **Don't** convertir la composición inicial de landing en una obligación para las pantallas operativas.
-- **Don't** presentar cifras ficticias como ahorros observados ni registros testnet como certificación física.
-- **Don't** sustituir los títulos locales por una fuente remota sin una nueva decisión de diseño.
-- **Don't** tratar las rampas de presentación del sidecar como tokens implementados.
-
+- Comunicar propuesta, participantes y límites antes de la tecnología. Mantener el caso de Corrientes identificado como ficticio.
+- Usar Solicitar una demostración; conservar el anchor existente para enlaces compartidos. El formulario guarda una solicitud, sin reservar fecha ni enviar correo.
+- Conservar imágenes locales, dimensiones reservadas, sizes adecuados y carga prioritaria solo de la imagen principal.
+- Indexar únicamente el inicio en Production con APP_URL HTTPS válido; demo y trazas noindex/nofollow. Preview no es indexable. No añadir datos privados a canonical, sitemap ni vistas sociales.
+- No convertir todo el layout en cliente, introducir una biblioteca universal ni duplicar árboles por tema.
+- No afirmar conformidad WCAG, aprobación de lector de pantalla o métricas de campo a partir de pruebas automatizadas.

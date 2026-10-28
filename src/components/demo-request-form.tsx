@@ -5,7 +5,7 @@ import { demoRequestFieldErrors, demoRequestSchema } from "@/shared/demo-request
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
 import { postDemoRequest, type ContactFailure } from "@/frontend/demo-request";
 import { formatDate } from "@/frontend/format";
-import { ActionButton, Field, Notice, TextAreaField } from "./ui/primitives";
+import { ActionButton, ErrorSummary, Field, Notice, TextAreaField } from "./ui/primitives";
 import styles from "./demo-request-form.module.css";
 
 const emptyDraft = { name: "", email: "", company: "", message: "" };
@@ -75,11 +75,14 @@ export function DemoRequestForm() {
   const knownMessage = error && error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message
     : "No recibimos una confirmación de guardado. Revisá tu conexión y reintentá esta misma solicitud.";
   return <div className={styles.wrapper}>
-    {phase === "saved" && saved ? <div ref={feedback} tabIndex={-1} className="stack"><Notice title={saved.message} announce>
+    <noscript>Para enviar una solicitud, activá JavaScript. Podés seguir leyendo la propuesta sin habilitarlo.</noscript>
+    {phase === "saved" && saved ? <div ref={feedback} tabIndex={-1} className="stack"><Notice title={saved.message} tone="success" announce>
       <p>Guardada el {formatDate(saved.createdAt)}.</p><p>No se reservó un horario ni se envió un correo automático.</p>
-    </Notice><div><ActionButton type="button" secondary onClick={() => newIntent(true)}>Enviar otra solicitud</ActionButton></div></div> :
+    </Notice><div><ActionButton type="button" variant="secondary" onClick={() => newIntent(true)}>Enviar otra solicitud</ActionButton></div></div> :
       <form ref={form} method="post" action="/api/demo-requests" noValidate onSubmit={submit} className="stack" aria-busy={!ready || phase === "sending"}>
+        <ErrorSummary errors={Object.entries(fields).filter(([key]) => ["name", "email", "company", "message"].includes(key)).map(([key, messages]) => ({ href: `#contact-${key}`, message: messages.join(" ") }))} />
         <fieldset disabled={!ready || phase !== "editing"} className={styles.fields}><legend>Datos para conocer el prototipo</legend>
+          <p className={styles.required}>Nombre, email y empresa son obligatorios.</p>
           <Field id="contact-name" name="name" label="Nombre" autoComplete="name" required maxLength={DEMO_REQUEST_LIMITS.name} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} error={fields.name?.[0]} />
           <Field id="contact-email" name="email" label="Email" type="email" inputMode="email" autoComplete="email" required maxLength={DEMO_REQUEST_LIMITS.email} value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} help="No hace falta un dominio empresarial." error={fields.email?.[0]} />
           <Field id="contact-company" name="company" label="Empresa" autoComplete="organization" required maxLength={DEMO_REQUEST_LIMITS.company} value={draft.company} onChange={e => setDraft({ ...draft, company: e.target.value })} error={fields.company?.[0]} />

@@ -1,349 +1,81 @@
-﻿{
-    "schemaVersion":  2,
-    "generatedAt":  "2026-10-24T00:46:25.9651367Z",
-    "title":  "Design System: Jopói",
-    "extensions":  {
-                       "extraction":  {
-                                          "method":  "code",
-                                          "milestone":  "S13",
-                                          "directionConfirmed":  true,
-                                          "renderObserved":  false,
-                                          "visualApprovalObserved":  false,
-                                          "scope":  [
-                                                        "/",
-                                                        "/demo",
-                                                        "/trazabilidad/[traceId]"
-                                                    ],
-                                          "sources":  [
-                                                          "src/app/globals.css",
-                                                          "src/app/page.module.css",
-                                                          "src/components/ui/ui.module.css",
-                                                          "src/app/layout.tsx",
-                                                          "src/components/navigation.tsx",
-                                                          "src/components/demo-request-form.module.css",
-                                                          "src/components/demo-request-form.tsx",
-                                                          "src/app/page.tsx",
-                                                          "src/app/demo/page.tsx",
-                                                          "src/app/trazabilidad/[traceId]/page.tsx"
-                                                      ],
-                                          "limitations":  "Extracción sin navegador. Sin inspección de render, medición de contraste ni aprobación visual observada. Las rampas son presentación sintética; no son tokens implementados."
-                                      },
-                       "colorMeta":  {
-                                         "surface":  {
-                                                         "role":  "neutral",
-                                                         "displayName":  "Superficie clara",
-                                                         "tonalRamp":  [
-                                                                           "oklch(15% 0.008 120)",
-                                                                           "oklch(26% 0.008 120)",
-                                                                           "oklch(38% 0.008 120)",
-                                                                           "oklch(49% 0.008 120)",
-                                                                           "oklch(61% 0.008 120)",
-                                                                           "oklch(72% 0.008 120)",
-                                                                           "oklch(84% 0.008 120)",
-                                                                           "oklch(95% 0.008 120)"
-                                                                       ],
-                                                         "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                     },
-                                         "subtle":  {
-                                                        "role":  "neutral",
-                                                        "displayName":  "Plano suave",
-                                                        "tonalRamp":  [
-                                                                          "oklch(15% 0.012 130)",
-                                                                          "oklch(26% 0.012 130)",
-                                                                          "oklch(38% 0.012 130)",
-                                                                          "oklch(49% 0.012 130)",
-                                                                          "oklch(61% 0.012 130)",
-                                                                          "oklch(72% 0.012 130)",
-                                                                          "oklch(84% 0.012 130)",
-                                                                          "oklch(95% 0.012 130)"
-                                                                      ],
-                                                        "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                    },
-                                         "ink":  {
-                                                     "role":  "neutral",
-                                                     "displayName":  "Tinta petróleo",
-                                                     "tonalRamp":  [
-                                                                       "oklch(15% 0.025 190)",
-                                                                       "oklch(26% 0.025 190)",
-                                                                       "oklch(38% 0.025 190)",
-                                                                       "oklch(49% 0.025 190)",
-                                                                       "oklch(61% 0.025 190)",
-                                                                       "oklch(72% 0.025 190)",
-                                                                       "oklch(84% 0.025 190)",
-                                                                       "oklch(95% 0.025 190)"
-                                                                   ],
-                                                     "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                 },
-                                         "muted":  {
-                                                       "role":  "neutral",
-                                                       "displayName":  "Texto secundario",
-                                                       "tonalRamp":  [
-                                                                         "oklch(15% 0.025 180)",
-                                                                         "oklch(26% 0.025 180)",
-                                                                         "oklch(38% 0.025 180)",
-                                                                         "oklch(49% 0.025 180)",
-                                                                         "oklch(61% 0.025 180)",
-                                                                         "oklch(72% 0.025 180)",
-                                                                         "oklch(84% 0.025 180)",
-                                                                         "oklch(95% 0.025 180)"
-                                                                     ],
-                                                       "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                   },
-                                         "line":  {
-                                                      "role":  "neutral",
-                                                      "displayName":  "Línea vegetal",
-                                                      "tonalRamp":  [
-                                                                        "oklch(15% 0.016 145)",
-                                                                        "oklch(26% 0.016 145)",
-                                                                        "oklch(38% 0.016 145)",
-                                                                        "oklch(49% 0.016 145)",
-                                                                        "oklch(61% 0.016 145)",
-                                                                        "oklch(72% 0.016 145)",
-                                                                        "oklch(84% 0.016 145)",
-                                                                        "oklch(95% 0.016 145)"
-                                                                    ],
-                                                      "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                  },
-                                         "action":  {
-                                                        "role":  "primary",
-                                                        "displayName":  "Petróleo de acción",
-                                                        "tonalRamp":  [
-                                                                          "oklch(15% 0.06 185)",
-                                                                          "oklch(26% 0.06 185)",
-                                                                          "oklch(38% 0.06 185)",
-                                                                          "oklch(49% 0.06 185)",
-                                                                          "oklch(61% 0.06 185)",
-                                                                          "oklch(72% 0.06 185)",
-                                                                          "oklch(84% 0.06 185)",
-                                                                          "oklch(95% 0.06 185)"
-                                                                      ],
-                                                        "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                    },
-                                         "action-hover":  {
-                                                              "role":  "primary",
-                                                              "displayName":  "Petróleo profundo",
-                                                              "tonalRamp":  [
-                                                                                "oklch(15% 0.05 185)",
-                                                                                "oklch(26% 0.05 185)",
-                                                                                "oklch(38% 0.05 185)",
-                                                                                "oklch(49% 0.05 185)",
-                                                                                "oklch(61% 0.05 185)",
-                                                                                "oklch(72% 0.05 185)",
-                                                                                "oklch(84% 0.05 185)",
-                                                                                "oklch(95% 0.05 185)"
-                                                                            ],
-                                                              "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                          },
-                                         "signal":  {
-                                                        "role":  "secondary",
-                                                        "displayName":  "Amarillo señal",
-                                                        "tonalRamp":  [
-                                                                          "oklch(15% 0.13 95)",
-                                                                          "oklch(26% 0.13 95)",
-                                                                          "oklch(38% 0.13 95)",
-                                                                          "oklch(49% 0.13 95)",
-                                                                          "oklch(61% 0.13 95)",
-                                                                          "oklch(72% 0.13 95)",
-                                                                          "oklch(84% 0.13 95)",
-                                                                          "oklch(95% 0.13 95)"
-                                                                      ],
-                                                        "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                    },
-                                         "danger":  {
-                                                        "role":  "semantic-error",
-                                                        "displayName":  "Rojo de error",
-                                                        "tonalRamp":  [
-                                                                          "oklch(15% 0.15 25)",
-                                                                          "oklch(26% 0.15 25)",
-                                                                          "oklch(38% 0.15 25)",
-                                                                          "oklch(49% 0.15 25)",
-                                                                          "oklch(61% 0.15 25)",
-                                                                          "oklch(72% 0.15 25)",
-                                                                          "oklch(84% 0.15 25)",
-                                                                          "oklch(95% 0.15 25)"
-                                                                      ],
-                                                        "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                    },
-                                         "white":  {
-                                                       "role":  "neutral",
-                                                       "displayName":  "Blanco",
-                                                       "tonalRamp":  [
-                                                                         "oklch(15% 0 0)",
-                                                                         "oklch(26% 0 0)",
-                                                                         "oklch(38% 0 0)",
-                                                                         "oklch(49% 0 0)",
-                                                                         "oklch(61% 0 0)",
-                                                                         "oklch(72% 0 0)",
-                                                                         "oklch(84% 0 0)",
-                                                                         "oklch(95% 0 0)"
-                                                                     ],
-                                                       "rampPurpose":  "Presentación sintética; no normativa ni implementada."
-                                                   }
-                                     },
-                       "typographyMeta":  {
-                                              "display":  {
-                                                              "displayName":  "Título de landing",
-                                                              "purpose":  "Máximo 18ch en inicio."
-                                                          },
-                                              "headline":  {
-                                                               "displayName":  "Título compartido",
-                                                               "purpose":  "h1 en demo y trazabilidad, máximo 24ch."
-                                                           },
-                                              "title":  {
-                                                            "displayName":  "Título de sección",
-                                                            "purpose":  "h2 compartido."
-                                                        },
-                                              "body":  {
-                                                           "displayName":  "Lectura",
-                                                           "purpose":  "Texto y controles en fuente del sistema."
-                                                       },
-                                              "label":  {
-                                                            "displayName":  "Etiqueta de campo",
-                                                            "purpose":  "Etiqueta de formulario en system-ui con peso 650."
-                                                        }
-                                          },
-                       "shadows":  [
-
-                                   ],
-                       "motion":  [
-
-                                  ],
-                       "breakpoints":  [
-                                           {
-                                               "name":  "roles-and-ledger",
-                                               "value":  "25rem"
-                                           },
-                                           {
-                                               "name":  "shared-and-form",
-                                               "value":  "42rem"
-                                           },
-                                           {
-                                               "name":  "landing-stack",
-                                               "value":  "48rem"
-                                           },
-                                           {
-                                               "name":  "landing-density",
-                                               "value":  "60rem"
-                                           }
-                                       ],
-                       "focus":  {
-                                     "value":  "3px solid var(--action)",
-                                     "offset":  "4px",
-                                     "forcedColors":  "Highlight"
-                                 },
-                       "layout":  {
-                                      "contentMax":  "72rem",
-                                      "paragraphMax":  "72ch"
-                                  },
-                       "fontLoading":  {
-                                           "family":  "Barlow Semi Condensed",
-                                           "weight":  600,
-                                           "source":  "src/app/fonts/BarlowSemiCondensed-SemiBold.ttf",
-                                           "strategy":  "next/font/local; display: swap; --font-heading"
-                                       }
-                   },
-    "components":  [
-                       {
-                           "name":  "Acción principal",
-                           "kind":  "button",
-                           "refersTo":  "button-primary",
-                           "description":  "Acción primaria compartida; conserva hover, foco y estado ocupado.",
-                           "html":  "\u003cbutton class=\"ds-primary\"\u003eProbar demo ↗\u003c/button\u003e",
-                           "css":  ".ds-primary{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:2.75rem;padding:.65rem 1rem;border:1px solid var(--action,#145b58);border-radius:.35rem;background:var(--action,#145b58);color:#fff;font:650 1rem/1.6 system-ui,sans-serif;cursor:pointer;touch-action:manipulation}.ds-primary:hover{background:var(--action-hover,#0c403e)}.ds-primary:focus-visible{outline:3px solid var(--action,#145b58);outline-offset:4px}.ds-primary:disabled{background:var(--muted,#526462);border-color:var(--muted,#526462);cursor:wait}@media(forced-colors:active){.ds-primary:focus-visible{outline-color:Highlight}}"
-                       },
-                       {
-                           "name":  "Acción secundaria",
-                           "kind":  "button",
-                           "refersTo":  "button-secondary",
-                           "description":  "Alternativa de menor énfasis sobre superficie clara.",
-                           "html":  "\u003cbutton class=\"ds-secondary\"\u003eBook a demo\u003c/button\u003e",
-                           "css":  ".ds-secondary{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.65rem 1rem;border:1px solid var(--action,#145b58);border-radius:.35rem;background:transparent;color:var(--action,#145b58);font:650 1rem/1.6 system-ui,sans-serif;cursor:pointer;touch-action:manipulation}.ds-secondary:hover{background:var(--subtle,#edf1eb)}.ds-secondary:focus-visible{outline:3px solid var(--action,#145b58);outline-offset:4px}.ds-secondary:disabled{background:var(--muted,#526462);border-color:var(--muted,#526462);cursor:wait}@media(forced-colors:active){.ds-secondary:focus-visible{outline-color:Highlight}}"
-                       },
-                       {
-                           "name":  "Campo con ayuda",
-                           "kind":  "input",
-                           "refersTo":  "input",
-                           "description":  "Campo compartido con etiqueta, ayuda y estado de error.",
-                           "html":  "\u003cdiv class=\"ds-field\"\u003e\u003clabel class=\"ds-label\" for=\"ds-email\"\u003eEmail\u003c/label\u003e\u003cinput class=\"ds-input\" id=\"ds-email\" type=\"email\" aria-describedby=\"ds-email-help\"\u003e\u003cp class=\"ds-help\" id=\"ds-email-help\"\u003eNo hace falta un dominio empresarial.\u003c/p\u003e\u003c/div\u003e",
-                           "css":  ".ds-field{display:grid;gap:.4rem;max-width:40rem;color:var(--ink,#192e2e);font:1rem/1.6 system-ui,sans-serif}.ds-label{font-weight:650}.ds-input{width:100%;min-height:2.75rem;padding:.7rem;border:1px solid var(--muted,#526462);border-radius:.3rem;font:1rem/1.6 system-ui,sans-serif;background:var(--surface,#fafbf8);color:var(--ink,#192e2e);caret-color:var(--action,#145b58)}.ds-input[aria-invalid=true]{border-color:var(--danger,#a82424)}.ds-input:focus-visible{outline:3px solid var(--action,#145b58);outline-offset:4px}.ds-input:disabled{background:var(--subtle,#edf1eb);color:var(--muted,#526462);opacity:1;cursor:not-allowed}.ds-help{margin:0;font-size:.9rem;color:var(--muted,#526462)}@media(forced-colors:active){.ds-input:focus-visible{outline-color:Highlight}}"
-                       },
-                       {
-                           "name":  "Navegación",
-                           "kind":  "nav",
-                           "description":  "Navegación envolvente compartida con ubicación actual explícita.",
-                           "html":  "\u003cnav class=\"ds-nav\" aria-label=\"Navegación de muestra\"\u003e\u003ca href=\"#ds-inicio\" aria-current=\"page\"\u003eInicio\u003c/a\u003e\u003ca href=\"#ds-demo\"\u003eDemo\u003c/a\u003e\u003ca href=\"#ds-traza\"\u003eConsultar trazabilidad\u003c/a\u003e\u003ca href=\"#ds-contacto\"\u003eBook a demo\u003c/a\u003e\u003c/nav\u003e",
-                           "css":  ".ds-nav{display:flex;flex-wrap:wrap;gap:.25rem 1.15rem;font:1rem/1.6 system-ui,sans-serif}.ds-nav a{padding:.65rem .1rem;color:var(--action,#145b58);text-decoration:none;text-underline-offset:.2em}.ds-nav a[aria-current]{text-decoration:underline;font-weight:650}.ds-nav a:hover{text-decoration-thickness:2px}.ds-nav a:focus-visible{outline:3px solid var(--action,#145b58);outline-offset:4px}@media(max-width:42rem){.ds-nav{gap:0 1rem;width:100%}}@media(forced-colors:active){.ds-nav a:focus-visible{outline-color:Highlight}}"
-                       },
-                       {
-                           "name":  "Aviso compartido",
-                           "kind":  "card",
-                           "refersTo":  "notice",
-                           "description":  "Plano suave para información o error; no tiene interacción propia.",
-                           "html":  "\u003cdiv class=\"ds-notice\"\u003e\u003cstrong\u003ePor ahora, una vista de consulta\u003c/strong\u003e\u003cp\u003eEsta versión no realiza acciones operativas.\u003c/p\u003e\u003c/div\u003e",
-                           "css":  ".ds-notice{display:grid;gap:.4rem;padding:1.2rem;border:1px solid var(--line,#c8d2ca);border-radius:.4rem;background:var(--subtle,#edf1eb);color:var(--ink,#192e2e);font:1rem/1.6 system-ui,sans-serif}.ds-notice p{margin:0}.ds-notice strong{color:var(--ink,#192e2e)}.ds-notice[data-tone=error]{border-color:var(--danger,#a82424)}"
-                       },
-                       {
-                           "name":  "Desglose económico",
-                           "kind":  "custom",
-                           "refersTo":  "ledger",
-                           "description":  "Filas documentales y total; muestra ilustrativa sin importe fijo de diseño.",
-                           "html":  "\u003cdiv class=\"ds-ledger\"\u003e\u003cdl\u003e\u003cdiv\u003e\u003cdt\u003eMaterial\u003c/dt\u003e\u003cdd\u003eARS —\u003c/dd\u003e\u003c/div\u003e\u003cdiv\u003e\u003cdt\u003eFlete de retorno\u003c/dt\u003e\u003cdd\u003eARS —\u003c/dd\u003e\u003c/div\u003e\u003cdiv class=\"ds-total\"\u003e\u003cdt\u003eTotal con retorno\u003c/dt\u003e\u003cdd\u003eARS —\u003c/dd\u003e\u003c/div\u003e\u003c/dl\u003e\u003cp\u003eImportes ilustrativos del escenario.\u003c/p\u003e\u003c/div\u003e",
-                           "css":  ".ds-ledger{padding:1.5rem;background:var(--subtle,#edf1eb);border-top:3px solid var(--action,#145b58);color:var(--ink,#192e2e);font:1rem/1.6 system-ui,sans-serif}.ds-ledger dl{margin:0 0 1rem}.ds-ledger dl\u003ediv{display:flex;justify-content:space-between;gap:1rem;padding:.8rem 0;border-bottom:1px solid var(--line,#c8d2ca)}.ds-ledger dt{max-width:26ch}.ds-ledger dd{margin:0;white-space:nowrap;font-variant-numeric:tabular-nums}.ds-ledger .ds-total{font-weight:700;border-bottom:2px solid var(--action,#145b58)}.ds-ledger p{margin:0;font-size:.88rem;color:var(--muted,#526462)}@media(max-width:60rem){.ds-ledger dl\u003ediv{flex-direction:column;gap:.2rem}}@media(max-width:48rem){.ds-ledger dl\u003ediv{flex-direction:row}}@media(max-width:25rem){.ds-ledger{padding:1rem}.ds-ledger dl\u003ediv{flex-direction:column}}"
-                       },
-                       {
-                           "name":  "Comparación de la ficha",
-                           "kind":  "custom",
-                           "description":  "Dato destacado acompañado de su límite ilustrativo.",
-                           "html":  "\u003cdiv class=\"ds-comparison\"\u003e\u003cspan\u003eDiferencia ilustrativa a favor del retorno\u003c/span\u003e\u003cstrong\u003eARS —\u003c/strong\u003e\u003cspan\u003efrente al flete dedicado, con los supuestos del escenario\u003c/span\u003e\u003c/div\u003e",
-                           "css":  ".ds-comparison{display:flex;flex-direction:column;align-items:flex-start;gap:.2rem;color:var(--ink,#192e2e);font:.88rem/1.6 system-ui,sans-serif}.ds-comparison strong{font-family:var(--font-heading,\u0027Barlow Semi Condensed\u0027),\u0027Arial Narrow\u0027,sans-serif;font-size:clamp(2rem,3.2vw,2.8rem);font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums}"
-                       },
-                       {
-                           "name":  "Estado de red",
-                           "kind":  "custom",
-                           "description":  "Texto e icono para un estado; conserva distinción respecto de la operación.",
-                           "html":  "\u003cspan class=\"ds-status\"\u003e\u003csvg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"\u003e\u003cpath d=\"M20 6 9 17l-5-5\"/\u003e\u003c/svg\u003eConfirmado en testnet\u003c/span\u003e",
-                           "css":  ".ds-status{display:inline-flex;align-items:center;gap:.4rem;margin:0;font:600 1rem/1.6 system-ui,sans-serif;color:var(--ink,#192e2e)}.ds-status svg{flex:0 0 auto}"
-                       }
-                   ],
-    "narrative":  {
-                      "northStar":  "Ficha de abastecimiento industrial",
-                      "overview":  "Superficie clara, petróleo/teal y amarillo señal. La voz visual es concreta y regional: títulos condensados, datos ordenados y divisores precisos hacen legible una operación industrial. La fotografía local de chips aporta materia; la información explica qué se compara y qué evidencia existe.\n\nLa landing integra la comparación económica al inicio. Esa composición pertenece a esa superficie: `/demo` y `/trazabilidad/[traceId]` comparten tipografía, navegación, colores, formularios y estados sin adoptar la estructura promocional. Los importes y el escenario se identifican como ilustrativos; el registro testnet no se presenta como certificación física.\n\nExtracción S13 del código, con dirección cualitativa confirmada por el usuario. Fuentes: `src/app/globals.css`, `src/app/page.module.css`, `src/app/layout.tsx`, `src/app/page.tsx`, `src/components/ui/ui.module.css`, `src/components/navigation.tsx`, `src/components/demo-request-form.module.css`, formulario y páginas de demo/trazabilidad. No se dispuso de navegador: no hay aprobación visual observada ni verificación de render, contraste calculado o tamaños reales en pantalla. Los tokens representan la implementación leída.",
-                      "keyCharacteristics":  [
-                                                 "Claridad industrial sobre fondo claro.",
-                                                 "Títulos condensados y lectura en system-ui.",
-                                                 "Petróleo para acción y amarillo para señal.",
-                                                 "Datos tabulares y evidencia con contexto explícito.",
-                                                 "Profundidad por tono y divisores."
-                                             ],
-                      "rules":  [
-                                    {
-                                        "name":  "The Señal con contexto Rule",
-                                        "body":  "El amarillo aparece en la selección de texto; no comunica por sí solo una confirmación operativa.",
-                                        "section":  "colors"
-                                    },
-                                    {
-                                        "name":  "The Dos voces Rule",
-                                        "body":  "Reservar Barlow Semi Condensed para títulos, marca y cantidades destacadas; mantener controles y lectura continua en system-ui.",
-                                        "section":  "typography"
-                                    },
-                                    {
-                                        "name":  "The Profundidad documental Rule",
-                                        "body":  "Construir jerarquía con superficie, espacio y divisores antes de introducir elevación.",
-                                        "section":  "elevation"
-                                    }
-                                ],
-                      "dos":  [
-                                  "**Do** reutilizar los tokens compartidos en landing, demo y trazabilidad.",
-                                  "**Do** mantener visibles los límites del escenario ilustrativo y del registro testnet.",
-                                  "**Do** conservar foco visible, etiquetas, ayudas y mensajes de error textuales.",
-                                  "**Do** mantener fotografía de referencia y créditos unidos a su contexto.",
-                                  "**Do** alinear importes con números tabulares y conservar sus supuestos."
-                              ],
-                      "donts":  [
-                                    "**Don\u0027t** convertir la composición inicial de landing en una obligación para las pantallas operativas.",
-                                    "**Don\u0027t** presentar cifras ficticias como ahorros observados ni registros testnet como certificación física.",
-                                    "**Don\u0027t** sustituir los títulos locales por una fuente remota sin una nueva decisión de diseño.",
-                                    "**Don\u0027t** tratar las rampas de presentación del sidecar como tokens implementados."
-                                ]
-                  }
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T22:43:30.681Z",
+  "title": "Design System: Jopói",
+  "extensions": {
+    "extraction": {
+      "method": "code",
+      "milestone": "S20",
+      "directionConfirmed": true,
+      "sources": [
+        "DESIGN.md",
+        "src/app/globals.css",
+        "src/components/ui/ui.module.css"
+      ],
+      "limitations": "Revisión interna de capturas en ambos temas; evidencia automática y pendientes manuales/remotos en docs/s20-validacion.md. Sin aprobación visual observada del responsable.",
+      "sourceSha256": "42f250b492c9920bd5dcb75fc39fd9b372182735c73770f66f06af35e44145e8",
+      "renderObserved": true,
+      "visualApprovalObserved": false
+    },
+    "breakpoints": [
+      {
+        "name": "narrow-content",
+        "value": "25rem"
+      },
+      {
+        "name": "compact",
+        "value": "40rem"
+      },
+      {
+        "name": "contact-fields",
+        "value": "42rem"
+      },
+      {
+        "name": "wide",
+        "value": "64rem"
+      }
+    ],
+    "focus": {
+      "width": "3px",
+      "offset": "4px",
+      "color": "var(--action)"
+    },
+    "layers": {
+      "skipLink": 20
+    },
+    "themes": {
+      "default": "system",
+      "storageKey": "jopoi.theme",
+      "darkTokenPrefix": "dark-",
+      "qr": "fixed-light"
+    }
+  },
+  "components": [
+    {
+      "name": "Acción principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de una tarea.",
+      "html": "<button class=\"ds-action\">Probar demo</button>",
+      "css": ".ds-action{font:650 1rem/1.6 system-ui;min-height:2.75rem;padding:.5rem 1rem;border:1px solid var(--action);border-radius:var(--radius-sm);background:var(--action);color:var(--on-action)}.ds-action:hover{background:var(--action-hover)}.ds-action:focus-visible{outline:3px solid var(--action);outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Ficha de abastecimiento industrial",
+    "overview": "Petróleo, neutros vegetales, títulos condensados y fotografía regional. Persuadir en el inicio, operar en la demo y leer en trazabilidad.",
+    "keyCharacteristics": [
+      "Sistema, Claro y Oscuro",
+      "Divisores documentales",
+      "Datos y límites explícitos"
+    ],
+    "rules": [],
+    "dos": [
+      "Consumir tokens compartidos.",
+      "Conservar semántica y controles nativos."
+    ],
+    "donts": [
+      "No certificar cargas físicas a partir de testnet.",
+      "No duplicar árboles de contenido por tema."
+    ]
+  }
 }

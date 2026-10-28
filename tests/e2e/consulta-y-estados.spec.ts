@@ -30,7 +30,7 @@ test("E2E-08 · QR decodificable comparte lectura entre contextos sin credencial
     await expect(reader.getByRole("button", { name: "Confirmar retiro", exact: true })).toHaveCount(0);
     expect((await other.cookies()).some(cookie => cookie.name === "jopoi_session")).toBe(false);
     expect((await other.request.get(`${journey.origin}/api/demo/runs/${parsed.pathname.split("/").at(-1)}`)).status()).toBe(401);
-    await info.attach("consulta-compartida", { body: await reader.screenshot({ fullPage: true }), contentType: "image/png" });
+    await journey.screenshot(info, "consulta-compartida", reader);
   } finally { await other.close(); }
 });
 
