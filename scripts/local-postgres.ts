@@ -117,7 +117,7 @@ async function ensureLocalEnvironment(password: string): Promise<void> {
   let content = await exists(path) ? await readFile(path, "utf8") : "";
   const variables = parse(content);
   const url = `postgresql://jopoi:${password}@127.0.0.1:${PORT}/jopoi`;
-  for (const name of ["DATABASE_URL", "DIRECT_URL"]) {
+  for (const name of ["DATABASE_URL", "DIRECT_URL", "DATABASE_URL_UNPOOLED"]) {
     if ((variables[name]?.trim() && variables[name] !== url)
       || (process.env[name]?.trim() && process.env[name] !== url)) {
       throw new LocalPostgresError("LOCAL_DATABASE_ENV_CONFLICT: no se reemplazan conexiones existentes");

@@ -3,13 +3,13 @@ import { fileURLToPath } from "node:url";
 import { CliEnvironmentError, environmentOption, loadCliEnvironment } from "../src/server/config/cli-environment";
 
 async function main() {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   if (args.length === 1 && args[0] === "--help") {
-    console.log("maintenance --run [--env-file ARCHIVO] [--local-only]\nEjecuta limpieza y recuperación acotadas; modifica SQL y puede enviar a Hedera testnet.\n--local-only exige PostgreSQL 127.0.0.1:54321/jopoi; no desactiva Hedera.\nArchivo explícito sin fallback. --help no carga entorno ni conecta.");
+    console.log("maintenance --run [--env-file ARCHIVO (o --vercel-env-file ARCHIVO)] [--local-only]\nEjecuta limpieza y recuperación acotadas; modifica SQL y puede enviar a Hedera testnet.\n--local-only exige PostgreSQL 127.0.0.1:54321/jopoi; no desactiva Hedera.\nArchivo explícito sin fallback. --help no carga entorno ni conecta.");
     return;
   }
   if (!args.includes("--run") || args.some(a => !["--run", "--local-only"].includes(a)) || new Set(args).size !== args.length) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
-  loadCliEnvironment(resolve(dirname(fileURLToPath(import.meta.url)), ".."), file);
+  loadCliEnvironment(resolve(dirname(fileURLToPath(import.meta.url)), ".."), file, format);
   const { createConfigReader } = await import("../src/server/config/environment");
   const config = createConfigReader(process.env).database();
   if (config.status !== "configured") throw new Error("DATABASE_UNAVAILABLE");

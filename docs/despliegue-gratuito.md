@@ -27,7 +27,7 @@ $env:Path = "$taskNodeDirectory;$env:Path"
 | --- | --- |
 | `delivery:check` | Solo archivos y CPU. Comprueba Node/engine, coincidencia de dependencias con lockfile, secuencia del build, inventario de cuatro migraciones, activos/fuente/licencia, cron diario, política y formatos de configuración. Si hay clave de operador, comprueba DER con el parser existente, sin cliente ni red. |
 | `--profile local` | Perfil predeterminado. Permite capacidades ausentes con avisos para conservar la base parcial S01. La configuración inválida o los archivos inconsistentes bloquean. |
-| `--profile candidate` | Exige `--env-file` y valida como producción: capacidades completas, origen HTTPS, secretos independientes y conexiones Neon pooled/directa con TLS al mismo endpoint/base. No comprueba credenciales contra los proveedores. |
+| `--profile candidate` | Exige un archivo explícito (`--env-file` o `--vercel-env-file`) y valida como producción: capacidades completas, origen HTTPS, secretos independientes y conexiones Neon pooled/directa con TLS al mismo endpoint/base. No comprueba credenciales contra los proveedores. |
 | `delivery:build` | Exige archivo y candidato válido. Ejecuta `prisma generate` y `next build` mediante procesos Node sin shell; se detiene ante fallo. No migra, conecta SQL, crea topic ni despliega. |
 | `ops:status` | Exige archivo explícito y solo `DATABASE_URL` válida. Abre una transacción RepeatableRead con `SET TRANSACTION READ ONLY`, obtiene agregados y cierra la conexión. No ejecuta mantenimiento ni Hedera. |
 
@@ -48,6 +48,8 @@ Copy-Item .env.candidate.example .env.candidate.local
 La copia privada queda ignorada por Git; S16 no la creó ni completó. Los secretos se generan independientemente con 32 bytes aleatorios mediante una herramienta local y se introducen directamente en el archivo/panel privado, nunca en documentación, argumentos o chat.
 
 Todos los CLI administrativos admiten `--env-file ARCHIVO`: base de datos, topic, mantenimiento y exportación. El archivo se resuelve desde la raíz del repositorio, tiene un límite de 64 KiB y acepta solo las variables conocidas de S01; un campo desconocido, incluido `NEXT_PUBLIC_*`, se rechaza sin mostrarlo. Un archivo ausente no activa fallback.
+
+S19 añade `--vercel-env-file ARCHIVO` para exportaciones Vercel: selecciona solo las variables reconocidas de Jopói e ignora las adicionales sin importarlas al proceso. Es excluyente con el selector estricto y conserva el sellado de ausencias. La conexión administrativa puede llegar como `DATABASE_URL_UNPOOLED`; si también existe `DIRECT_URL`, deben coincidir. La guía principal para un proyecto nuevo es el [procedimiento S19](persistencia-gestionada-desde-vercel.md); los ejemplos con `.env.candidate.local` siguen siendo compatibles para archivos estrictos anteriores.
 
 Con selección explícita se reemplazan todas las variables conocidas del proceso, también las omitidas, por cadenas vacías cuando faltan. Eso impide que cargas posteriores de dotenv/Prisma/Next completen la configuración de aplicación desde `.env.local`. El entorno del sistema necesario para ejecutar herramientas, como PATH, se conserva. Sin selector se mantiene la precedencia anterior: proceso, `.env.local`, `.env`.
 
@@ -83,8 +85,8 @@ npm run dev
 
 ## Preparación externa futura — no ejecutada
 
-1. **Cuentas y presupuesto.** Confirmar cuenta personal Hobby en Vercel, Neon Free y acceso al portal Hedera testnet. No añadir tarjeta, Pro, dominios pagos o upgrades. La finalidad continúa siendo prototipo personal para mostrar y recibir comentarios; no es una aprobación formal de elegibilidad del proveedor. [Vercel Hobby](https://vercel.com/docs/plans/hobby), [Neon Free sin tarjeta](https://neon.com/pricing).
-2. **Neon.** Crear/elegir el recurso Free y copiar en el archivo privado la conexión pooled a `DATABASE_URL` y la directa a `DIRECT_URL`. Confirmar mismo endpoint/base, TLS y región; no mezclar entornos. El pool de la aplicación sigue limitado a dos conexiones por instancia, no a dos conexiones globales de todo Vercel. [Prisma y Neon](https://neon.com/docs/guides/prisma).
+1. **Proyecto y presupuesto desde Vercel.** Crear un proyecto personal Hobby nuevo y vincular el directorio sin desplegar todavía. Aplicar el [procedimiento S19](persistencia-gestionada-desde-vercel.md), sin tarjeta, Pro, dominios pagos ni upgrades. La finalidad sigue siendo prototipo personal, sin constituir aprobación formal de elegibilidad. Hedera testnet conserva su configuración independiente.
+2. **Base nativa del Marketplace.** Aprovisionar Neon Free desde Vercel, sin alta independiente en Neon, y conectar únicamente Production. La integración sincroniza `DATABASE_URL` pooled y `DATABASE_URL_UNPOOLED` directa. Los CLI aceptan la exportación mediante `--vercel-env-file`, sin copiar conexiones manualmente ni modificar `.env.local`. `DIRECT_URL` sigue siendo compatible; si ambas directas tienen valor deben coincidir. Verificar mismo endpoint/base, TLS, región y plan realmente gratuito. El pool sigue limitado a dos conexiones por instancia, no globalmente.
 3. **Migraciones explícitas.** Revisar el destino privado elegido antes de ejecutar los comandos siguientes. Aplicar únicamente las cuatro migraciones versionadas; nunca `reset`, `db push` o una migración automática en build para reparar datos vigentes.
 
 ```powershell
@@ -113,7 +115,7 @@ Prepare firma y escribe el journal privado; submit envía una vez con el ID pers
 | Variables | Ubicación futura |
 | --- | --- |
 | `DATABASE_URL`, `SESSION_SECRET`, `CRON_SECRET`, `APP_URL`, `HEDERA_OPERATOR_ID`, `HEDERA_OPERATOR_KEY`, `HEDERA_TOPIC_ID`, `HCS_CONFIGURATION_GENERATION`, `HCS_DAILY_LIMIT` | Archivo administrativo privado y entorno Production del proyecto Vercel. Nunca `NEXT_PUBLIC_*`. |
-| `DIRECT_URL` | Archivo administrativo para Prisma CLI; la aplicación y el build normal no la necesitan en Vercel. |
+| `DATABASE_URL_UNPOOLED` o `DIRECT_URL` | Conexión administrativa para Prisma CLI. La integración sincroniza la primera; no duplicarla manualmente. La aplicación no la necesita para operar. |
 | `NODE_ENV` | La plantilla candidata usa production; Vercel/Next lo establecen en sus procesos. No se crea otro entorno de producción desde la UI. |
 
 Antes de construir el candidato local, ejecutar `delivery:check --profile candidate` con su archivo y después `delivery:build` con el mismo. El archivo candidato no se envía ni versiona: Vercel recibe sus variables mediante la configuración privada del proyecto. En Vercel se mantiene el build normal sin migraciones. Cambiar `APP_URL` requiere un nuevo build; no basta con cambiar el valor runtime.

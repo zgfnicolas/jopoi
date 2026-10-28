@@ -17,14 +17,14 @@ function requireLocalTarget(url: string): void {
 }
 
 async function main(): Promise<void> {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   const command = args[0];
   if (!['migrate', 'status', 'check'].includes(command)) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   if (args.length === 2 && args[1] === "--help") {
-    console.log("db:migrate | db:status | db:check -- [--env-file ARCHIVO] [--local-only]\nMigrar modifica SQL; status/check solo consultan. No ejecuta Hedera.\n--local-only exige 127.0.0.1:54321/jopoi. Archivo explícito sin fallback; ayuda sin entorno ni conexiones."); return;
+    console.log("db:migrate | db:status | db:check -- [--env-file ARCHIVO (o --vercel-env-file ARCHIVO)] [--local-only]\nMigrar modifica SQL; status/check solo consultan. No ejecuta Hedera.\n--local-only exige 127.0.0.1:54321/jopoi. Archivo explícito sin fallback; ayuda sin entorno ni conexiones."); return;
   }
   if (args.slice(1).some(arg => arg !== "--local-only") || args.length > 2) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
-  loadCliEnvironment(ROOT, file);
+  loadCliEnvironment(ROOT, file, format);
   const config = createConfigReader(process.env);
   if (command === "check") {
     const database = config.database();

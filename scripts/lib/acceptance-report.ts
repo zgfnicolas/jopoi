@@ -9,22 +9,34 @@ export type Verdict = z.infer<typeof verdict>;
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const proofSource = z.strictObject({ file: z.string().min(1), sha256: hash });
 export const providerProof = z.strictObject({
-  version: z.literal(1), observedAt: z.iso.datetime(), candidateUrl: z.url(), deploymentRevision: z.string().regex(/^[a-f0-9]{40}$/),
-  reviewMethod: z.literal("provider-dashboard"), reviewed: z.literal(true),
-  vercel: z.strictObject({ plan: z.literal("Hobby"), noPaymentMethod: z.literal(true), noAutomaticUpgrade: z.literal(true), source: proofSource }),
-  neon: z.strictObject({ plan: z.literal("Free"), noPaymentMethod: z.literal(true), noAutomaticUpgrade: z.literal(true), source: proofSource }),
+  version: z.literal(2), observedAt: z.iso.datetime(), candidateUrl: z.url(), deploymentRevision: z.string().regex(/^[a-f0-9]{40}$/),
+  reviewMethod: z.literal("vercel-dashboard"), reviewed: z.literal(true),
+  vercel: z.strictObject({ projectId: z.string().regex(/^prj_[A-Za-z0-9]+$/), plan: z.literal("Hobby"), noPaymentMethod: z.literal(true), noAutomaticUpgrade: z.literal(true), source: proofSource }),
+  database: z.strictObject({ provider: z.literal("neon"), plan: z.literal("Free"),
+    projectId: z.string().regex(/^prj_[A-Za-z0-9]+$/), resourceId: z.string().min(1).max(256),
+    integrationMode: z.literal("native"), provisioning: z.literal("vercel-marketplace"),
+    environments: z.tuple([z.literal("production")]), noIndependentAccount: z.literal(true), credentialsSynced: z.literal(true),
+    noPaymentMethod: z.literal(true), noAutomaticUpgrade: z.literal(true), source: proofSource }),
   cron: z.strictObject({ schedule: z.literal("0 3 * * *"), executedAt: z.iso.datetime(),
     result: z.enum(["MAINTENANCE_COMPLETE", "MAINTENANCE_SKIPPED"]), source: proofSource }),
-});
+}).refine(proof => proof.vercel.projectId === proof.database.projectId);
 
-export function readProof(file: string | undefined, origin: string | undefined, revision: string) {
-  if (!file || !origin) return null;
+/** Project identity only; never read environment files or integration secrets. */
+function linkedVercelProjectId(): string | undefined {
+  try {
+    return z.object({ projectId: z.string().regex(/^prj_[A-Za-z0-9]+$/) })
+      .parse(JSON.parse(readFileSync(resolve(".vercel/project.json"), "utf8"))).projectId;
+  } catch { return undefined; }
+}
+
+export function readProof(file: string | undefined, origin: string | undefined, revision: string, projectId = linkedVercelProjectId()) {
+  if (!file || !origin || !projectId) return null;
   try {
     const proof = providerProof.parse(JSON.parse(readFileSync(file, "utf8")));
-    if (proof.candidateUrl !== origin || proof.deploymentRevision !== revision || Date.parse(proof.observedAt) > Date.now()
+    if (proof.vercel.projectId !== projectId || proof.candidateUrl !== origin || proof.deploymentRevision !== revision || Date.parse(proof.observedAt) > Date.now()
       || Date.now() - Date.parse(proof.observedAt) > 7 * 86400000 || Date.parse(proof.cron.executedAt) > Date.now()
       || Date.now() - Date.parse(proof.cron.executedAt) > 7 * 86400000) return null;
-    for (const source of [proof.vercel.source, proof.neon.source, proof.cron.source]) {
+    for (const source of [proof.vercel.source, proof.database.source, proof.cron.source]) {
       const artifact = resolve(source.file);
       if (!artifact.startsWith(resolve(".cache/acceptance") + sep)) return null;
       if (createHash("sha256").update(readFileSync(artifact)).digest("hex") !== source.sha256) return null;
@@ -83,7 +95,7 @@ export function acceptanceReport(origin?: string, proofFile?: string, journalFil
       : id === "E2E-14" ? local(id) === "FALLIDO" ? "FALLIDO" : proof && local(id) === "APROBADO" ? "APROBADO" : "BLOQUEADO" : local(id);
     return { id, result, local: ["E2E-12", "E2E-13"].includes(id) ? "NO_APLICA" : local(id),
       recovery: result === "BLOQUEADO" ? id === "E2E-12" ? "Falta comprobar cinco hitos reales con el candidato y journal seleccionados."
-        : ["E2E-13", "E2E-14"].includes(id) ? "Falta evidencia revisada de planes gratuitos y ejecución del cron diario del candidato."
+        : ["E2E-13", "E2E-14"].includes(id) ? "Falta evidencia v2 del proyecto Vercel vinculado, base nativa gratuita y ejecución del cron diario del candidato."
         : "Falta evidencia vigente de ambos proyectos de navegador." : null };
   });
   const criterionCases = [["E2E-01", "E2E-10", "E2E-13"], ["E2E-03", "E2E-04", "E2E-05"], ["E2E-03", "E2E-04", "E2E-05"],

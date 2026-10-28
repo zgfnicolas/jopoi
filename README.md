@@ -2,14 +2,14 @@
 
 Prototipo personal de coordinación B2B de subproductos y transporte en Corrientes. La demo usa chips forestales y datos ficticios, con registros reales en Hedera testnet.
 
-La definición del proyecto quedó confirmada en Q31 y las 18 specs están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S15 incorporan interfaz, contacto, panel y trazabilidad/QR. S16 prepara la entrega con validación offline, entorno explícito, observación privada y guía de publicación/recuperación. S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 añade recorridos de navegador en Chromium y WebKit móvil emulado, evidencia y aceptación separada del candidato publicado. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Despliegue, planes gratuitos y cinco hitos reales de testnet requieren configuración y evidencia externas; no se declaran aprobados por pasar pruebas locales.
+La definición del proyecto quedó confirmada en Q31 y las 18 specs originales y S19 están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S15 incorporan interfaz, contacto, panel y trazabilidad/QR. S16 prepara la entrega con validación offline, entorno explícito, observación privada y guía de publicación/recuperación. S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 añade recorridos de navegador en Chromium y WebKit móvil emulado, evidencia y aceptación separada del candidato publicado. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Despliegue, planes gratuitos y cinco hitos reales de testnet requieren configuración y evidencia externas; no se declaran aprobados por pasar pruebas locales.
 
 ## Documentación
 
 | Documento | Contenido |
 | --- | --- |
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
-| [Specs ordenadas](docs/specs/README.md) | 18 specs desde backend hasta frontend y entrega, con pruebas al final. |
+| [Specs ordenadas](docs/specs/README.md) | 18 specs originales y S19 para persistencia gestionada desde Vercel. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
 | [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |
 | [Persistencia SQL](docs/persistencia-sql.md) | Base S03, PostgreSQL portable, modelo, migraciones, transacciones y retención. |
@@ -28,6 +28,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 | [Preparación del despliegue gratuito](docs/despliegue-gratuito.md) | S16, comandos offline, selección de entorno, operación y publicación futura sin gasto. |
 | [Pruebas de API e integración](docs/pruebas-api-e-integracion.md) | S17, ejecución aislada, matriz API-01–API-26 y evidencia con red controlada. |
 | [Pruebas E2E y aceptación](docs/pruebas-e2e-y-aceptacion.md) | S18, navegador, QR, teclado/móvil, informes y aceptación externa con bloqueos explícitos. |
+| [Persistencia gestionada desde Vercel](docs/persistencia-gestionada-desde-vercel.md) | S19, integración nativa del Marketplace, exportación privada de entorno y evidencia v2 del proyecto y la base vinculados. |
 | [Sistema de diseño](DESIGN.md) | Ficha de abastecimiento industrial, tokens y componentes compartidos. |
 | [Modelo de la demo](docs/modelo-demo.md) | Participantes, relaciones y estados. |
 | [Flujo y trazabilidad](docs/flujo-y-trazabilidad.md) | Hitos HCS, hashes, pendientes, cuotas y recuperación. |
@@ -38,7 +39,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs están docum
 
 ## Base acordada
 
-Next.js, PostgreSQL en Neon Free con Prisma y JSONB, Vercel Free/Hobby y Hedera HCS testnet firmado por el servidor Jopói. Presupuesto cero, sin tarjetas, planes pagos ni upgrades automáticos.
+Next.js, PostgreSQL con Prisma y JSONB mediante Neon nativo de Vercel Marketplace, Vercel Free/Hobby y Hedera HCS testnet firmado por el servidor Jopói. La preparación habitual de la base se gestiona desde Vercel, sin cuenta independiente en Neon. Presupuesto cero, sin tarjetas, planes pagos ni upgrades automáticos; condiciones en la cuenta y aceptación remota aún requieren evidencia real.
 
 La experiencia representa generador, coordinador, transportista y comprador dentro de una sesión anónima. «Probar demo» abre el recorrido; «Book a demo» guarda una solicitud real para conocer el prototipo. El lanzamiento comercial queda para una evolución posterior.
 

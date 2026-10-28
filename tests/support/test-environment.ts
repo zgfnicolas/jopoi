@@ -4,7 +4,7 @@ import type { TestResources } from "./runtime-provision";
 export function sealedEnvironment(resources: TestResources): NodeJS.ProcessEnv {
   return {
     ...process.env,
-    NODE_ENV: "development", DATABASE_URL: resources.databaseUrl, DIRECT_URL: resources.databaseUrl,
+    NODE_ENV: "development", DATABASE_URL: resources.databaseUrl, DIRECT_URL: resources.databaseUrl, DATABASE_URL_UNPOOLED: "",
     SESSION_SECRET: "synthetic-session-secret-for-s17-only", CRON_SECRET: "synthetic-cron-secret-for-s17-only",
     APP_URL: `http://127.0.0.1:${resources.httpPort}`, HEDERA_OPERATOR_ID: "0.0.17",
     HEDERA_OPERATOR_KEY: "11".repeat(32), HEDERA_TOPIC_ID: "0.0.170", HCS_CONFIGURATION_GENERATION: "s17",

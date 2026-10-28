@@ -2,7 +2,9 @@
 
 Fecha: 2026-10-27. Dependencias: persistencia, despliegue y aceptación existentes.
 
-Estado: alcance aclarado por el responsable; especificación viable mediante una integración nativa de Vercel Marketplace, pendiente de implementación y validación del plan gratuito disponible. Se reutilizan los límites de prueba de API y navegador existentes. Publicación pendiente de configuración del tracker; `ready-for-agent` es la etiqueta solicitada por to-spec, todavía no aplicada.
+Estado: configuración, herramientas privadas y evidencia v2 implementadas; ver [procedimiento S19](../persistencia-gestionada-desde-vercel.md). Aprovisionamiento, validación del plan en la cuenta, despliegue y aceptación remota pendientes de acceso y evidencia externa. Se reutilizan los límites de API y navegador existentes, más pruebas CLI de selección de entorno y aceptación documental. Publicación en el tracker pendiente de configuración; `ready-for-agent` todavía no aplicada.
+
+Verificación local: 15 pruebas CLI, 28 de API y 28 de navegador aprobadas, además de TypeScript, validación Prisma y build de producción. El responsable eligió dejar el despliegue pendiente. El [registro de implementación](../persistencia-gestionada-desde-vercel.md) distingue esta evidencia local de la aceptación remota todavía no realizada.
 
 ## Problem Statement
 
@@ -85,7 +87,7 @@ El criterio de éxito es una URL publicada con persistencia durable, configuraci
 - **Validación del destino y del flujo Vercel:** una suite aprobada con PostgreSQL local demuestra regresiones funcionales, pero no acredita compatibilidad, cuotas o conectividad del servicio elegido. Comprobar desde Vercel la creación del recurso con integración nativa, selección del plan gratuito, conexión al proyecto, sincronización de credenciales y aislamiento de entornos. Verificar conexión real, migraciones, persistencia tras reinicio o redeploy y operación gratuita en el candidato publicado. El procedimiento habitual debe completarse sin crear una cuenta independiente ni configurar la base desde el panel del proveedor.
 - **Validación del traslado:** si existen datos, contrastar recuentos y relaciones, precisión, identificadores públicos, hashes y estados pendientes antes y después del corte; ensayar restauración y recuperación con datos controlados. No provocar fallos destructivos sobre una base con datos reales para ejecutar pruebas.
 - **Regla de cierre:** mantener separadas la evidencia de regresión local, la aceptación del despliegue y la verificación real en Hedera. Dar por cumplida la centralización cuando el procedimiento desde Vercel funcione y preserve las garantías de la demo, aunque la base sea operada por un tercero. Documentar cualquier tarea necesaria que todavía obligue a administrar ese proveedor por separado antes de cerrar la aceptación.
-- **Esta entrega:** revisión documental y de fuentes oficiales; no se crean ni ejecutan suites, migraciones, despliegues o envíos a testnet para producir la spec.
+- **Implementación posterior:** la fase de especificación no provisionó recursos. S19 incorpora configuración y evidencia documental, pruebas CLI y regresión local. Esa verificación no acredita por sí sola aprovisionamiento, despliegue ni envíos reales a testnet.
 
 ## Out of Scope
 

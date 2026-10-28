@@ -54,8 +54,14 @@ export class TestRuntime {
       return status;
     }, status => status === 401, "NEXT_READY", 90000);
     if (this.bundler === "webpack") {
-      // Compile page entries before attaching a browser's development HMR client.
-      for (const path of ["/", "/demo", "/trazabilidad/00000000-0000-4000-8000-000000000000"]) {
+      // Compile every UI entry before the browser's 15s request budget starts.
+      // GETs without cookies use protected/unknown resources or unsupported methods; no commands run.
+      const sample = "00000000-0000-4000-8000-000000000000";
+      for (const path of ["/", "/demo", "/trazabilidad/00000000-0000-4000-8000-000000000000",
+        "/api/demo/session", "/api/demo/runs/current", "/api/demo/runs", "/api/demo/runs/reset",
+        `/api/demo/runs/${sample}`, `/api/demo/runs/${sample}/commands`,
+        `/api/demo/runs/${sample}/events/${sample}/retry`, "/api/demo-requests",
+        `/api/traces/${sample}`, `/api/traces/${sample}/events/${sample}/verification`, "/api/cron"]) {
         const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
         await response.text();
         if (response.status >= 500) throw new Error("BLOCKED_NEXT_PAGE_FAILED; revisar next.log");

@@ -6,11 +6,11 @@ import { acceptanceReport, readProof } from "./lib/acceptance-report";
 import { evidenceRevision } from "./lib/evidence";
 
 async function main() {
-  const { args, file } = environmentOption(process.argv.slice(2));
+  const { args, file, format } = environmentOption(process.argv.slice(2));
   const action = args.shift();
   if (!["check", "live"].includes(action ?? "")) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   if (args.length === 1 && args[0] === "--help") {
-    console.log("acceptance:check -- [--env-file ARCHIVO] [--evidence ARCHIVO] [--journal ARCHIVO]\nacceptance:live -- --run --env-file ARCHIVO --evidence ARCHIVO --journal .cache/acceptance/ARCHIVO.json\nCheck solo lee archivos: no conecta SQL, inicia navegador ni contacta proveedores.\nLive opera un recorrido sintético en el candidato explícito; no crea servicios, topics o despliegues.\nReusar journal solo consulta el recorrido conocido; no repite escrituras. Nunca guarda cookies o claves.\nCódigos: 0 aprobado, 1 fallido/bloqueado, 2 argumentos inválidos. Ayuda sin cargar entorno."); return;
+    console.log("acceptance:check -- [--env-file ARCHIVO (o --vercel-env-file ARCHIVO)] [--evidence ARCHIVO] [--journal ARCHIVO]\nacceptance:live -- --run --env-file ARCHIVO (o --vercel-env-file ARCHIVO) --evidence ARCHIVO --journal .cache/acceptance/ARCHIVO.json\nCheck solo lee archivos: no conecta SQL, inicia navegador ni contacta proveedores.\nLive opera un recorrido sintético en el candidato explícito; no crea servicios, topics o despliegues.\nReusar journal solo consulta el recorrido conocido; no repite escrituras. Nunca guarda cookies o claves.\nCódigos: 0 aprobado, 1 fallido/bloqueado, 2 argumentos inválidos. Ayuda sin cargar entorno."); return;
   }
   let run = false, evidence: string | undefined, journal: string | undefined;
   for (let index = 0; index < args.length; index++) {
@@ -26,7 +26,7 @@ async function main() {
   let origin: string | undefined;
   let configured = false;
   if (file) {
-    loadCliEnvironment(process.cwd(), file);
+    loadCliEnvironment(process.cwd(), file, format);
     const candidate = await deliveryCheck(process.cwd(), "candidate", process.env);
     configured = candidate.ok;
     if (configured) origin = process.env.APP_URL;

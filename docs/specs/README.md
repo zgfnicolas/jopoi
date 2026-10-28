@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-22. Base: alcance confirmado en Q31 y aclaración posterior de trabajar en specs antes de escribir código.
 
-Estado: 18 specs documentadas; S01–S15 implementan backend e interfaz, S16 añade preparación de entrega y S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 implementa navegador, capturas, teclado/móvil y herramientas de aceptación externa. Las cuatro migraciones están aplicadas a PostgreSQL local; publicación y aceptación real de testnet siguen pendientes de evidencia externa. El usuario confirmó API pública más navegador como límites de prueba. S02–S17 se integraron mediante PR #1–#16; este trabajo no publica nuevas issues ni PRs.
+Estado: 18 specs originales y S19 documentadas; S01–S15 implementan backend e interfaz, S16 añade preparación de entrega y S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 implementa navegador, capturas, teclado/móvil y herramientas de aceptación externa. Las cuatro migraciones están aplicadas a PostgreSQL local; publicación y aceptación real de testnet siguen pendientes de evidencia externa. El usuario confirmó API pública más navegador como límites de prueba. S02–S17 se integraron mediante PR #1–#16; este trabajo no publica nuevas issues ni PRs.
 
 ## Orden de trabajo
 
@@ -31,7 +31,7 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 ## Cambio de infraestructura solicitado posteriormente
 
-[S19 · Persistencia y despliegue gestionados desde Vercel](19-persistencia-gestionada-desde-vercel.md) recoge la solicitud y su aclaración del 2026-10-27: el responsable acepta proveedores externos por detrás y quiere aprovisionar y gestionar la base desde Vercel mediante una integración nativa del Marketplace, sin cuentas independientes ni configuración habitual fuera de Vercel. El bloqueo anterior por exigir productos exclusivamente propios queda retirado. Neon puede seguir siendo el proveedor subyacente; se mantienen PostgreSQL y presupuesto cero. La implementación y validación del plan gratuito están pendientes, con los límites de API y navegador existentes. Su publicación requiere configurar el tracker. Las referencias anteriores a Neon Free describen el plan original; S19 añade el requisito de gestionarlo desde Vercel y permite otra integración nativa compatible si fuera necesaria.
+[S19 · Persistencia y despliegue gestionados desde Vercel](19-persistencia-gestionada-desde-vercel.md) recoge la solicitud y su aclaración del 2026-10-27: el responsable acepta proveedores externos por detrás y quiere aprovisionar y gestionar la base desde Vercel mediante una integración nativa del Marketplace, sin cuentas independientes ni configuración habitual fuera de Vercel. El bloqueo anterior por exigir productos exclusivamente propios queda retirado. Neon puede seguir siendo el proveedor subyacente; se mantienen PostgreSQL y presupuesto cero. La configuración nativa, herramientas y evidencia v2 están implementadas; ver [procedimiento S19](../persistencia-gestionada-desde-vercel.md). Aprovisionamiento, plan en la cuenta, publicación y aceptación remota siguen pendientes de acceso y evidencia externa, conservando los límites de API y navegador existentes. Su publicación requiere configurar el tracker. Las referencias anteriores a Neon Free describen el plan original; S19 añade el requisito de gestionarlo desde Vercel y permite otra integración nativa compatible si fuera necesaria.
 
 ## Continuidad del plan original
 
