@@ -17,5 +17,5 @@ export function ReadErrorView({ error, refresh }: { error: ReadError; refresh: (
   const message = error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message : "No pudimos recuperar los datos. Revisá tu conexión y volvé a consultar.";
   return <div className="stack"><Notice title={custom?.title ?? "La consulta no está disponible"} tone="error" announce>
     <p>{custom?.text ?? message}</p>{error.requestId && <p>Referencia de consulta: <span className="identifier">{error.requestId}</span></p>}
-  </Notice><div className="actions"><ActionButton onClick={refresh}>Actualizar consulta</ActionButton><ActionLink href="/" secondary>Volver al inicio</ActionLink></div></div>;
+  </Notice><div className="actions"><ActionButton onClick={refresh}>Actualizar consulta</ActionButton><ActionLink href="/" variant="secondary">Volver al inicio</ActionLink></div></div>;
 }

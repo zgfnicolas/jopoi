@@ -2,8 +2,8 @@ import { test, expect } from "./support/fixtures";
 
 test("E2E-01 · beneficio, material y coordinación preceden a los detalles técnicos", async ({ journey, page }, info) => {
   await page.goto(journey.origin);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Un lote disponible.Un retorno que puede llevarlo.");
-  await expect(page.getByText(/Jopói conecta material, comprador y transporte compatible/)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Jopói: coordinación de materiales, compradores y transporte");
+  await expect(page.getByText(/Una propuesta para conectar empresas/)).toBeVisible();
   const h1 = await page.getByRole("heading", { level: 1 }).boundingBox();
   const technical = await page.getByRole("heading", { name: "La acción y su evidencia, conectadas." }).boundingBox();
   expect(h1!.y).toBeLessThan(technical!.y);
@@ -17,13 +17,13 @@ test("E2E-02 · probar y solicitar demo son accesos independientes", async ({ jo
   await expect(page.getByRole("button", { name: "Comenzar", exact: true })).toBeVisible();
   await expect(page.getByLabel("Email", { exact: true })).toHaveCount(0);
   await page.goto(journey.origin);
-  await page.getByRole("main").getByRole("link", { name: "Book a demo", exact: true }).click();
+  await page.getByRole("main").getByRole("link", { name: "Solicitar una demostración", exact: true }).click();
   await expect(page.getByLabel("Email", { exact: true })).toBeVisible();
   await expect(page.getByText("Este formulario guarda una solicitud real. No reserva una fecha ni envía correos automáticos.")).toBeVisible();
 });
 
 test("E2E-07 · error conserva campos y el guardado se confirma solo después de persistir", async ({ journey, page, runtime }, info) => {
-  const submit = () => info.project.name === "webkit-mobile"
+  const submit = () => Boolean(info.project.use.isMobile)
     ? page.getByRole("button", { name: "Solicitar conocer el prototipo", exact: true }).tap()
     : page.getByRole("button", { name: "Solicitar conocer el prototipo", exact: true }).click();
   await page.goto(journey.origin + "/#book-a-demo");

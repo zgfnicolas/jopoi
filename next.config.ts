@@ -4,7 +4,9 @@ import { readFileSync } from "node:fs";
 import { resolve, sep } from "node:path";
 
 export default function configuration(phase: string): NextConfig {
-  const config: NextConfig = { serverExternalPackages: ["@hiero-ledger/sdk"] };
+  const config: NextConfig = { serverExternalPackages: ["@hiero-ledger/sdk"],
+    async headers() { return [{ source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }]; },
+  };
   const directory = process.env.JOPOI_API_TEST_DIRECTORY;
   if (!directory) return config;
   const root = resolve(".cache", "api-tests");
@@ -22,6 +24,9 @@ export default function configuration(phase: string): NextConfig {
   return {
     ...config,
     distDir: process.env.JOPOI_E2E_BUNDLER === "webpack" ? ".cache/e2e/next" : ".cache/api-tests/next",
+    // Keep the local browser harness usable on memory-constrained Windows hosts.
+    // The normal production configuration above does not enable experimental flags.
+    experimental: { webpackMemoryOptimizations: true },
     typescript: { tsconfigPath: "tsconfig.api.json" },
     turbopack: { resolveAlias: {
       "@/server/runtime/clock": "./tests/support/clock.ts",

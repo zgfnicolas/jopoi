@@ -1,6 +1,6 @@
-.share { display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start; }
+.share { display: flex; gap: var(--space-8); flex-wrap: wrap; align-items: flex-start; }
 .share > div { flex: 1 1 22rem; min-width: 0; }
 .qr { margin: 0; width: 256px; max-width: 100%; }
-.qr img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
-.qr figcaption { margin-top: .5rem; font-size: .88rem; color: var(--muted); }
-.placeholder { display: grid; place-items: center; width: 100%; aspect-ratio: 1; padding: 1rem; background: var(--subtle); }
+.qr img { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #ffffff; }
+.qr figcaption { margin-top: var(--space-2); font-size: var(--text-caption); color: var(--muted); }
+.placeholder { display: grid; place-items: center; width: 100%; aspect-ratio: 1; padding: var(--space-4); background: var(--subtle); }

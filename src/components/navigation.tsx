@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ThemeSelector } from "./theme-selector";
 export function Navigation() {
   const path = usePathname();
   return <header className="site-header"><div className="header-content">
@@ -9,7 +10,8 @@ export function Navigation() {
       <Link href="/" aria-current={path === "/" ? "page" : undefined}>Inicio</Link>
       <Link href="/demo" prefetch={false} aria-current={path === "/demo" ? "page" : undefined}>Demo</Link>
       <Link href="/#consultar-trazabilidad" aria-current={path.startsWith("/trazabilidad/") ? "location" : undefined}>Consultar trazabilidad</Link>
-      <Link href="/#book-a-demo">Book a demo</Link>
+      <Link href="/#book-a-demo">Solicitar una demostración</Link>
     </nav>
+    <ThemeSelector />
   </div></header>;
 }

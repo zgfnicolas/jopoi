@@ -6,7 +6,7 @@ import type { SimulatedRole } from "@/shared/operation-contracts";
 import type { PublicEventType } from "@/shared/event-contracts";
 import { useOperationPanel } from "@/frontend/use-operation-panel";
 import { formatArs, formatDate, formatHumidity, formatKg } from "@/frontend/format";
-import { ActionButton, Notice } from "./ui/primitives";
+import { ActionButton, Notice, SelectField } from "./ui/primitives";
 import { OperationalStatus, PublicationStatus, VerificationStatus } from "./ui/status";
 import { nextRoles, OperationTask, roleLabels } from "./operation-task";
 import { TraceShare } from "./trace-share";
@@ -30,8 +30,8 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
   return <div className="stack">
     <div ref={feedback} tabIndex={-1} className="stack">
       {panel.busy && <Notice title="Procesando…" announce><p>Esperamos la respuesta del servidor. No cierres la página si querés conservar una intención pendiente.</p></Notice>}
-      {panel.message && <Notice title={panel.message} announce>{panel.stale && <p>Falta actualizar el detalle. El guardado confirmado no se volverá a enviar por este fallo de lectura.</p>}</Notice>}
-      {panel.error && <Notice title={panel.uncertain ? "La acción sigue sin confirmar" : panel.conflict ? "El estado guardado cambió" : panel.error.code === "SESSION_EXPIRED" ? "Tu sesión venció" : panel.error.code === "SESSION_REQUIRED" ? "Comenzá tu exploración" : "No pudimos completar la consulta o acción"} tone={startAllowed && panel.error.code === "SESSION_REQUIRED" ? "info" : "error"} announce>
+      {panel.message && <Notice title={panel.message} tone={panel.stale ? "warning" : "success"} announce>{panel.stale && <p>Falta actualizar el detalle. El guardado confirmado no se volverá a enviar por este fallo de lectura.</p>}</Notice>}
+      {panel.error && <Notice title={panel.uncertain ? "La acción sigue sin confirmar" : panel.conflict ? "El estado guardado cambió" : panel.error.code === "SESSION_EXPIRED" ? "Tu sesión venció" : panel.error.code === "SESSION_REQUIRED" ? "Comenzá tu exploración" : "No pudimos completar la consulta o acción"} tone={startAllowed && panel.error.code === "SESSION_REQUIRED" ? "info" : panel.uncertain || panel.conflict || ["SESSION_EXPIRED", "RUN_LIMIT_REACHED"].includes(panel.error.code) ? "warning" : "error"} announce>
         <p>{panel.errorText}</p>{Object.entries(fields).map(([key, value]) => <p key={key}>{value.join(" ")}</p>)}
         {panel.error.requestId && <p>Referencia: <span className="identifier">{panel.error.requestId}</span></p>}
         {panel.error.code === "SESSION_EXPIRED" && <p>Retiramos la vista privada. Los enlaces públicos pueden seguir disponibles hasta su propio vencimiento. Una nueva sesión no será propietaria de la anterior.</p>}
@@ -49,8 +49,8 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
       })}</ol>
       <div className={styles.workspace}>
         <section className={`${styles.task} stack`} aria-labelledby="task-title"><h2 id="task-title" tabIndex={-1}>Tu siguiente acción</h2>
-          <label htmlFor="simulated-role">Rol que estás representando</label><select id="simulated-role" value={role} disabled={panel.blocked} onChange={event => setRole(event.target.value as SimulatedRole)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
-          {requiredRole && requiredRole !== role && <div><ActionButton type="button" secondary disabled={panel.blocked} onClick={() => { setRole(requiredRole); requestAnimationFrame(() => document.getElementById("task-title")?.focus()); }}>Representar a {roleLabels[requiredRole]}</ActionButton></div>}
+          <SelectField label="Rol que estás representando" id="simulated-role" value={role} disabled={panel.blocked} onChange={event => setRole(event.target.value as SimulatedRole)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</SelectField>
+          {requiredRole && requiredRole !== role && <div><ActionButton type="button" variant="secondary" disabled={panel.blocked} onClick={() => { setRole(requiredRole); requestAnimationFrame(() => document.getElementById("task-title")?.focus()); }}>Representar a {roleLabels[requiredRole]}</ActionButton></div>}
           <OperationTask key={`${run.traceId}:${panel.draftRevision}`} run={run} role={role} blocked={panel.blocked} conflict={panel.conflict} reviewBlocked={panel.busy || panel.stale || panel.uncertain} reviewed={panel.acknowledgeConflict} submit={panel.command} />
         </section>
         <aside className="stack" aria-label="Contexto guardado del recorrido"><h2>El lote guardado</h2><h3>{run.scenario.material.label}</h3>
@@ -79,17 +79,17 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
           {publication.nextAttemptAt && <p>Próxima elegibilidad: {formatDate(publication.nextAttemptAt)}.</p>}
           {publication.state === "PAUSED_QUOTA" && <p>El cupo está agotado. La acción SQL sigue guardada; el envío espera recursos disponibles.</p>}
           {publication.state === "PAUSED_CONFIG" && <p>El envío está pausado por configuración. La acción SQL sigue guardada.</p>}
-          {(publication.manualAvailable || publication.state === "UNCERTAIN" && !publication.blockedBy) && <div><ActionButton type="button" secondary disabled={panel.blocked} onClick={() => panel.retryPublication(event.payload.eventId)}>{publication.state === "UNCERTAIN" ? "Comprobar envío incierto" : "Autorizar intento adicional"}</ActionButton></div>}
+          {(publication.manualAvailable || publication.state === "UNCERTAIN" && !publication.blockedBy) && <div><ActionButton type="button" variant="secondary" disabled={panel.blocked} onClick={() => panel.retryPublication(event.payload.eventId)}>{publication.state === "UNCERTAIN" ? "Comprobar envío incierto" : "Autorizar intento adicional"}</ActionButton></div>}
           {publication.state === "FAILED" && publication.manualAttempts >= 1 && <p>Intentos de envío agotados. El cierre operativo permanece registrado.</p>}
         </li>)}</ol>}</details>
       </section>
       <section className="content-section stack" aria-labelledby="share-title"><h2 id="share-title">Consultar y compartir</h2><TraceShare key={run.traceId} traceId={run.traceId} expiresAt={run.expiresAt} publicOrigin={publicOrigin} /></section>
       <section className="content-section stack" aria-labelledby="reset-title"><h2 id="reset-title">Explorar otro resultado</h2><p>Crear otro recorrido consume una exploración. El anterior conserva su historial y su fecha de vencimiento. Los cambios locales sin guardar se perderán.</p>
-        {panel.data && panel.data.session.remainingRuns > 0 ? confirmReset ? <Notice title="¿Crear otro recorrido?" announce><p>Quedan {panel.data.session.remainingRuns} exploraciones. Esta acción no reabre ni modifica el recorrido anterior.</p><div className="actions"><ActionButton type="button" disabled={panel.blocked} onClick={() => { setConfirmReset(false); panel.reset(); }}>Confirmar nuevo recorrido</ActionButton><ActionButton type="button" secondary disabled={panel.busy} onClick={() => setConfirmReset(false)}>Cancelar</ActionButton></div></Notice> : <div><ActionButton type="button" secondary disabled={panel.blocked} onClick={() => setConfirmReset(true)}>Nuevo recorrido</ActionButton></div> : <Notice title="Usaste las tres exploraciones"><p>Podés consultar los recorridos existentes. Recargar no renueva el cupo.</p></Notice>}
+        {panel.data && panel.data.session.remainingRuns > 0 ? confirmReset ? <Notice title="¿Crear otro recorrido?" announce><p>Quedan {panel.data.session.remainingRuns} exploraciones. Esta acción no reabre ni modifica el recorrido anterior.</p><div className="actions"><ActionButton type="button" disabled={panel.blocked} onClick={() => { setConfirmReset(false); panel.reset(); }}>Confirmar nuevo recorrido</ActionButton><ActionButton type="button" variant="secondary" disabled={panel.busy} onClick={() => setConfirmReset(false)}>Cancelar</ActionButton></div></Notice> : <div><ActionButton type="button" variant="secondary" disabled={panel.blocked} onClick={() => setConfirmReset(true)}>Nuevo recorrido</ActionButton></div> : <Notice title="Usaste las tres exploraciones"><p>Podés consultar los recorridos existentes. Recargar no renueva el cupo.</p></Notice>}
       </section>
     </>}
     {panel.links.filter(link => link.traceId !== run?.traceId).length > 0 && <section className="content-section stack"><h2>Consultas conservadas en esta visita</h2><p>Solo conservamos estos enlaces en memoria. Su consulta pública puede seguir disponible al vencer la sesión privada.</p><ul>{panel.links.filter(link => link.traceId !== run?.traceId).map(link => <li key={link.traceId}><a href={`/trazabilidad/${link.traceId}`}>Consultar recorrido <span className="identifier">{link.traceId}</span></a></li>)}</ul></section>}
-    <div className="actions"><ActionButton type="button" secondary disabled={panel.busy} onClick={panel.refresh}>Actualizar lectura</ActionButton>{panel.error?.code === "NOT_FOUND" && <ActionButton type="button" secondary disabled={panel.busy} onClick={panel.recoverCurrent}>Consultar el recorrido actual</ActionButton>}</div>
+    <div className="actions"><ActionButton type="button" variant="secondary" disabled={panel.busy} onClick={panel.refresh}>Actualizar lectura</ActionButton>{panel.error?.code === "NOT_FOUND" && <ActionButton type="button" variant="secondary" disabled={panel.busy} onClick={panel.recoverCurrent}>Consultar el recorrido actual</ActionButton>}</div>
   </div>;
 }
 function Evidence({ run }: { run: DemoRunDetail }) {

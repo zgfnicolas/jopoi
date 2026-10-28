@@ -11,7 +11,7 @@ async function keyboardTo(page: Page, target: Locator) {
 }
 
 test("E2E-10 · teclado de escritorio, uso táctil móvil y controles sin recorte", async ({ journey, page }, info) => {
-  const mobile = info.project.name === "webkit-mobile";
+  const mobile = Boolean(info.project.use.isMobile);
   const activate = async (target: Locator) => {
     if (mobile) await target.tap();
     else { await keyboardTo(page, target); await page.keyboard.press("Enter"); }
@@ -30,7 +30,7 @@ test("E2E-10 · teclado de escritorio, uso táctil móvil y controles sin recort
   await activate(page.getByRole("button", { name: "Solicitar conocer el prototipo", exact: true }));
   await expect(page.getByText("Tu solicitud para conocer el prototipo quedó guardada.", { exact: true })).toBeVisible();
   await expect.poll(() => page.evaluate(() => document.activeElement?.textContent)).toContain("Tu solicitud para conocer el prototipo quedó guardada.");
-  const widths = info.project.name === "chromium-desktop" ? [320, 768, 1440] : [390];
+  const widths = !info.project.use.isMobile ? [320, 768, 1440] : [390];
   for (const width of widths) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);

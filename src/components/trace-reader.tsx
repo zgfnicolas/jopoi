@@ -62,6 +62,6 @@ function TraceContent({ trace, publicOrigin, refresh, invalidate, changed }: { t
         <ol className={styles.timeline}>{trace.events.map(event => <TraceEventView key={event.eventId} event={event} current={verification.results[event.eventId]} busyEvent={verification.busyEvent} verify={() => { void verification.verify(event); }} />)}</ol>}
     </section>
     <section className="content-section stack" aria-labelledby="share-heading"><h2 id="share-heading">Compartir esta consulta</h2><TraceShare traceId={trace.traceId} expiresAt={trace.expiresAt} publicOrigin={publicOrigin} /></section>
-    <div className="stack"><p>Actualizar vuelve a leer SQL y descarta las observaciones transitorias anteriores. No hay seguimiento continuo ni reintentos automáticos.</p><div><ActionButton type="button" secondary onClick={refresh}>Actualizar lectura</ActionButton></div></div>
+    <div className="stack"><p>Actualizar vuelve a leer SQL y descarta las observaciones transitorias anteriores. No hay seguimiento continuo ni reintentos automáticos.</p><div><ActionButton type="button" variant="secondary" onClick={refresh}>Actualizar lectura</ActionButton></div></div>
   </div>;
 }

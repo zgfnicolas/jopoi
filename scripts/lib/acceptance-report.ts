@@ -85,7 +85,7 @@ export function acceptanceReport(origin?: string, proofFile?: string, journalFil
   }
   const local = (id: string): Verdict => {
     const item = browser?.cases.find(item => item.id === id);
-    if (!item || !["chromium-desktop", "webkit-mobile"].every(project => item.observations?.some(value => value.project === project))) return "BLOQUEADO";
+    if (!item || !["chromium-desktop", "webkit-mobile", "chromium-desktop-dark", "webkit-mobile-dark"].every(project => item.observations?.some(value => value.project === project))) return "BLOQUEADO";
     return item.result;
   };
   const real: Verdict = live?.status === "FALLIDO" ? "FALLIDO" : live?.status === "APROBADO" && live.events.length === 5 ? "APROBADO" : "BLOQUEADO";
@@ -96,16 +96,18 @@ export function acceptanceReport(origin?: string, proofFile?: string, journalFil
     return { id, result, local: ["E2E-12", "E2E-13"].includes(id) ? "NO_APLICA" : local(id),
       recovery: result === "BLOQUEADO" ? id === "E2E-12" ? "Falta comprobar cinco hitos reales con el candidato y journal seleccionados."
         : ["E2E-13", "E2E-14"].includes(id) ? "Falta evidencia v2 del proyecto Vercel vinculado, base nativa gratuita y ejecución del cron diario del candidato."
-        : "Falta evidencia vigente de ambos proyectos de navegador." : null };
+        : "Falta evidencia vigente de las cuatro variantes de navegador y tema." : null };
   });
   const criterionCases = [["E2E-01", "E2E-10", "E2E-13"], ["E2E-03", "E2E-04", "E2E-05"], ["E2E-03", "E2E-04", "E2E-05"],
     ["E2E-06", "E2E-08"], ["E2E-08"], ["E2E-12"], ["E2E-09"], ["E2E-06", "E2E-11"], ["E2E-14"], ["E2E-07"],
     ["E2E-01", "E2E-15"], ["E2E-13"], ["E2E-12", "E2E-13", "E2E-14"], ["E2E-08", "E2E-12"]];
   const combine = (states: string[]): Verdict => states.includes("FALLIDO") ? "FALLIDO" : states.every(state => state === "APROBADO") ? "APROBADO" : "BLOQUEADO";
   const apiVerdict = api && api.cases.length === 26 ? combine(api.cases.map(item => item.result)) : "BLOQUEADO";
+  const ui = combine([local("S20-01"), local("S20-02")]);
   const criteria = criterionCases.map((ids, index) => ({ criterion: index + 1, cases: ids,
     result: combine([apiVerdict, ...ids.map(id => cases.find(item => item.id === id)!.result)]) }));
   return { generatedAt: new Date().toISOString(), ...source, mode: "ACCEPTANCE_AGGREGATE", api: apiVerdict,
-    status: combine([apiVerdict, source.dirty ? "BLOQUEADO" : "APROBADO", ...cases.map(item => item.result)]),
+    ui,
+    status: combine([apiVerdict, ui, source.dirty ? "BLOQUEADO" : "APROBADO", ...cases.map(item => item.result)]),
     note: "La evidencia local usa Hedera controlado y móvil emulado. Un estado bloqueado no acredita aceptación final.", cases, criteria };
 }
