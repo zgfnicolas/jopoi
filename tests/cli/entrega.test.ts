@@ -15,7 +15,11 @@ after(() => {
   assert.ok(directory.startsWith(cache + sep));
   rmSync(directory, { recursive: true, force: true });
 });
-const pooled = "postgresql://synthetic:private-marker@ep-synthetic-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require";
+// Offline parser fixtures: generated credentials, never provisioned or used to connect.
+const pooledUrl = new URL("postgresql://ep-synthetic-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require");
+pooledUrl.username = "synthetic";
+pooledUrl.password = randomUUID();
+const pooled = pooledUrl.href;
 const direct = pooled.replace("-pooler", "");
 function fixture(values: Record<string, string>) {
   const file = resolve(directory, `${randomUUID()}.env`);
@@ -30,6 +34,7 @@ function cli(script: string, args: string[], extra: Record<string, string> = {})
   assert.equal(result.error, undefined);
   assert.equal(result.signal, null);
   assert.doesNotMatch(result.stdout + result.stderr, /private-marker|ambient-marker/);
+  assert.ok(!(result.stdout + result.stderr).includes(pooledUrl.password), "CLI output must not expose generated credentials");
   return result;
 }
 function check(values: Record<string, string>, selector = "--vercel-env-file") {
