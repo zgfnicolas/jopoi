@@ -37,6 +37,10 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 [S20 · Interfaz coherente, inicio descriptivo, accesibilidad y SEO](20-sistema-ui-accesibilidad-y-seo.md) define la mejora de toda la UI: portada orientada al público de Jopói, sistema visual y componentes reutilizables, temas claro/oscuro, HTML semántico, responsive, objetivo WCAG 2.2 AA y política de indexación. Conserva identidad industrial, dominio y finalidad de prototipo. La implementación y sus comprobaciones locales se registran en [validación S20](../s20-validacion.md); los límites de navegador, HTTP/HTML y API están confirmados. Lector de pantalla, datos de campo y despliegue tienen evidencia separada. Publicación pendiente de configuración del tracker.
 
+## Revisión de API, acceso y datos solicitada posteriormente
+
+[S21 · Revisión y mejoras de API, sesiones, concurrencia y base de datos](21-api-sesiones-concurrencia-y-seguridad-de-datos.md) convierte la solicitud del 2026-10-29 en una auditoría con correcciones basadas en evidencia. Cubre AuthN/AuthZ, cookie HttpOnly y pertinencia de access/refresh tokens, contratos HTTP, abuso, asincronía, concurrencia, cron, normalización, integridad, ACID/rollback, índices, funciones y seguridad de PostgreSQL. Registra lo observado estáticamente y lo pendiente de pruebas y entorno; conserva las fronteras API/navegador ya confirmadas. Especificación propuesta, sin implementación ni pruebas nuevas ejecutadas. Publicación pendiente de configuración del tracker.
+
 ## Continuidad del plan original
 
 S01–S05 preparan capacidades acotadas; S06–S11 integran las reglas y la trazabilidad de backend; S12–S15 construyen la experiencia; S16 prepara la entrega gratuita; S17–S18 crean y ejecutan las verificaciones finales.
