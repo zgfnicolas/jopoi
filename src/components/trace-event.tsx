@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { TraceEvent, TraceEvidence, TraceLinks } from "@/shared/trace-contracts";
 import type { CurrentVerification } from "@/frontend/use-trace-verification";
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
+import { retryAfterMessage } from "@/frontend/retry-after";
 import { canonicalJson } from "@/domain/canonical-json";
 import { formatDate } from "@/frontend/format";
 import { ActionButton, Notice } from "./ui/primitives";
@@ -36,7 +37,7 @@ export function TraceEventView({ event, current, busyEvent, verify }: { event: T
         {busyEvent !== null && busyEvent !== event.eventId && <p>Esperá a que termine la consulta del otro hito.</p>}
         <div ref={feedback} tabIndex={-1} className="stack">
           {current?.status === "loading" && <Notice title="Consultando la evidencia de este hito…" announce><p>Una lectura acotada, sin reintentos automáticos.</p></Notice>}
-          {current?.status === "error" && <Notice title="No pudimos obtener un contraste actual" tone="error" announce><p>{current.error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[current.error.code as keyof typeof API_ERROR_CATALOG].message : "No recibimos una respuesta válida. Podés volver a consultar manualmente."}</p><p>El historial guardado se conserva; esta respuesta no confirma una coincidencia actual.</p>{current.error.requestId && <p>Referencia: <span className="identifier">{current.error.requestId}</span></p>}</Notice>}
+          {current?.status === "error" && <Notice title="No pudimos obtener un contraste actual" tone="error" announce><p>{current.error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[current.error.code as keyof typeof API_ERROR_CATALOG].message : "No recibimos una respuesta válida. Podés volver a consultar manualmente."}{retryAfterMessage(current.error.retryAfter)}</p><p>El historial guardado se conserva; esta respuesta no confirma una coincidencia actual.</p>{current.error.requestId && <p>Referencia: <span className="identifier">{current.error.requestId}</span></p>}</Notice>}
           {current?.status === "ready" && <><Notice title="Resultado de esta consulta" announce><VerificationStatus state={current.data.state} />
             {current.data.state === "NOT_CHECKED" && <p>No hay un intento verificable disponible. No se realizó un contraste remoto.</p>}
             {current.data.state === "PENDING" && <p>La evidencia todavía no está disponible para confirmar una coincidencia.</p>}

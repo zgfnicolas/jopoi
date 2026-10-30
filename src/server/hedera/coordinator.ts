@@ -283,10 +283,10 @@ export function createCoordinator(context: CoordinationContext) {
     return transaction(tx => tx.$queryRaw<{ eventId: string }[]>(Prisma.sql`
       SELECT p."eventId" FROM "HcsPublication" p
       JOIN "OperationEvent" e ON e.id=p."eventId" JOIN "DemoRun" r ON r.id=e."runId"
-      WHERE r."expiresAt" > ${now()} AND ${traceId ? Prisma.sql`r."traceId"=${traceId}::uuid` : Prisma.sql`TRUE`}
+      WHERE r."expiresAt" > ${now().toISOString()}::timestamptz AND ${traceId ? Prisma.sql`r."traceId"=${traceId}::uuid` : Prisma.sql`TRUE`}
         AND ${visited.length ? Prisma.sql`p."eventId" NOT IN (${Prisma.join(visited.map(id => Prisma.sql`${id}::uuid`))})` : Prisma.sql`TRUE`}
-        AND (p."nextAttemptAt" IS NULL OR p."nextAttemptAt" <= ${now()})
-        AND (p."leaseExpiresAt" IS NULL OR p."leaseExpiresAt" <= ${now()})
+        AND (p."nextAttemptAt" IS NULL OR p."nextAttemptAt" <= ${now().toISOString()}::timestamptz)
+        AND (p."leaseExpiresAt" IS NULL OR p."leaseExpiresAt" <= ${now().toISOString()}::timestamptz)
         AND (p.state <> 'CONFIRMED' OR p."verificationState" IN ('NOT_CHECKED','PENDING','UNAVAILABLE'))
         AND (p."automaticAttempts" < 3 OR p.state IN ('CONFIRMED','UNCERTAIN','IN_FLIGHT')
           OR (p."manualAuthorizedAt" IS NOT NULL AND p."manualAttempts"=0)

@@ -10,8 +10,9 @@ export default class ApiReporter implements Reporter {
       return { name: test.fullName, state: result.state,
         blocked: result.errors?.some(error => /BLOCKED_|TIMEOUT_WAITING_FOR_NEXT_READY/.test(error.message)) ?? false };
     }));
-    const cases = Array.from({ length: 26 }, (_, index) => {
-      const id = `API-${String(index + 1).padStart(2, "0")}`;
+    const identifiers = [...Array.from({ length: 26 }, (_, index) => `API-${String(index + 1).padStart(2, "0")}`),
+      ...Array.from({ length: 15 }, (_, index) => `S21-${String(index + 1).padStart(2, "0")}`)];
+    const cases = identifiers.map(id => {
       const matching = tests.filter(test => test.name.includes(id));
       return { id, result: matching.some(test => test.state === "failed" && !test.blocked) ? "FALLIDO"
         : !matching.length || matching.some(test => test.blocked || test.state === "pending" || test.state === "skipped") ? "BLOQUEADO"
@@ -21,6 +22,9 @@ export default class ApiReporter implements Reporter {
     mkdirSync(directory, { recursive: true });
     writeFileSync(resolve(directory, "report.json"), JSON.stringify({ generatedAt: new Date().toISOString(), ...evidenceRevision(), evidence: "HEDERA_CONTROLADO_NO_TESTNET_REAL", startupErrors: errors.length, cases }, null, 2));
     writeFileSync(resolve(directory, "report.md"), "# S17 · Hedera controlado (no testnet real)\n\n| Caso | Resultado |\n| --- | --- |\n" + cases.map(item => `| ${item.id} | ${item.result} |`).join("\n") + "\n");
+    const security = resolve(".cache", "s21");
+    mkdirSync(security, { recursive: true });
+    writeFileSync(resolve(security, "api-report.json"), JSON.stringify({ generatedAt: new Date().toISOString(), ...evidenceRevision(), startupErrors: errors.length, cases }, null, 2));
     const selected = process.argv.some(argument => argument === "-t" || argument.startsWith("--testNamePattern") || /tests[\\/]api[\\/].*\.test\.ts$/.test(argument));
     if (!selected && cases.some(item => item.result !== "APROBADO")) process.exitCode = 1;
   }

@@ -7,6 +7,7 @@ import { ApplicationError } from "../application-error";
 import { apiBoundary as boundary, PRIVATE_RESPONSE_HEADERS as privateHeaders, readJsonBody, requireBrowserMutation } from "../http";
 import { SESSION_COOKIE } from "./credentials";
 import { beginSession, recoverSession, resolveRunIntent } from "./service";
+import { requireRateLimit } from "../security/rate-limit";
 
 const emptyBody = z.strictObject({});
 const runIntentBody = z.strictObject({ requestId: z.uuid().transform((value) => value.toLowerCase()) });
@@ -25,6 +26,7 @@ export async function postSession(request: NextRequest): Promise<NextResponse> {
   return boundary(async () => {
     requireBrowserMutation(request);
     if (!emptyBody.safeParse(await readJsonBody(request, MAX_BODY_BYTES)).success) throw new ApplicationError("INVALID_INPUT");
+    await requireRateLimit(request, "SESSION");
     const result = await beginSession(request.cookies.get(SESSION_COOKIE)?.value);
     const response = NextResponse.json(result.body, { status: result.created ? 201 : 200, headers: privateHeaders });
     if (result.token !== undefined) {

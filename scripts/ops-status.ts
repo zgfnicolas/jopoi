@@ -26,6 +26,7 @@ async function main() {
       const errors = await tx.hcsPublication.groupBy({ by: ["lastErrorCode"], where: { lastErrorCode: { not: null } }, _count: { _all: true } });
       const expiredRuns = await tx.demoRun.count({ where: { expiresAt: { lte: observedAt } } });
       const expiredContacts = await tx.demoRequest.count({ where: { expiresAt: { lte: observedAt } } });
+      const expiredRateBuckets = await tx.requestRateBucket.count({ where: { expiresAt: { lte: observedAt } } });
       const maintenance = await tx.maintenanceLease.findUnique({ where: { name: "DAILY_MAINTENANCE" }, select: { lastCompletedDate: true } });
       const safeErrors: Record<string, number> = {};
       for (const row of errors) {
@@ -35,7 +36,7 @@ async function main() {
       return { publication: Object.fromEntries(publication.map(row => [row.state, row._count._all])),
         verification: Object.fromEntries(verification.map(row => [row.verificationState, row._count._all])),
         attempts: attempts.map(row => ({ kind: row.kind, state: row.state, count: row._count._all })), errors: safeErrors,
-        expiredAwaitingCleanup: { runs: expiredRuns, contacts: expiredContacts }, lastCompletedMaintenanceDate: maintenance?.lastCompletedDate?.toISOString() ?? null };
+        expiredAwaitingCleanup: { runs: expiredRuns, contacts: expiredContacts, rateBuckets: expiredRateBuckets }, lastCompletedMaintenanceDate: maintenance?.lastCompletedDate?.toISOString() ?? null };
     }, { isolationLevel: "RepeatableRead", maxWait: 2000, timeout: 5000 });
     console.log(JSON.stringify({ code: "OPERATIONS_OBSERVED", observedAt: observedAt.toISOString(), ...report }));
   } finally { await db.$disconnect(); }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { DEMO_POLICY, HEDERA_NETWORK } from "../../shared/demo-policy";
+import { databaseConnection } from "../database/connection-policy";
 
 /** Parser privado sin acceso a process.env: también reutilizable por futuros CLI. */
 export type Environment = Readonly<Record<string, string | undefined>>;
@@ -55,7 +56,8 @@ export type ConfigurationSummary = ConfigurationMetadata & (
 const postgresUrl = z.string().refine((value) => {
   if (!URL.canParse(value)) return false;
   const url = new URL(value);
-  return ["postgres:", "postgresql:"].includes(url.protocol) && url.hostname.length > 0;
+  if (!["postgres:", "postgresql:"].includes(url.protocol) || !url.hostname) return false;
+  try { databaseConnection(value); return true; } catch { return false; }
 });
 
 const secret = z.string().min(32).regex(/^\S+$/);

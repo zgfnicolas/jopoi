@@ -5,8 +5,9 @@ import { resolve, sep } from "node:path";
 
 import { child, completed } from "./process";
 import { ledger } from "./ledger";
+import { provisionApplicationRole } from "./restricted-role";
 
-export interface TestResources { directory: string; pgPort: number; httpPort: number; databaseUrl: string; socket: string; token: string; pgBin: string }
+export interface TestResources { directory: string; pgPort: number; httpPort: number; secondaryHttpPort: number; databaseUrl: string; applicationUrl: string; socket: string; token: string; pgBin: string }
 
 
 async function freePort(): Promise<number> {
@@ -41,7 +42,7 @@ async function initialize() {
   const directory = resolve(".cache", "api-tests", randomUUID());
   await mkdir(directory, { recursive: true });
   const token = randomBytes(32).toString("hex");
-  const [pgPort, httpPort] = [await freePort(), await freePort()];
+  const [pgPort, httpPort, secondaryHttpPort] = [await freePort(), await freePort(), await freePort()];
   const candidates = (await readdir(resolve(".tools", "postgresql"))).filter(name => /^17\.[\d.-]+$/.test(name)).sort();
   if (!candidates.length) throw new Error("BLOCKED_POSTGRES_BINARIES_MISSING");
   const pgBin = resolve(".tools", "postgresql", candidates.at(-1)!, "pgsql", "bin");
@@ -60,13 +61,14 @@ async function initialize() {
     await pg("createdb", ["-h", "127.0.0.1", "-p", String(pgPort), "-U", "s17", "s17_api"]);
     const databaseUrl = `postgresql://s17:${password}@127.0.0.1:${pgPort}/s17_api`;
     const socket = process.platform === "win32" ? `\\\\.\\pipe\\jopoi-s17-${token}` : resolve(directory, "ledger.sock");
-    await writeFile(resolve(directory, "owner.json"), JSON.stringify({ token, pgPort, httpPort }), { mode: 0o600 });
+    await writeFile(resolve(directory, "owner.json"), JSON.stringify({ token, pgPort, httpPort, secondaryHttpPort }), { mode: 0o600 });
     await writeFile(resolve(directory, "clock.json"), JSON.stringify("2026-01-01T12:00:00.000Z"));
     // Seal all application values so Next/Prisma cannot load real .env.local credentials.
     const { sealedEnvironment } = await import("./test-environment");
-    const resources: TestResources = { directory, pgPort, httpPort, databaseUrl, socket, token, pgBin };
+    const resources: TestResources = { directory, pgPort, httpPort, secondaryHttpPort, databaseUrl, applicationUrl: databaseUrl, socket, token, pgBin };
     const appEnv = sealedEnvironment(resources);
     await completed(child(process.execPath, ["node_modules/prisma/build/index.js", "migrate", "deploy"], appEnv, resolve(directory, "migrations.log")));
+    resources.applicationUrl = await provisionApplicationRole(databaseUrl);
     const server = await ledger(socket, resolve(directory, "clock.json"));
     return { resources, close: async () => {
       server.close();

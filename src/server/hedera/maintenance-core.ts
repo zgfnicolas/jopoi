@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import type { Prisma } from "../../generated/prisma/client";
 import { ApplicationError } from "../application-error";
 import { createCoordinator, utcDay, type CoordinationContext } from "./coordinator";
@@ -7,6 +8,8 @@ const NAME = "DAILY_MAINTENANCE";
 /** Shared by authenticated cron and explicit admin CLI. Each category is bounded. */
 export async function runMaintenance(context: CoordinationContext, force = false) {
   const { transaction, now } = context;
+  const monotonicStarted = performance.now();
+  const durationMs = () => Math.round(performance.now() - monotonicStarted);
   const started = now().getTime(), deadline = started + 45000, owner = randomUUID();
   const claimed = await transaction(async (tx) => {
     await tx.maintenanceLease.upsert({ where: { name: NAME }, create: { name: NAME }, update: {} });
@@ -15,8 +18,8 @@ export async function runMaintenance(context: CoordinationContext, force = false
         ...(force ? [] : [{ OR: [{ lastCompletedDate: null }, { lastCompletedDate: { lt: utcDay(now()) } }] }])],
     }, data: { owner, expiresAt: new Date(started + 120000) } })).count === 1;
   });
-  if (!claimed) return { skipped: true };
-  const counts = { runs: 0, contacts: 0, sessions: 0, quotas: 0, leases: 0 };
+  if (!claimed) return { skipped: true, executionId: owner, durationMs: durationMs() };
+  const counts = { runs: 0, contacts: 0, sessions: 0, quotas: 0, leases: 0, rateBuckets: 0 };
   let released = false;
   // Leave maxWait + transaction timeout before starting another cleanup transaction.
   const canClean = () => now().getTime() + 7000 <= started + 15000;
@@ -30,6 +33,11 @@ export async function runMaintenance(context: CoordinationContext, force = false
     const expiredSessions = { expiresAt: { lte: now() }, runs: { none: {} } };
     const oldQuotas = { date: { lt: new Date(utcDay(now()).getTime() - 8 * 86400000) } };
     const oldLeases = { leaseExpiresAt: { lte: now() } };
+    if (canClean()) counts.rateBuckets = await transaction(async tx => {
+      await fenced(tx);
+      return tx.$executeRaw`DELETE FROM "RequestRateBucket" WHERE ("scope","subject","windowStart") IN
+        (SELECT "scope","subject","windowStart" FROM "RequestRateBucket" WHERE "expiresAt" <= ${now().toISOString()}::timestamptz ORDER BY "expiresAt" LIMIT 1000)`;
+    });
     if (canClean()) counts.runs = await transaction(async (tx) => {
       await fenced(tx);
       const rows = await tx.demoRun.findMany({ where: expiredRuns, take: 100, select: { id: true } });
@@ -61,7 +69,8 @@ export async function runMaintenance(context: CoordinationContext, force = false
         && !await tx.demoRequest.findFirst({ where: expiredContacts, select: { id: true } })
         && !await tx.demoSession.findFirst({ where: expiredSessions, select: { id: true } })
         && !await tx.dailyQuota.findFirst({ where: oldQuotas, select: { scope: true } })
-        && !await tx.hcsPublication.findFirst({ where: oldLeases, select: { eventId: true } });
+        && !await tx.hcsPublication.findFirst({ where: oldLeases, select: { eventId: true } })
+        && !await tx.requestRateBucket.findFirst({ where: { expiresAt: { lte: now() } }, select: { scope: true } });
     });
     let publications = { processed: 0, hasMore: true };
     let publicationError: string | null = null;
@@ -73,7 +82,7 @@ export async function runMaintenance(context: CoordinationContext, force = false
       await tx.maintenanceLease.update({ where: { name: NAME }, data: { ...(complete ? { lastCompletedDate: utcDay(now()) } : {}), owner: null, expiresAt: null } });
     });
     released = true;
-    return { skipped: false, counts, cleanupComplete, publications, publicationError, complete };
+    return { skipped: false, executionId: owner, durationMs: durationMs(), counts, cleanupComplete, publications, publicationError, complete };
   } finally {
     if (!released) await transaction(async (tx) => { await tx.maintenanceLease.updateMany({ where: { name: NAME, owner }, data: { owner: null, expiresAt: null } }); });
   }

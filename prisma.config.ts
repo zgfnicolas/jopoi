@@ -1,6 +1,7 @@
 import { defineConfig } from "prisma/config";
 import { loadCliEnvironment } from "./src/server/config/cli-environment";
 import { createConfigReader } from "./src/server/config/environment";
+import { migrationConnection } from "./src/server/database/connection-policy";
 
 loadCliEnvironment();
 const migrations = createConfigReader(process.env).migrations();
@@ -9,5 +10,5 @@ const migrations = createConfigReader(process.env).migrations();
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: { path: "prisma/migrations" },
-  ...(migrations.status === "configured" ? { datasource: { url: migrations.config.url } } : {}),
+  ...(migrations.status === "configured" ? { datasource: { url: migrationConnection(migrations.config.url) } } : {}),
 });

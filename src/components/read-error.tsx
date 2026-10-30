@@ -1,5 +1,6 @@
 "use client";
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
+import { retryAfterMessage } from "@/frontend/retry-after";
 import type { ReadError } from "@/frontend/api";
 import { ActionButton, ActionLink, Notice } from "./ui/primitives";
 const explanations: Partial<Record<ReadError["code"], { title: string; text: string }>> = {
@@ -16,6 +17,6 @@ export function ReadErrorView({ error, refresh }: { error: ReadError; refresh: (
   const custom = explanations[error.code];
   const message = error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message : "No pudimos recuperar los datos. Revisá tu conexión y volvé a consultar.";
   return <div className="stack"><Notice title={custom?.title ?? "La consulta no está disponible"} tone="error" announce>
-    <p>{custom?.text ?? message}</p>{error.requestId && <p>Referencia de consulta: <span className="identifier">{error.requestId}</span></p>}
+    <p>{custom?.text ?? message}{retryAfterMessage(error.retryAfter)}</p>{error.requestId && <p>Referencia de consulta: <span className="identifier">{error.requestId}</span></p>}
   </Notice><div className="actions"><ActionButton onClick={refresh}>Actualizar consulta</ActionButton><ActionLink href="/" variant="secondary">Volver al inicio</ActionLink></div></div>;
 }

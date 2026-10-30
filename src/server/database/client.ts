@@ -1,10 +1,11 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../../generated/prisma/client";
+import { databaseConnection } from "./connection-policy";
 
 /** Sin entorno global ni conexión durante importación; reutilizable por CLI. */
 export function createDatabaseClient(url: string): PrismaClient {
   const adapter = new PrismaPg({
-    connectionString: url,
+    ...databaseConnection(url),
     max: 2,
     min: 0,
     connectionTimeoutMillis: 3000,

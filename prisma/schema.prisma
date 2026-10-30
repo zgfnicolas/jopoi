@@ -263,3 +263,15 @@ model DemoRequest {
 
   @@index([expiresAt])
 }
+
+// Admission metadata only: no IP, cookie or contact values.
+model RequestRateBucket {
+  scope       String   @db.VarChar(16)
+  subject     String   @db.VarChar(64)
+  windowStart DateTime @db.Timestamptz(3)
+  used        Int
+  expiresAt   DateTime @db.Timestamptz(3)
+
+  @@id([scope, subject, windowStart])
+  @@index([expiresAt])
+}

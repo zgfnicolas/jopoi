@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { DEMO_REQUEST_LIMITS, type DemoRequestConfirmation } from "@/shared/contact-contracts";
 import { demoRequestFieldErrors, demoRequestSchema } from "@/shared/demo-request-schema";
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
+import { retryAfterMessage } from "@/frontend/retry-after";
 import { postDemoRequest, type ContactFailure } from "@/frontend/demo-request";
 import { formatDate } from "@/frontend/format";
 import { ActionButton, ErrorSummary, Field, Notice, TextAreaField } from "./ui/primitives";
@@ -72,7 +73,7 @@ export function DemoRequestForm() {
     else if (result.error.code === "IDEMPOTENCY_CONFLICT") setPhase("conflict");
     else setPhase("uncertain");
   }
-  const knownMessage = error && error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message
+  const knownMessage = error && error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message + retryAfterMessage(error.retryAfter)
     : "No recibimos una confirmación de guardado. Revisá tu conexión y reintentá esta misma solicitud.";
   return <div className={styles.wrapper}>
     <noscript>Para enviar una solicitud, activá JavaScript. Podés seguir leyendo la propuesta sin habilitarlo.</noscript>

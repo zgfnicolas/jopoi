@@ -5,6 +5,7 @@
     "paths": {
       "@/server/runtime/clock": ["./tests/support/clock.ts"],
       "@/server/runtime/network": ["./tests/support/network.ts"],
+      "@/server/runtime/client-identity": ["./tests/support/client-identity.ts"],
       "@/*": ["./src/*"]
     }
   },
