@@ -6,6 +6,14 @@ Fuente: [spec S22](../../docs/specs/22-profesionalizacion-integral-y-confiabilid
 
 Hay **32 tickets aprobados individualmente documentados**, con criterios de aceptación y bloqueos concretos. Se cubren **88 historias, 21 decisiones, 17 hallazgos y 32 escenarios**. Se conservan en drafts hasta configurar su publicación. Las pruebas y contratos se incorporan al comportamiento que entregan, no en una fase horizontal posterior.
 
+## Avance de implementación
+
+El usuario autorizó posteriormente implementar los primeros diez tickets, deteniéndose después de cada uno para sugerir un commit y esperar confirmación antes del siguiente.
+
+- **01 completado y validado localmente (2026-10-30):** [evidencia de dependencias seguras](../../docs/s22-01-dependencias-seguras.md). Auditorías sin vulnerabilidades, 7/7 pruebas de seguridad y 43/43 HTTP aprobadas, typecheck correcto.
+- **02 pendiente de confirmación para comenzar.** Los tickets 02–10 no se implementaron en esta entrega.
+- La publicación de tickets, la ejecución del workflow en GitHub y la protección de rama continúan pendientes de configuración remota.
+
 ## Antes de publicar
 
 La aprobación ya fue recibida: «Me parece bien esos tickets». No hace falta volver a pedir aprobación de granularidad o dependencias. Sigue pendiente configurar el destino con /setup-matt-pocock-skills; si el destino es local se publicará un archivo por ticket en issues, y si es remoto se publicarán issues en orden de dependencias. Se aplicará ready-for-agent al publicar este desglose aprobado. No se modifica ni se cierra una issue padre.

@@ -14,6 +14,9 @@
     "test": "vitest run",
     "test:api": "vitest run",
     "test:cli": "node --import tsx --test --test-concurrency=1 tests/cli/entrega.test.ts tests/cli/seguridad.test.ts",
+    "test:security": "node --test tests/security/dependencies.test.mjs tests/security/audit-gate.test.mjs",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
+    "security:audit:all": "npm audit --audit-level=high",
     "db:audit": "node --import tsx scripts/database-audit.ts",
     "s21:benchmark": "node --import tsx scripts/s21-benchmark.ts",
     "s21:https": "node --import tsx scripts/s21-https-cookie.ts",
@@ -55,6 +58,13 @@
     "react-dom": "19.3.1",
     "server-only": "0.0.1",
     "zod": "4.6.7"
+  },
+  "overrides": {
+    "@hiero-ledger/sdk@2.90.1": {
+      "ethers@6.16.0": {
+        "ws": "8.21.0"
+      }
+    }
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

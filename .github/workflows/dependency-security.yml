@@ -1,0 +1,40 @@
+name: Seguridad de dependencias
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Obtener la revisión sin conservar credenciales
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Preparar Node sin secretos ni caché automática
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24.22.1"
+          package-manager-cache: false
+      - name: Instalar desde lockfile sin ejecutar scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Comprobar el transporte efectivo del SDK en loopback
+        run: npm run test:security
+      - name: Bloquear avisos altos o críticos de producción
+        run: npm run security:audit
+      - name: Revisar también herramientas de desarrollo semanalmente
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: npm run security:audit:all
