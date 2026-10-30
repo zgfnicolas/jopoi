@@ -41,6 +41,10 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 [S21 · Revisión y mejoras de API, sesiones, concurrencia y base de datos](21-api-sesiones-concurrencia-y-seguridad-de-datos.md) convierte la solicitud del 2026-10-29 en una auditoría con correcciones basadas en evidencia. Cubre AuthN/AuthZ, cookie HttpOnly y pertinencia de access/refresh tokens, contratos HTTP, abuso, asincronía, concurrencia, cron, normalización, integridad, ACID/rollback, índices, funciones y seguridad de PostgreSQL. Incorpora límites compartidos, TLS estricto, conexiones UTC, rol restringido de prueba, auditoría SQL privada y herramientas de evidencia. Resultados y pendientes en [validación S21](../s21-validacion.md); conserva las fronteras API/navegador y no acredita el proveedor mediante pruebas locales. Publicación pendiente de configuración del tracker.
 
+## Profesionalización integral solicitada posteriormente
+
+[S22 · Profesionalización integral, seguridad y confiabilidad](22-profesionalizacion-integral-y-confiabilidad.md) convierte la auditoría full-stack del 2026-10-30 en una especificación de corrección de sus 17 hallazgos y los seis bloques de calidad solicitados. Define admisión y limpieza sostenibles, dependencias seguras, tipado completo, contratos HTTP/OpenAPI, CSP y ciclo de sesión, renderizado/frescura, observabilidad, objetivos de servicio y gates de entrega. Incluye 88 historias, 32 escenarios de aceptación y trazabilidad de cada hallazgo, preservando los ADR y presupuesto cero. Es una spec pendiente de implementación; no acredita resultados de producción ni autoriza publicar recursos. Conserva las fronteras HTTP/navegador ya confirmadas y los CLI existentes. La publicación en tracker sigue pendiente de configuración.
+
 ## Continuidad del plan original
 
 S01–S05 preparan capacidades acotadas; S06–S11 integran las reglas y la trazabilidad de backend; S12–S15 construyen la experiencia; S16 prepara la entrega gratuita; S17–S18 crean y ejecutan las verificaciones finales.
