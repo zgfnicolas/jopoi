@@ -1,0 +1,1292 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-pending-publication",
+  "sourceSpec": "S22",
+  "sourceSha256": "8c39f320e466d5185be1543b49132bdbb50386574ac5ba19483b9636bc7f628a",
+  "sourceRevision": "e5f54a5b8b79727e8c8c933761e4a5fbe8d1e62c",
+  "publication": {
+    "tracker": null,
+    "approved": true,
+    "approvalEvidence": "El usuario aprobó los 32 tickets y sus dependencias: Me parece bien esos tickets.",
+    "labelOnApproval": "ready-for-agent",
+    "parentIssue": null
+  },
+  "tickets": [
+    {
+      "id": "01",
+      "title": "Resolver los avisos de seguridad del SDK de Hedera",
+      "file": "drafts/01-dependencias-hedera-seguras.md",
+      "blockedBy": [],
+      "decisions": [
+        "D04",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-03"
+      ],
+      "stories": [
+        21,
+        22,
+        23,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-07",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "02",
+      "title": "Preparar verificaciones reproducibles y la expansión del tipado estricto",
+      "file": "drafts/02-preparar-calidad-y-migracion-estricta.md",
+      "blockedBy": [],
+      "decisions": [
+        "D06",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-08",
+        "AUD-16"
+      ],
+      "stories": [
+        29,
+        31,
+        32,
+        33,
+        34,
+        35,
+        81,
+        87
+      ],
+      "acceptanceCases": [
+        "S22-10",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "03",
+      "title": "Introducir contratos operativos válidos junto a los actuales",
+      "file": "drafts/03-expandir-contratos-operativos.md",
+      "blockedBy": [
+        "02"
+      ],
+      "decisions": [
+        "D01",
+        "D06",
+        "D16"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-14",
+        "AUD-16"
+      ],
+      "stories": [
+        4,
+        29,
+        30,
+        31,
+        75,
+        81,
+        87
+      ],
+      "acceptanceCases": [
+        "S22-10",
+        "S22-11"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "04",
+      "title": "Guardar y recuperar operaciones con invariantes semánticas",
+      "file": "drafts/04-operaciones-persistidas-validas.md",
+      "blockedBy": [
+        "03"
+      ],
+      "decisions": [
+        "D06",
+        "D16",
+        "D18"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-14"
+      ],
+      "stories": [
+        4,
+        29,
+        30,
+        31,
+        75,
+        76,
+        77,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-10",
+        "S22-11",
+        "S22-29"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "05",
+      "title": "Mantener edición y reintentos del panel con intenciones tipadas",
+      "file": "drafts/05-intenciones-ui-tipadas.md",
+      "blockedBy": [
+        "03"
+      ],
+      "decisions": [
+        "D06",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-14",
+        "AUD-16"
+      ],
+      "stories": [
+        4,
+        10,
+        11,
+        29,
+        30,
+        31,
+        32,
+        81
+      ],
+      "acceptanceCases": [
+        "S22-03",
+        "S22-10",
+        "S22-11"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "06",
+      "title": "Validar CLI, configuración y arneses con tipos estrictos",
+      "file": "drafts/06-cli-configuracion-pruebas-estrictas.md",
+      "blockedBy": [
+        "02"
+      ],
+      "decisions": [
+        "D06",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-08",
+        "AUD-16"
+      ],
+      "stories": [
+        29,
+        31,
+        32,
+        33,
+        34,
+        78,
+        81,
+        83
+      ],
+      "acceptanceCases": [
+        "S22-10",
+        "S22-29",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "07",
+      "title": "Activar el perfil estricto completo y retirar compatibilidad de tipos",
+      "file": "drafts/07-exigir-perfil-estricto-global.md",
+      "blockedBy": [
+        "04",
+        "05",
+        "06"
+      ],
+      "decisions": [
+        "D06",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-05",
+        "AUD-08",
+        "AUD-16"
+      ],
+      "stories": [
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        81
+      ],
+      "acceptanceCases": [
+        "S22-10",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "08",
+      "title": "Investigar fallos desde una referencia pública segura",
+      "file": "drafts/08-diagnosticos-correlacionados.md",
+      "blockedBy": [],
+      "decisions": [
+        "D05",
+        "D13"
+      ],
+      "auditFindings": [
+        "AUD-04",
+        "AUD-09"
+      ],
+      "stories": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        61,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-08",
+        "S22-09"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "09",
+      "title": "Entregar errores RFC 9457 comprendidos por toda la interfaz",
+      "file": "drafts/09-problem-details-contrato-base.md",
+      "blockedBy": [
+        "08"
+      ],
+      "decisions": [
+        "D07",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-07",
+        "AUD-08"
+      ],
+      "stories": [
+        11,
+        13,
+        24,
+        36,
+        37,
+        42
+      ],
+      "acceptanceCases": [
+        "S22-04",
+        "S22-08",
+        "S22-12",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "10",
+      "title": "Acotar la creación diaria de sesiones y solicitudes de demo",
+      "file": "drafts/10-admision-sesiones-contactos.md",
+      "blockedBy": [
+        "09"
+      ],
+      "decisions": [
+        "D02",
+        "D03"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02"
+      ],
+      "stories": [
+        3,
+        5,
+        6,
+        7,
+        8,
+        11,
+        13,
+        15,
+        50,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-02",
+        "S22-04",
+        "S22-05"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "11",
+      "title": "Limitar intenciones y proteger las lecturas y comandos privados",
+      "file": "drafts/11-limites-recorridos-intenciones.md",
+      "blockedBy": [
+        "10"
+      ],
+      "decisions": [
+        "D02",
+        "D08"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02"
+      ],
+      "stories": [
+        5,
+        6,
+        7,
+        9,
+        10,
+        11,
+        12,
+        13,
+        42,
+        62
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-02",
+        "S22-03",
+        "S22-04"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "12",
+      "title": "Eliminar vencidos con limpieza justa y recuperable",
+      "file": "drafts/12-limpieza-sostenible.md",
+      "blockedBy": [
+        "11"
+      ],
+      "decisions": [
+        "D03",
+        "D14",
+        "D16"
+      ],
+      "auditFindings": [
+        "AUD-02",
+        "AUD-17"
+      ],
+      "stories": [
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        72,
+        75,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-05",
+        "S22-06",
+        "S22-27"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "13",
+      "title": "Rechazar cuerpos lentos y lecturas que exceden su presupuesto",
+      "file": "drafts/13-deadlines-cancelacion-http.md",
+      "blockedBy": [
+        "09"
+      ],
+      "decisions": [
+        "D14",
+        "D15"
+      ],
+      "auditFindings": [
+        "AUD-17"
+      ],
+      "stories": [
+        6,
+        13,
+        61,
+        63,
+        64,
+        67
+      ],
+      "acceptanceCases": [
+        "S22-04",
+        "S22-24"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "14",
+      "title": "Publicar y contrastar con capacidad global y recuperación segura",
+      "file": "drafts/14-capacidad-global-hcs-reintentos.md",
+      "blockedBy": [
+        "11",
+        "13"
+      ],
+      "decisions": [
+        "D02",
+        "D03",
+        "D13",
+        "D15"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-17"
+      ],
+      "stories": [
+        12,
+        19,
+        61,
+        62,
+        64,
+        65,
+        66,
+        67,
+        75
+      ],
+      "acceptanceCases": [
+        "S22-09",
+        "S22-24",
+        "S22-25"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "15",
+      "title": "Proteger la sesión HTTPS y sus mutaciones con CSRF",
+      "file": "drafts/15-cookie-host-y-csrf.md",
+      "blockedBy": [
+        "09"
+      ],
+      "decisions": [
+        "D07",
+        "D10"
+      ],
+      "auditFindings": [
+        "AUD-13"
+      ],
+      "stories": [
+        3,
+        42,
+        45,
+        48,
+        49,
+        50,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-12",
+        "S22-16",
+        "S22-18"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "16",
+      "title": "Cerrar sesiones y hacer efectivo el vencimiento por inactividad",
+      "file": "drafts/16-revocacion-expiracion-sesion.md",
+      "blockedBy": [
+        "15"
+      ],
+      "decisions": [
+        "D01",
+        "D10",
+        "D18"
+      ],
+      "auditFindings": [
+        "AUD-13"
+      ],
+      "stories": [
+        45,
+        46,
+        47,
+        49,
+        50,
+        76
+      ],
+      "acceptanceCases": [
+        "S22-16",
+        "S22-17",
+        "S22-18",
+        "S22-29"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "17",
+      "title": "Editar la operación con If-Match e Idempotency-Key",
+      "file": "drafts/17-edicion-etag-idempotency-key.md",
+      "blockedBy": [
+        "04",
+        "11",
+        "15"
+      ],
+      "decisions": [
+        "D06",
+        "D07",
+        "D08"
+      ],
+      "auditFindings": [
+        "AUD-07",
+        "AUD-14"
+      ],
+      "stories": [
+        10,
+        11,
+        36,
+        39,
+        40,
+        42,
+        55,
+        75
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-03",
+        "S22-12",
+        "S22-13",
+        "S22-14"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "18",
+      "title": "Consultar trazabilidad pública versionada y condicional",
+      "file": "drafts/18-api-publica-versionada-condicional.md",
+      "blockedBy": [
+        "09"
+      ],
+      "decisions": [
+        "D07",
+        "D08",
+        "D11"
+      ],
+      "auditFindings": [
+        "AUD-07",
+        "AUD-10"
+      ],
+      "stories": [
+        36,
+        38,
+        41,
+        42,
+        51,
+        52,
+        54,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-12",
+        "S22-14",
+        "S22-19"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "19",
+      "title": "Mostrar el historial inicial sin JavaScript y con status real",
+      "file": "drafts/19-historial-inicial-sin-javascript.md",
+      "blockedBy": [
+        "18"
+      ],
+      "decisions": [
+        "D09",
+        "D11"
+      ],
+      "auditFindings": [
+        "AUD-06",
+        "AUD-10"
+      ],
+      "stories": [
+        51,
+        52,
+        53,
+        54,
+        56,
+        57
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-19",
+        "S22-21"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "20",
+      "title": "Hacer visible la antigüedad y actualizar antes de editar",
+      "file": "drafts/20-frescura-operacion-y-trazabilidad.md",
+      "blockedBy": [
+        "17",
+        "19"
+      ],
+      "decisions": [
+        "D08",
+        "D11"
+      ],
+      "auditFindings": [
+        "AUD-10"
+      ],
+      "stories": [
+        11,
+        49,
+        53,
+        54,
+        55,
+        57
+      ],
+      "acceptanceCases": [
+        "S22-13",
+        "S22-19",
+        "S22-20",
+        "S22-21"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "21",
+      "title": "Aplicar CSP estricta sin romper tema, formularios ni QR",
+      "file": "drafts/21-csp-y-cabeceras-efectivas.md",
+      "blockedBy": [
+        "19"
+      ],
+      "decisions": [
+        "D09",
+        "D11",
+        "D12"
+      ],
+      "auditFindings": [
+        "AUD-06"
+      ],
+      "stories": [
+        43,
+        44,
+        53,
+        56,
+        57,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-15",
+        "S22-19",
+        "S22-21",
+        "S22-22"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "22",
+      "title": "Recuperar y exportar sólo los datos necesarios",
+      "file": "drafts/22-proyecciones-y-exportacion-eficientes.md",
+      "blockedBy": [
+        "04"
+      ],
+      "decisions": [
+        "D06",
+        "D16",
+        "D17"
+      ],
+      "auditFindings": [
+        "AUD-12",
+        "AUD-15",
+        "AUD-16"
+      ],
+      "stories": [
+        31,
+        32,
+        61,
+        73,
+        74,
+        75,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-03",
+        "S22-11",
+        "S22-28",
+        "S22-30"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "23",
+      "title": "Seguir una acción desde HTTP hasta SQL, HCS y cron",
+      "file": "drafts/23-trazas-distribuidas-y-exportacion-segura.md",
+      "blockedBy": [
+        "08"
+      ],
+      "decisions": [
+        "D05",
+        "D13",
+        "D18"
+      ],
+      "auditFindings": [
+        "AUD-04",
+        "AUD-09"
+      ],
+      "stories": [
+        24,
+        25,
+        26,
+        27,
+        28,
+        61,
+        66,
+        67,
+        68,
+        83,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-08",
+        "S22-09",
+        "S22-26",
+        "S22-29"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "24",
+      "title": "Medir latencia, saturación y atraso con cardinalidad acotada",
+      "file": "drafts/24-metricas-capacidad-y-atraso.md",
+      "blockedBy": [
+        "12",
+        "14",
+        "23"
+      ],
+      "decisions": [
+        "D03",
+        "D13",
+        "D14",
+        "D17"
+      ],
+      "auditFindings": [
+        "AUD-02",
+        "AUD-09",
+        "AUD-12",
+        "AUD-17"
+      ],
+      "stories": [
+        16,
+        17,
+        20,
+        61,
+        62,
+        68,
+        69,
+        72,
+        83
+      ],
+      "acceptanceCases": [
+        "S22-05",
+        "S22-09",
+        "S22-26",
+        "S22-27",
+        "S22-28"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "25",
+      "title": "Detectar incidentes con salud, objetivos y alertas accionables",
+      "file": "drafts/25-salud-slos-alertas-runbooks.md",
+      "blockedBy": [
+        "24"
+      ],
+      "decisions": [
+        "D13",
+        "D14"
+      ],
+      "auditFindings": [
+        "AUD-02",
+        "AUD-04",
+        "AUD-09",
+        "AUD-17"
+      ],
+      "stories": [
+        24,
+        28,
+        61,
+        67,
+        69,
+        70,
+        71,
+        72,
+        83,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-08",
+        "S22-26",
+        "S22-27",
+        "S22-32"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "26",
+      "title": "Medir la experiencia real sin exportar datos privados",
+      "file": "drafts/26-rum-privado-y-percentiles-reales.md",
+      "blockedBy": [
+        "10",
+        "19",
+        "23"
+      ],
+      "decisions": [
+        "D02",
+        "D12",
+        "D13"
+      ],
+      "auditFindings": [
+        "AUD-09",
+        "AUD-11"
+      ],
+      "stories": [
+        27,
+        51,
+        57,
+        58,
+        68,
+        83,
+        84,
+        85,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-23",
+        "S22-26",
+        "S22-32"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "27",
+      "title": "Mantener rápidas las tres rutas con un gate de producción",
+      "file": "drafts/27-presupuestos-frontend-y-laboratorio.md",
+      "blockedBy": [
+        "20",
+        "21"
+      ],
+      "decisions": [
+        "D09",
+        "D11",
+        "D12",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-06",
+        "AUD-10",
+        "AUD-11",
+        "AUD-16"
+      ],
+      "stories": [
+        33,
+        35,
+        43,
+        44,
+        51,
+        53,
+        56,
+        57,
+        59,
+        81
+      ],
+      "acceptanceCases": [
+        "S22-15",
+        "S22-19",
+        "S22-20",
+        "S22-21",
+        "S22-22",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "28",
+      "title": "Dimensionar admisión y pool con carga de producción",
+      "file": "drafts/28-ensayo-capacidad-pool-localidad.md",
+      "blockedBy": [
+        "22",
+        "24",
+        "27"
+      ],
+      "decisions": [
+        "D02",
+        "D03",
+        "D12",
+        "D14",
+        "D17"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02",
+        "AUD-11",
+        "AUD-12",
+        "AUD-15",
+        "AUD-17"
+      ],
+      "stories": [
+        5,
+        6,
+        7,
+        14,
+        20,
+        59,
+        60,
+        61,
+        62,
+        64,
+        68,
+        69,
+        73,
+        74,
+        80,
+        82,
+        85
+      ],
+      "acceptanceCases": [
+        "S22-02",
+        "S22-05",
+        "S22-06",
+        "S22-22",
+        "S22-24",
+        "S22-26",
+        "S22-28"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "29",
+      "title": "Ensayar migraciones y restauración sin alterar evidencia",
+      "file": "drafts/29-rollout-restauracion-sin-perdida.md",
+      "blockedBy": [
+        "04",
+        "12",
+        "14",
+        "16",
+        "23"
+      ],
+      "decisions": [
+        "D01",
+        "D03",
+        "D10",
+        "D13",
+        "D16",
+        "D18",
+        "D19"
+      ],
+      "auditFindings": [
+        "AUD-02",
+        "AUD-09",
+        "AUD-13",
+        "AUD-14",
+        "AUD-15",
+        "AUD-17"
+      ],
+      "stories": [
+        19,
+        20,
+        46,
+        47,
+        66,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        82,
+        83,
+        86
+      ],
+      "acceptanceCases": [
+        "S22-06",
+        "S22-11",
+        "S22-16",
+        "S22-17",
+        "S22-25",
+        "S22-29",
+        "S22-30",
+        "S22-31"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "30",
+      "title": "Cerrar la entrega local con regresión y evidencia reproducibles",
+      "file": "drafts/30-release-reproducible-y-evidencia-local.md",
+      "blockedBy": [
+        "01",
+        "07",
+        "25",
+        "26",
+        "28",
+        "29"
+      ],
+      "decisions": [
+        "D01",
+        "D04",
+        "D07",
+        "D19",
+        "D20",
+        "D21"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02",
+        "AUD-03",
+        "AUD-04",
+        "AUD-05",
+        "AUD-06",
+        "AUD-07",
+        "AUD-08",
+        "AUD-09",
+        "AUD-10",
+        "AUD-11",
+        "AUD-12",
+        "AUD-13",
+        "AUD-14",
+        "AUD-15",
+        "AUD-16",
+        "AUD-17"
+      ],
+      "stories": [
+        1,
+        2,
+        4,
+        21,
+        23,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        38,
+        75,
+        76,
+        78,
+        81,
+        82,
+        83,
+        84,
+        85,
+        87,
+        88
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-02",
+        "S22-03",
+        "S22-04",
+        "S22-05",
+        "S22-06",
+        "S22-07",
+        "S22-08",
+        "S22-09",
+        "S22-10",
+        "S22-11",
+        "S22-12",
+        "S22-13",
+        "S22-14",
+        "S22-15",
+        "S22-16",
+        "S22-17",
+        "S22-18",
+        "S22-19",
+        "S22-20",
+        "S22-21",
+        "S22-22",
+        "S22-23",
+        "S22-24",
+        "S22-25",
+        "S22-26",
+        "S22-27",
+        "S22-28",
+        "S22-29",
+        "S22-30",
+        "S22-31",
+        "S22-32"
+      ],
+      "externalConditions": null
+    },
+    {
+      "id": "31",
+      "title": "Acreditar seguridad, capacidad y recuperación del candidato",
+      "file": "drafts/31-aceptacion-operativa-candidato.md",
+      "blockedBy": [
+        "30"
+      ],
+      "decisions": [
+        "D01",
+        "D09",
+        "D10",
+        "D13",
+        "D14",
+        "D17",
+        "D18",
+        "D21"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02",
+        "AUD-03",
+        "AUD-04",
+        "AUD-06",
+        "AUD-07",
+        "AUD-08",
+        "AUD-09",
+        "AUD-10",
+        "AUD-12",
+        "AUD-13",
+        "AUD-14",
+        "AUD-15",
+        "AUD-17"
+      ],
+      "stories": [
+        1,
+        2,
+        15,
+        16,
+        20,
+        24,
+        25,
+        27,
+        38,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        50,
+        52,
+        60,
+        61,
+        62,
+        64,
+        66,
+        67,
+        69,
+        70,
+        71,
+        72,
+        76,
+        78,
+        79,
+        80,
+        82,
+        83,
+        84,
+        85,
+        86,
+        88
+      ],
+      "acceptanceCases": [
+        "S22-01",
+        "S22-05",
+        "S22-06",
+        "S22-08",
+        "S22-09",
+        "S22-12",
+        "S22-14",
+        "S22-15",
+        "S22-16",
+        "S22-17",
+        "S22-18",
+        "S22-19",
+        "S22-24",
+        "S22-25",
+        "S22-26",
+        "S22-27",
+        "S22-28",
+        "S22-29",
+        "S22-30",
+        "S22-32"
+      ],
+      "externalConditions": "Requiere candidato explícito, acceso al proveedor, responsable/canal de alertas y autorización operativa para despliegue, restore aislado y mensajes testnet. Ninguna dependencia de ticket reemplaza esas condiciones ni autoriza gastos."
+    },
+    {
+      "id": "32",
+      "title": "Validar resultados de campo y cerrar los seis DoD",
+      "file": "drafts/32-aceptacion-campo-y-cierre-s22.md",
+      "blockedBy": [
+        "31"
+      ],
+      "decisions": [
+        "D01",
+        "D12",
+        "D13",
+        "D14",
+        "D20",
+        "D21"
+      ],
+      "auditFindings": [
+        "AUD-01",
+        "AUD-02",
+        "AUD-03",
+        "AUD-04",
+        "AUD-05",
+        "AUD-06",
+        "AUD-07",
+        "AUD-08",
+        "AUD-09",
+        "AUD-10",
+        "AUD-11",
+        "AUD-12",
+        "AUD-13",
+        "AUD-14",
+        "AUD-15",
+        "AUD-16",
+        "AUD-17"
+      ],
+      "stories": [
+        1,
+        2,
+        15,
+        16,
+        20,
+        22,
+        25,
+        27,
+        28,
+        58,
+        59,
+        68,
+        69,
+        70,
+        72,
+        79,
+        80,
+        83,
+        84,
+        85,
+        87,
+        88
+      ],
+      "acceptanceCases": [
+        "S22-23",
+        "S22-26",
+        "S22-27",
+        "S22-28",
+        "S22-30",
+        "S22-32"
+      ],
+      "externalConditions": "Requiere ventana móvil de 28 días y al menos 200 muestras válidas por métrica/cohorte para CWV; objetivos de disponibilidad/publicación necesitan su propia evidencia operativa. Tiempo transcurrido no sustituye volumen o aprobación."
+    }
+  ]
+}
+
