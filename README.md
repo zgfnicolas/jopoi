@@ -10,6 +10,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs originales y
 | --- | --- |
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
 | [Specs ordenadas](docs/specs/README.md) | 18 specs originales y S19 para persistencia gestionada desde Vercel. |
+| [Seguridad y datos S21](docs/s21-validacion.md) | Límites compartidos, sesiones, TLS/UTC, auditoría SQL, integridad, recuperación y evidencia local/remota separada. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
 | [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |
 | [Persistencia SQL](docs/persistencia-sql.md) | Base S03, PostgreSQL portable, modelo, migraciones, transacciones y retención. |

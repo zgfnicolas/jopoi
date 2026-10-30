@@ -45,7 +45,7 @@ export async function deliveryCheck(root: string, profile: DeliveryProfile, envi
     for (const path of ["src/app/fonts/BarlowSemiCondensed-SemiBold.ttf", "src/app/fonts/OFL.txt"]) if (statSync(resolve(root, path)).size === 0) throw new Error();
   } catch { add("assets", "LOCAL_ASSETS_MISSING_OR_INVALID"); }
   try {
-    const expected = ["202610220001_initial", "202610230001_session_intents", "202610230002_hcs_binding", "202610230003_publication_coordination"];
+    const expected = ["202610220001_initial", "202610230001_session_intents", "202610230002_hcs_binding", "202610230003_publication_coordination", "202610290001_request_rate_limits"];
     const actual = readdirSync(resolve(root, "prisma/migrations"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
     if (JSON.stringify(actual) !== JSON.stringify(expected.sort()) || actual.some(name => !existsSync(resolve(root, "prisma/migrations", name, "migration.sql")))) add("migrations", "MIGRATION_INVENTORY_REVIEW_REQUIRED");
   } catch { add("migrations", "MIGRATION_INVENTORY_INVALID"); }

@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-29. Base inspeccionada: commit `2b32599`, sin cambios previos en el árbol de trabajo.
 
-Estado: especificación propuesta a partir de la solicitud de revisar buenas prácticas. Se realizó exploración estática del backend, migraciones, documentación y pruebas existentes; no se ejecutaron suites, consultas de rendimiento ni comprobaciones del proveedor. No acredita implementación de las mejoras ni aceptación de seguridad. Publicación pendiente de configuración del tracker. Etiqueta prevista: `ready-for-agent`, todavía no aplicada.
+Estado: implementación local de S21 con límites compartidos, auditoría SQL, política TLS/UTC y verificaciones de seguridad, concurrencia y recuperación. Resultados ejecutados y pendientes de aceptación en [validación S21](../s21-validacion.md). El diagnóstico inicial que sigue conserva la observación previa a la implementación y no equivale al estado posterior. La evidencia local no acredita configuración ni aceptación del proveedor. Publicación pendiente de configuración del tracker. Etiqueta prevista: `ready-for-agent`, todavía no aplicada.
 
 ## Problem Statement
 

@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { API_ERROR_CATALOG, type ApiErrorCode } from "@/shared/api-errors";
+import { retryAfterSeconds } from "./retry-after";
 import { DEMO_REQUEST_CONFIRMATION, type DemoRequestConfirmation } from "@/shared/contact-contracts";
 
 export interface ContactFailure { code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; status: number | null;
-  fields: Record<string, readonly string[]>; diagnosticId?: string }
+  fields: Record<string, readonly string[]>; diagnosticId?: string; retryAfter?: number }
 export type ContactResult = { ok: true; confirmation: DemoRequestConfirmation } | { ok: false; error: ContactFailure };
 const confirmation = z.strictObject({ id: z.uuid(), createdAt: z.iso.datetime({ precision: 3 }), message: z.literal(DEMO_REQUEST_CONFIRMATION) });
 const fieldMessages = z.array(z.string().max(400)).max(8).optional();
@@ -30,6 +31,6 @@ export async function postDemoRequest(body: string, signal: AbortSignal): Promis
     if (!code) return invalid("INVALID_RESPONSE", response.status);
     const fields: Record<string, readonly string[]> = {};
     for (const [key, messages] of Object.entries(parsed.data.error.fields ?? {})) if (messages) fields[key] = messages;
-    return { ok: false, error: { code, status: response.status, fields, diagnosticId: parsed.data.error.requestId } };
+    return { ok: false, error: { code, status: response.status, fields, diagnosticId: parsed.data.error.requestId, retryAfter: retryAfterSeconds(response) } };
   } catch { return invalid("NETWORK_UNAVAILABLE"); }
 }

@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { API_ERROR_CATALOG, type ApiErrorCode } from "@/shared/api-errors";
+import { retryAfterSeconds } from "./retry-after";
 
-export interface MutationError { code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; status: number | null; fields: Record<string, readonly string[]>; requestId?: string }
+export interface MutationError { code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; status: number | null; fields: Record<string, readonly string[]>; requestId?: string; retryAfter?: number }
 export type MutationResult<T> = { ok: true; data: T } | { ok: false; error: MutationError };
 const messages = z.array(z.string().max(400)).max(8).optional();
 const errorSchema = z.object({ error: z.object({ code: z.string(), requestId: z.uuid(), fields: z.object({
@@ -29,6 +30,6 @@ export async function postOperation<T>(path: string, body: string, schema: z.Zod
     if (!code || API_ERROR_CATALOG[code].status !== response.status) return fail("INVALID_RESPONSE", response.status);
     const fields: Record<string, readonly string[]> = {};
     for (const [key, value] of Object.entries(parsed.data.error.fields ?? {})) if (value) fields[key] = value;
-    return { ok: false, error: { code, status: response.status, fields, requestId: parsed.data.error.requestId } };
+    return { ok: false, error: { code, status: response.status, fields, requestId: parsed.data.error.requestId, retryAfter: retryAfterSeconds(response) } };
   } catch { return fail("NETWORK_UNAVAILABLE"); }
 }

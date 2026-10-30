@@ -39,7 +39,7 @@ La progresión va de piezas pequeñas de base al backend compuesto, después al 
 
 ## Revisión de API, acceso y datos solicitada posteriormente
 
-[S21 · Revisión y mejoras de API, sesiones, concurrencia y base de datos](21-api-sesiones-concurrencia-y-seguridad-de-datos.md) convierte la solicitud del 2026-10-29 en una auditoría con correcciones basadas en evidencia. Cubre AuthN/AuthZ, cookie HttpOnly y pertinencia de access/refresh tokens, contratos HTTP, abuso, asincronía, concurrencia, cron, normalización, integridad, ACID/rollback, índices, funciones y seguridad de PostgreSQL. Registra lo observado estáticamente y lo pendiente de pruebas y entorno; conserva las fronteras API/navegador ya confirmadas. Especificación propuesta, sin implementación ni pruebas nuevas ejecutadas. Publicación pendiente de configuración del tracker.
+[S21 · Revisión y mejoras de API, sesiones, concurrencia y base de datos](21-api-sesiones-concurrencia-y-seguridad-de-datos.md) convierte la solicitud del 2026-10-29 en una auditoría con correcciones basadas en evidencia. Cubre AuthN/AuthZ, cookie HttpOnly y pertinencia de access/refresh tokens, contratos HTTP, abuso, asincronía, concurrencia, cron, normalización, integridad, ACID/rollback, índices, funciones y seguridad de PostgreSQL. Incorpora límites compartidos, TLS estricto, conexiones UTC, rol restringido de prueba, auditoría SQL privada y herramientas de evidencia. Resultados y pendientes en [validación S21](../s21-validacion.md); conserva las fronteras API/navegador y no acredita el proveedor mediante pruebas locales. Publicación pendiente de configuración del tracker.
 
 ## Continuidad del plan original
 

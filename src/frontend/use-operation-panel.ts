@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DemoRunResponse } from "@/shared/run-contracts";
 import type { OperationCommand } from "@/shared/operation-contracts";
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
+import { retryAfterMessage } from "./retry-after";
 import { readApi, type ReadError } from "./api";
 import { postOperation, type MutationError } from "./operation-api";
 import { commandResponseSchema, operationViewSchema, retryResponseSchema, runIntentSchema, sessionResponseSchema } from "./operation-models";
@@ -14,7 +15,7 @@ const retryMessages = { ALREADY_CONFIRMED: "El hito ya estaba confirmado en test
   RECONCILE_ONLY: "Se solicitó comprobar el envío incierto; no se autorizó otro envío.", MANUAL_AUTHORIZED: "El intento adicional quedó autorizado. Esto todavía no confirma el envío.",
   EXHAUSTED: "Se agotaron los intentos de este hito.", AUTOMATIC_PENDING: "Se solicitó procesar el trabajo elegible. La publicación sigue pendiente." };
 function errorMessage(error: ReadError | MutationError) {
-  return error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message : "No recibimos una respuesta válida. Revisá la conexión y volvé a intentar.";
+  return (error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[error.code as keyof typeof API_ERROR_CATALOG].message : "No recibimos una respuesta válida. Revisá la conexión y volvé a intentar.") + retryAfterMessage(error.retryAfter);
 }
 
 /** SQL snapshots and one captured intent. No optimistic operation, polling or durable browser storage. */
@@ -92,6 +93,7 @@ export function useOperationPanel() {
     function failure(problem: MutationError) {
       if (!alive()) return;
       setError(problem);
+      if (problem.code === "RATE_LIMITED") { setUncertain(true); return; }
       if (problem.status === null || problem.code === "INVALID_RESPONSE" || (problem.status ?? 0) >= 500) { setUncertain(true); return; }
       pending.current = null; setUncertain(false);
       if (["SESSION_REQUIRED", "SESSION_EXPIRED", "NOT_FOUND"].includes(problem.code)) {

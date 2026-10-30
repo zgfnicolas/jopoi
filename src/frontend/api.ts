@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { API_ERROR_CATALOG, type ApiErrorCode } from "@/shared/api-errors";
+import { retryAfterSeconds } from "./retry-after";
 
-export interface ReadError { readonly code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; readonly requestId?: string }
+export interface ReadError { readonly code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; readonly requestId?: string; readonly retryAfter?: number }
 export type ReadResult<T> = { ok: true; data: T } | { ok: false; error: ReadError };
 const errorSchema = z.object({ error: z.object({ code: z.string(), requestId: z.uuid().optional() }) });
 
@@ -16,7 +17,7 @@ export async function readApi<T>(path: string, schema: z.ZodType<T>, signal: Abo
     if (!response.ok) {
       const parsed = errorSchema.safeParse(body);
       const code = parsed.success ? Object.keys(API_ERROR_CATALOG).find(key => key === parsed.data.error.code) as ApiErrorCode | undefined : undefined;
-      return { ok: false, error: { code: code ?? "INVALID_RESPONSE", ...(parsed.success ? { requestId: parsed.data.error.requestId } : {}) } };
+      return { ok: false, error: { code: code ?? "INVALID_RESPONSE", retryAfter: retryAfterSeconds(response), ...(parsed.success ? { requestId: parsed.data.error.requestId } : {}) } };
     }
     const parsed = schema.safeParse(body);
     return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: { code: "INVALID_RESPONSE" } };

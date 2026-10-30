@@ -14,11 +14,12 @@ class ApiEnvironment extends TestRuntime {
 }
 export const environment = new ApiEnvironment();
 export class Visitor {
+  identity = randomUUID();
   cookie = "";
   traceId = "";
   async request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<HttpResult<T>> {
     const response = await fetch(environment.origin + path, {
-      method, headers: { ...(this.cookie ? { Cookie: this.cookie } : {}),
+      method, headers: { "X-S21-Visitor": this.identity, ...(this.cookie ? { Cookie: this.cookie } : {}),
         ...(method === "POST" ? { Origin: environment.origin, "X-Jopoi-Request": "demo", "Content-Type": "application/json" } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(60000),
     });

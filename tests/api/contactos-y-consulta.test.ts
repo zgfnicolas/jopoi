@@ -57,7 +57,8 @@ test("API-22 · contacto idempotente persistido y CSV escapado sin ejecutar fór
     expect((await visitor.post("/api/demo-requests", invalid)).status).toBe(400);
   }
   for (const formula of ["+1", "-1", "@SUM(1)", "＝1+1", "＋1", "－1", "＠SUM(1)"]) {
-    expect((await visitor.post("/api/demo-requests", { ...contact("Fórmula sintética"), message: formula })).status).toBe(201);
+    // Independent synthetic visitors keep CSV cases separate from abuse-limit coverage.
+    expect((await new Visitor().post("/api/demo-requests", { ...contact("Fórmula sintética"), message: formula })).status).toBe(201);
   }
   await environment.restart();
   expect((await visitor.post<DemoRequestConfirmation>("/api/demo-requests", input)).body.id).toBe(results[0].body.id);

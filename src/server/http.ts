@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createRequestContext, toApiError } from "./api-errors";
 import { ApplicationError } from "./application-error";
 import { getServerConfig, requireConfiguration } from "./config";
+import { RateLimitError } from "./security/rate-limit";
 
 export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie" });
 
@@ -56,6 +57,9 @@ export async function apiBoundary(work: () => Promise<NextResponse>): Promise<Ne
     return await work();
   } catch (error) {
     const result = toApiError(error, context);
-    return NextResponse.json(result.body, { status: result.status, headers: PRIVATE_RESPONSE_HEADERS });
+    return NextResponse.json(result.body, { status: result.status, headers: {
+      ...PRIVATE_RESPONSE_HEADERS,
+      ...(error instanceof RateLimitError ? { "Retry-After": String(error.retryAfter) } : {}),
+    } });
   }
 }
