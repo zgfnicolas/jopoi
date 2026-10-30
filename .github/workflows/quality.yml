@@ -1,0 +1,45 @@
+name: Calidad reproducible
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    # El arnés HTTP existente usa PostgreSQL x64 y herramientas .exe de Windows.
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Obtener código sin conservar credenciales
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Preparar Node sin caché compartida con PRs
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24.22.1"
+          package-manager-cache: false
+      - name: Instalar únicamente desde lockfile, sin scripts de instalación
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Preparar binarios PostgreSQL con checksum, sin crear bases ni entorno local
+        run: npm run db:local:prepare
+      - name: Exigir generación, validación, tipos vigentes, lint, regresiones y build
+        run: npm run quality:check
+      - name: Publicar diagnóstico temporal de la migración estricta
+        if: always()
+        shell: pwsh
+        run: |
+          if (Test-Path .cache/quality/strict-report.md) {
+            Get-Content -Raw .cache/quality/strict-report.md >> $env:GITHUB_STEP_SUMMARY
+          }

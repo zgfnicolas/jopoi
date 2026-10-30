@@ -11,7 +11,8 @@ Hay **32 tickets aprobados individualmente documentados**, con criterios de acep
 El usuario autorizó posteriormente implementar los primeros diez tickets, deteniéndose después de cada uno para sugerir un commit y esperar confirmación antes del siguiente.
 
 - **01 completado y validado localmente (2026-10-30):** [evidencia de dependencias seguras](../../docs/s22-01-dependencias-seguras.md). Auditorías sin vulnerabilidades, 7/7 pruebas de seguridad y 43/43 HTTP aprobadas, typecheck correcto.
-- **02 pendiente de confirmación para comenzar.** Los tickets 02–10 no se implementaron en esta entrega.
+- **02 completado y validado localmente (2026-10-30):** [puerta reproducible y perfil estricto](../../docs/s22-02-calidad-reproducible.md). Build y suites requeridas aprobados; Biome como único linter. Perfil completo temporal con 106 diagnósticos pendientes, conservando el perfil vigente aprobado.
+- **03 pendiente de confirmación para comenzar.** Los tickets 03–10 no se implementaron en esta entrega.
 - La publicación de tickets, la ejecución del workflow en GitHub y la protección de rama continúan pendientes de configuración remota.
 
 ## Antes de publicar

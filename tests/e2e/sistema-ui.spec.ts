@@ -56,7 +56,10 @@ test("S20-02 · sistema sin JavaScript, almacenamiento bloqueado y preferencias 
     const read = await fallback.newPage();
     await read.goto(journey.origin);
     await expect(read.getByRole("heading", { level: 1 })).toContainText("coordinación de materiales");
-    await expect(read.getByText("Para enviar una solicitud, activá JavaScript. Podés seguir leyendo la propuesta sin habilitarlo.")).toBeVisible();
+    // Playwright excluye NOSCRIPT del selector por texto, incluso con JavaScript desactivado.
+    const notice = read.locator("#book-a-demo noscript");
+    await expect(notice).toBeVisible();
+    await expect.poll(() => notice.textContent()).toBe("Para enviar una solicitud, activá JavaScript. Podés seguir leyendo la propuesta sin habilitarlo.");
     await expect(read.getByLabel("Identificador del recorrido")).toBeDisabled();
     expect(await read.locator("html").evaluate(element => getComputedStyle(element).colorScheme)).toBe("dark");
   } finally { await fallback.close(); }

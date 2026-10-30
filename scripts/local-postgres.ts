@@ -190,6 +190,8 @@ async function setup(): Promise<void> {
 async function main(): Promise<void> {
   if (process.platform !== "win32" || process.arch !== "x64") throw new LocalPostgresError("LOCAL_POSTGRES_REQUIRES_WINDOWS_X64");
   const command = process.argv[2] ?? "start";
+  // CI necesita sólo binarios verificados; no crees una base habitual ni un .env.local.
+  if (command === "prepare") return prepareBinaries();
   if (command === "setup") return setup();
   if (command === "start") return start();
   if (command === "status") {

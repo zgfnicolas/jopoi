@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": {
+    "includes": [
+      "src/**",
+      "scripts/**",
+      "tests/**",
+      "*.ts",
+      "*.mjs",
+      "*.json",
+      "!package-lock.json",
+      "!!src/generated/**"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "none",
+      "correctness": {
+        "noUnreachable": "error",
+        "noUnreachableSuper": "error",
+        "noInvalidConstructorSuper": "error",
+        "noInvalidUseBeforeDeclaration": "error",
+        "noUnsafeFinally": "error",
+        "useHookAtTopLevel": "error",
+        "useExhaustiveDependencies": { "level": "error", "options": { "reportUnnecessaryDependencies": false } },
+        "useValidTypeof": "error"
+      },
+      "suspicious": {
+        "noExplicitAny": "error",
+        "noTsIgnore": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "noDebugger": "error",
+        "noAsyncPromiseExecutor": "error",
+        "noAssignInExpressions": "error",
+        "noDuplicateCase": "error",
+        "noDuplicateClassMembers": "error",
+        "noDuplicateJsxProps": "error",
+        "noDuplicateObjectKeys": "error",
+        "noDuplicateParameters": "error",
+        "noVar": "error"
+      },
+      "security": { "noGlobalEval": "error" },
+      "style": { "useConst": "error" }
+    }
+  },
+  "assist": { "enabled": false }
+}

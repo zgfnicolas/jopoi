@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DemoRunResponse } from "@/shared/run-contracts";
 import type { OperationCommand } from "@/shared/operation-contracts";
 import { API_ERROR_CATALOG } from "@/shared/api-errors";
@@ -31,24 +31,24 @@ export function useOperationPanel() {
   const lock = useRef(false), active = useRef(false), generation = useRef(0);
   const controller = useRef<AbortController | null>(null), path = useRef(currentPath);
   const resetDraftOnRead = useRef(false);
-  function remember(run: PublicLink) {
+  const remember = useCallback((run: PublicLink) => {
     const link = { traceId: run.traceId, expiresAt: run.expiresAt };
     setLinks(previous => [...previous.filter(item => item.traceId !== link.traceId && Date.parse(item.expiresAt) > Date.now()), link]);
-  }
-  function expire() {
+  }, []);
+  const expire = useCallback(() => {
     generation.current++; controller.current?.abort(); pending.current = null; snapshot.current = null;
     lock.current = false; setBusy(false); setData(null); setUncertain(false); setConflict(false); setStale(false);
     setMessage(""); setError({ code: "SESSION_EXPIRED" }); setDraftRevision(value => value + 1);
-  }
-  function accept(value: DemoRunResponse) {
+  }, []);
+  const accept = useCallback((value: DemoRunResponse) => {
     const deadline = Math.min(Date.parse(value.session.expiresAt), value.run ? Date.parse(value.run.expiresAt) : Infinity);
     if (deadline <= Date.now()) { expire(); return false; }
     snapshot.current = value; setData(value); setStale(false);
     if (resetDraftOnRead.current) { resetDraftOnRead.current = false; setDraftRevision(revision => revision + 1); }
     if (value.run) remember(value.run);
     return true;
-  }
-  async function load(signal: AbortSignal) {
+  }, [expire, remember]);
+  const load = useCallback(async (signal: AbortSignal) => {
     const result = await readApi(path.current, operationViewSchema, signal);
     if (!active.current || signal.aborted) return false;
     if (result.ok) { if (!accept(result.data)) return false; setError(null); return true; }
@@ -57,7 +57,7 @@ export function useOperationPanel() {
       setDraftRevision(value => value + 1);
     }
     setError(result.error); setStale(true); return false;
-  }
+  }, [accept]);
   async function refresh() {
     if (lock.current) return;
     lock.current = true; setBusy(true);
@@ -70,9 +70,8 @@ export function useOperationPanel() {
     const request = new AbortController(); controller.current = request;
     void load(request.signal).finally(() => { if (active.current && !request.signal.aborted) { lock.current = false; setBusy(false); } });
     return () => { active.current = false; generation.current++; request.abort(); controller.current?.abort(); };
-    // The initial read is the only mount effect. Every write requires an explicit click.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // Conservá una lectura de montaje: las dependencias estables evitan repetirla al editar.
+  }, [load]);
   const deadline = data ? Math.min(Date.parse(data.session.expiresAt), data.run ? Date.parse(data.run.expiresAt) : Infinity) : null;
   useEffect(() => {
     if (deadline === null) return;
@@ -80,8 +79,7 @@ export function useOperationPanel() {
     const timer = setTimeout(check, Math.min(2147483647, Math.max(0, deadline - Date.now())));
     window.addEventListener("pageshow", check); document.addEventListener("visibilitychange", check);
     return () => { clearTimeout(timer); window.removeEventListener("pageshow", check); document.removeEventListener("visibilitychange", check); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deadline]);
+  }, [deadline, expire]);
 
   async function execute(intent: Intent) {
     if (lock.current) return;

@@ -3,6 +3,11 @@ import { useEffect, useState } from "react";
 import { THEME_KEY, themePreference, type ThemePreference } from "@/frontend/theme";
 import { SelectField } from "./ui/primitives";
 
+function apply(value: ThemePreference) {
+  if (value === "system") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = value;
+}
+
 export function ThemeSelector() {
   const [preference, setPreference] = useState<ThemePreference>("system");
   const [ready, setReady] = useState(false);
@@ -19,10 +24,6 @@ export function ThemeSelector() {
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
-  function apply(value: ThemePreference) {
-    if (value === "system") delete document.documentElement.dataset.theme;
-    else document.documentElement.dataset.theme = value;
-  }
   return <div className="theme-selector"><SelectField id="appearance" label="Apariencia" disabled={!ready} value={preference} onChange={event => {
     const value = themePreference(event.target.value);
     setPreference(value); apply(value);
