@@ -24,6 +24,7 @@ const checks = [
   "typecheck:report",
   "test:quality",
   "test:security",
+  "test:domain",
   "test:cli",
   "test:ui:tokens",
   "test:api",

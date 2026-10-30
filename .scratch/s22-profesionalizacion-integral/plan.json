@@ -108,7 +108,13 @@
         "S22-10",
         "S22-11"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-30",
+        "evidence": "docs/s22-03-contratos-operativos.md",
+        "validation": "quality:check aprobado: Prisma, tipos, lint, 39 pruebas de dominio, 43 HTTP, 2 bloqueo, 7 seguridad, 19 CLI, 2 tokens y build. Nuevo lote sin diagnósticos estrictos; 106 pendientes globales. Expansión compatible sin migrar consumidores SQL/UI."
+      }
     },
     {
       "id": "04",

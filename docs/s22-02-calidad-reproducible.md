@@ -27,6 +27,8 @@ La puerta ejecuta secuencialmente y se detiene en el primer fallo:
 9. `test:api`: regresión HTTP con PostgreSQL descartable y ledger controlado.
 10. `build`: generación Prisma y build de Next con origen local sintético.
 
+Desde el ticket 03, la puerta incorpora además `test:domain` después de seguridad: comprueba la reconstrucción semántica y la compatibilidad del modelo operativo expandido.
+
 `npm test` continúa ejecutando sólo la suite HTTP de Vitest: no incluye implícitamente CLI, tokens UI, seguridad ni las pruebas del gate. El análisis de advisories se exige en el workflow de dependencias del ticket 01; podés ejecutarlo localmente con `npm run security:audit` y `npm run security:audit:all`. No se agrega una dependencia de red al gate de código.
 
 El runner sella todas las variables de capacidades conocidas antes de iniciar los comandos, con conexiones y claves vacías y un APP_URL local sintético. Así los lectores de entorno no completan valores desde credenciales habituales. No publica HCS ni despliega. Los tests HTTP siguen usando su entorno y recursos aislados. Un fallo cancela los controles posteriores y devuelve un código distinto de cero; no usa `continue-on-error`.
