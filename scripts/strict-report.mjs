@@ -92,6 +92,10 @@ await writeFile(resolve(directory, "strict-report.json"), JSON.stringify(summary
 await writeFile(resolve(directory, "strict-report.txt"), output);
 await writeFile(resolve(directory, "strict-report.md"), markdown);
 if (snapshot[0] === "--snapshot") await writeFile(resolve(root, "docs/s22-02-diagnosticos-estrictos.md"), markdown);
+// El ticket 04 cerró estas áreas; no permitas que la tolerancia global oculte una regresión local.
+if (diagnostics.some(({ file }) => file.startsWith("src/server/") || file.startsWith("src/domain/"))) {
+  throw new Error("STRICT_SERVER_DOMAIN_REGRESSION");
+}
 console.log(
   `DIAGNÓSTICO TEMPORAL: ${diagnostics.length} pendientes. Detalle: .cache/quality/strict-report.json. Obligatorio sin tolerancia en ticket 07.`,
 );

@@ -15,8 +15,9 @@ export function environmentOption(input: readonly string[]): { args: string[]; f
   let file: string | undefined;
   let format: EnvironmentFileFormat = "strict";
   for (let index = 0; index < input.length; index++) {
-    if (!["--env-file", "--vercel-env-file"].includes(input[index])) { args.push(input[index]); continue; }
     const selector = input[index];
+    if (selector === undefined) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+    if (!["--env-file", "--vercel-env-file"].includes(selector)) { args.push(selector); continue; }
     const value = input[++index];
     if (file !== undefined || !value?.trim() || value.startsWith("--")) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
     file = value;

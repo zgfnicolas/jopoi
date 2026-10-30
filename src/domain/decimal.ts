@@ -14,6 +14,7 @@ export function parseFixedDecimal(
   }
 
   const [whole, fraction = ""] = input.split(".");
+  if (whole === undefined) return invalidField(field, "Ingresá una parte entera válida.");
   if (fraction.length > scale) {
     return invalidField(field, `Se admiten hasta ${scale} decimales, sin redondeo.`);
   }

@@ -14,7 +14,7 @@ export function requireBrowserMutation(request: Request): void {
   if (request.headers.get("origin") !== url || request.headers.get("x-jopoi-request") !== "demo") {
     throw new ApplicationError("REQUEST_FORBIDDEN");
   }
-  if (request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !== "application/json") {
+  if (request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
     throw new ApplicationError("INVALID_INPUT");
   }
 }

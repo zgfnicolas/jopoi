@@ -6,10 +6,12 @@ import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { createHcsEnvelope } from "../events/payload";
 import { verifyMessage } from "@/server/runtime/network";
-import { readRunSnapshot } from "../operations/storage";
+import { readRunSnapshot, readRunOperation } from "../operations/storage";
 import { hasSubmittedAttempt, projectTraceEvent, publicEventSelect, traceLinks } from "./projection";
 
-const runSelect = { id: true, traceId: true, state: true, expiresAt: true, scenarioVersion: true, scenarioSnapshot: true, assignedTripId: true } as const;
+const runSelect = { id: true, traceId: true, state: true, expiresAt: true, scenarioVersion: true, scenarioSnapshot: true,
+  declaredGrams: true, humidityHundredths: true, assignedBuyerId: true, assignedTripId: true, assignedAt: true,
+  receivedGrams: true, rejectionReasonCode: true, incidentReasonCode: true } as const;
 type ReadTransaction = <T>(work: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
 interface TraceReaderDependencies { transaction: ReadTransaction; verify: typeof verifyMessage; now: () => Date }
 
@@ -22,6 +24,7 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
     const run = await tx.demoRun.findUnique({ where: { traceId }, select: runSelect });
     if (run === null) throw new ApplicationError("NOT_FOUND");
     requireValidity(run.expiresAt);
+    readRunOperation(run);
     return run;
   }
   async function loadEvent(tx: Prisma.TransactionClient, traceId: string, eventId: string) {
@@ -29,7 +32,7 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
     if (run.state === "DRAFT") throw new ApplicationError("NOT_FOUND");
     const row = await tx.operationEvent.findFirst({ where: { id: eventId, runId: run.id }, select: publicEventSelect });
     if (row === null) throw new ApplicationError("NOT_FOUND");
-    const event = projectTraceEvent(row, traceId);
+    const event = projectTraceEvent(row, traceId, readRunSnapshot(run));
     requireValidity(run.expiresAt);
     return { run, row, event };
   }
@@ -39,7 +42,7 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
         const run = await loadRun(tx, traceId);
         const snapshot = readRunSnapshot(run);
         const rows = run.state === "DRAFT" ? [] : await tx.operationEvent.findMany({ where: { runId: run.id }, orderBy: { ordinal: "asc" }, select: publicEventSelect });
-        const events = rows.map(row => projectTraceEvent(row, traceId));
+        const events = rows.map(row => projectTraceEvent(row, traceId, snapshot));
         const declaration = events.find(event => event.type === "LOT_PUBLISHED" && event.event !== null);
         const reception = events.find(event => ["RECEIPT_ACCEPTED", "RECEIPT_ISSUE_REPORTED"].includes(event.type) && event.event !== null);
         const trip = run.state === "DRAFT" || run.assignedTripId === null ? null : snapshot.trips.find(item => item.id === run.assignedTripId);

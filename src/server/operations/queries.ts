@@ -16,7 +16,7 @@ import { readRunOperation, readRunSnapshot } from "./storage";
 
 async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<DemoRunDetail> {
   const scenario = readRunSnapshot(run);
-  const operation = readRunOperation(run);
+  const operation = readRunOperation(run, scenario);
   const compatibility = evaluateTripCompatibility(operation.quantityKg, scenario);
   const economics = calculateEconomics(operation.quantityKg, scenario.pricing);
   if (!compatibility.ok || !economics.ok) throw new ApplicationError("INTERNAL_ERROR");
@@ -28,7 +28,7 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
   const events = rows.map((row) => {
     if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
     return {
-      event: readPublicEvent(row, run.traceId),
+      event: readPublicEvent(row, run.traceId, scenario),
       publication: publicationSummary(row.publication, { blockedBy: rows.find(previous => previous.ordinal < row.ordinal && previous.publication?.state !== "CONFIRMED")?.id ?? null, quota }),
     };
   });

@@ -4,7 +4,9 @@ import { canonicalJson } from "../../domain/canonical-json";
 import { eventDigest, hcsEnvelopeSchema, publicEventSchema } from "../../domain/event-schemas";
 import type { ScenarioSnapshot } from "../../domain/scenario-types";
 import type { HcsEventEnvelope, PublicEventPayload, PublicEventRecord, PublicEventType } from "../../shared/event-contracts";
-import type { OperationAction, OperationData, SimulatedRole } from "../../shared/operation-contracts";
+import type { OperationAction, SimulatedRole } from "../../shared/operation-contracts";
+import type { OperationSnapshot } from "../../shared/operation-snapshot";
+import { reconstructOperationSnapshot } from "../../domain/operation-snapshot";
 import { ApplicationError } from "../application-error";
 import type { TraceIntegrity } from "../../shared/trace-contracts";
 
@@ -26,7 +28,7 @@ export function hashPublicEvent(value: unknown): PublicEventRecord {
 
 export function createPublicEvent(input: {
   traceId: string; eventId: string; ordinal: number; type: PublicEventType;
-  role: SimulatedRole; appliedAt: Date; operation: OperationData; snapshot: ScenarioSnapshot;
+  role: SimulatedRole; appliedAt: Date; operation: OperationSnapshot; snapshot: ScenarioSnapshot;
 }): PublicEventRecord {
   const { operation, snapshot } = input;
   const trip = operation.assignedTripId === null ? null : snapshot.trips.find((item) => item.id === operation.assignedTripId);
@@ -55,7 +57,7 @@ export function createPublicEvent(input: {
 }
 
 /** Solo contraste local; no representa verificación de Hedera o mirror. */
-export function readPublicEvent(row: OperationEvent, traceId: string): PublicEventRecord {
+export function readPublicEvent(row: PublicEventRow, traceId: string, snapshot: ScenarioSnapshot): PublicEventRecord {
   const record = hashPublicEvent(row.payload);
   const event = record.payload;
   if (!eventDigest.safeParse(row.digest).success || record.digest !== row.digest || event.eventId !== row.id
@@ -63,19 +65,46 @@ export function readPublicEvent(row: OperationEvent, traceId: string): PublicEve
     || event.type !== row.type || event.role.toUpperCase() !== row.simulatedRole || event.appliedAt !== row.appliedAt.toISOString()) {
     throw new ApplicationError("INTERNAL_ERROR");
   }
+  validateEventOperation(event, snapshot);
   return record;
 }
 
-export type PublicEventRow = Pick<OperationEvent, "id" | "ordinal" | "type" | "simulatedRole" | "appliedAt" | "payloadVersion" | "payload" | "digest">;
+/** El hash protege los bytes; contrastá también el significado con el escenario inmutable. */
+export function validateEventOperation(event: PublicEventPayload, snapshot: ScenarioSnapshot): void {
+  const detail = event.detail;
+  const assigned = detail.trip !== null;
+  const operation = reconstructOperationSnapshot({
+    state: detail.state, quantityKg: detail.quantityKg, humidityPercent: detail.humidityPercent,
+    assignedBuyerId: assigned ? detail.buyer.id : null, assignedTripId: detail.trip?.id ?? null,
+    receivedKg: detail.receivedKg,
+    rejectionReasonCode: detail.state === "REJECTED" ? detail.reason?.code ?? null : null,
+    incidentReasonCode: detail.state === "INCIDENT" ? detail.reason?.code ?? null : null,
+  }, snapshot);
+  const trip = snapshot.trips.find(item => item.id === detail.trip?.id);
+  const reasons = detail.state === "REJECTED" ? snapshot.rejectionReasons : snapshot.incidentReasons;
+  const reason = reasons.find(item => item.code === detail.reason?.code);
+  if (!operation.ok || detail.scenarioVersion !== snapshot.version
+    || detail.material.id !== snapshot.material.id || detail.material.label !== snapshot.material.label
+    || detail.buyer.id !== snapshot.buyer.id || detail.buyer.name !== snapshot.buyer.name
+    || (detail.trip !== null && detail.trip.label !== trip?.label)
+    || (detail.reason !== null && detail.reason.label !== reason?.label)) throw new ApplicationError("INTERNAL_ERROR");
+}
+
+export type PublicEventRow = Pick<OperationEvent, "id" | "ordinal" | "type" | "simulatedRole" | "appliedAt" | "payloadVersion" | "digest"> & { readonly payload: unknown };
 
 /** Public recovery isolates corruption; private command reads remain strict. */
-export function inspectPublicEvent(row: PublicEventRow, traceId: string): { event: PublicEventRecord | null; integrity: TraceIntegrity } {
+export function inspectPublicEvent(row: PublicEventRow, traceId: string, snapshot: ScenarioSnapshot): { event: PublicEventRecord | null; integrity: TraceIntegrity } {
   const stored = eventDigest.safeParse(row.digest);
   let localDigest: string | null = null;
   try { localDigest = createHash("sha256").update(canonicalJson(row.payload), "utf8").digest("hex"); } catch { /* Invalid JSON remains an explicit mismatch. */ }
   const parsed = publicEventSchema.safeParse(row.payload);
   const payload = parsed.success ? parsed.data : null;
-  const matched = payload !== null && stored.success && localDigest === stored.data && payload.eventId === row.id
+  let semanticsMatch = false;
+  if (payload !== null) {
+    try { validateEventOperation(payload, snapshot); semanticsMatch = true; }
+    catch (error) { if (!(error instanceof ApplicationError)) throw error; }
+  }
+  const matched = semanticsMatch && payload !== null && stored.success && localDigest === stored.data && payload.eventId === row.id
     && payload.traceId === traceId && payload.ordinal === row.ordinal && payload.version === row.payloadVersion
     && payload.type === row.type && payload.role.toUpperCase() === row.simulatedRole && payload.appliedAt === row.appliedAt.toISOString();
   return {

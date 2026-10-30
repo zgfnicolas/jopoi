@@ -6,6 +6,7 @@ import { createConfigReader, type Environment } from "../config/environment";
 import { createHcsEnvelope, readPublicEvent } from "../events/payload-core";
 import { HcsError, type HcsProvider, type NetworkOutcome, type PreparedMessage } from "./contracts";
 import { configuredTarget, type HcsTarget } from "./target";
+import { readRunSnapshot, readRunOperation } from "../operations/storage-core";
 
 export type TransactionRunner = <T>(work: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
 export interface CoordinationContext {
@@ -54,7 +55,11 @@ export function createCoordinator(context: CoordinationContext) {
     return row;
   }
   type Loaded = Awaited<ReturnType<typeof load>>;
-  function envelope(row: Loaded) { return createHcsEnvelope(readPublicEvent(row.event, row.event.run.traceId)); }
+  function envelope(row: Loaded) {
+    const snapshot = readRunSnapshot(row.event.run);
+    readRunOperation(row.event.run, snapshot);
+    return createHcsEnvelope(readPublicEvent(row.event, row.event.run.traceId, snapshot));
+  }
   function target(row: Loaded): HcsTarget | null {
     const r = row.event.run;
     return r.hcsConfigurationGeneration === null || r.hcsTopicId === null || r.hcsOperatorId === null ? null

@@ -1,3 +1,5 @@
+import type { OperationSnapshot } from "./operation-snapshot";
+
 /** Contratos JSON del dominio, sin ORM, sesión, versiones SQL ni publicación de red. */
 export type OperationState = "DRAFT" | "PUBLISHED" | "APPROVED" | "ASSIGNED" | "PICKED_UP" | "RECEIVED" | "REJECTED" | "INCIDENT";
 export type SimulatedRole = "generator" | "coordinator" | "carrier" | "buyer";
@@ -25,7 +27,7 @@ export interface OperationData {
 }
 
 export interface OperationDecision {
-  readonly operation: OperationData;
+  readonly operation: OperationSnapshot;
   /** Significado de negocio; no afirma persistencia, creación de evento ni consenso. */
   readonly createsMilestone: boolean;
 }

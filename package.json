@@ -18,7 +18,7 @@
     "format": "biome format --write",
     "quality:check": "node --import tsx scripts/quality.ts",
     "test:quality": "node --test --test-concurrency=1 tests/quality/gate.test.mjs",
-    "test:domain": "node --import tsx --test tests/domain/operation-snapshot.test.ts",
+    "test:domain": "node --import tsx --test tests/domain/operation-snapshot.test.ts tests/domain/persisted-operation.test.ts",
     "test": "vitest run",
     "test:api": "vitest run",
     "test:cli": "node --import tsx --test --test-concurrency=1 tests/cli/entrega.test.ts tests/cli/seguridad.test.ts",

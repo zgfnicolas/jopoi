@@ -33,7 +33,8 @@ export async function deliveryCheck(root: string, profile: DeliveryProfile, envi
   } catch { add("manifest", "PACKAGE_OR_LOCKFILE_INVALID"); }
   try {
     const cron = z.object({ crons: z.array(z.object({ path: z.string(), schedule: z.string() })) }).parse(json(resolve(root, "vercel.json")));
-    if (cron.crons.length !== 1 || cron.crons[0].path !== "/api/cron" || cron.crons[0].schedule !== "0 3 * * *") add("cron", "DAILY_CRON_REVIEW_REQUIRED");
+    const daily = cron.crons[0];
+    if (cron.crons.length !== 1 || daily?.path !== "/api/cron" || daily.schedule !== "0 3 * * *") add("cron", "DAILY_CRON_REVIEW_REQUIRED");
   } catch { add("cron", "CRON_CONFIGURATION_INVALID"); }
   try {
     const publicRoot = resolve(root, "public");
@@ -45,7 +46,7 @@ export async function deliveryCheck(root: string, profile: DeliveryProfile, envi
     for (const path of ["src/app/fonts/BarlowSemiCondensed-SemiBold.ttf", "src/app/fonts/OFL.txt"]) if (statSync(resolve(root, path)).size === 0) throw new Error();
   } catch { add("assets", "LOCAL_ASSETS_MISSING_OR_INVALID"); }
   try {
-    const expected = ["202610220001_initial", "202610230001_session_intents", "202610230002_hcs_binding", "202610230003_publication_coordination", "202610290001_request_rate_limits"];
+    const expected = ["202610220001_initial", "202610230001_session_intents", "202610230002_hcs_binding", "202610230003_publication_coordination", "202610290001_request_rate_limits", "202610300001_operation_invariants_expand", "202610300002_operation_invariants_validate"];
     const actual = readdirSync(resolve(root, "prisma/migrations"), { withFileTypes: true }).filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
     if (JSON.stringify(actual) !== JSON.stringify(expected.sort()) || actual.some(name => !existsSync(resolve(root, "prisma/migrations", name, "migration.sql")))) add("migrations", "MIGRATION_INVENTORY_REVIEW_REQUIRED");
   } catch { add("migrations", "MIGRATION_INVENTORY_INVALID"); }
@@ -67,8 +68,8 @@ export async function deliveryCheck(root: string, profile: DeliveryProfile, envi
       const secure = (url: URL) => ["require", "verify-ca", "verify-full"].includes(url.searchParams.get("sslmode") ?? "")
         && [...url.searchParams.keys()].every(key => ["sslmode", "channel_binding"].includes(key) && url.searchParams.getAll(key).length === 1)
         && (!url.searchParams.has("channel_binding") || url.searchParams.get("channel_binding") === "require");
-      if (!app.hostname.endsWith(".neon.tech") || !app.hostname.split(".")[0].endsWith("-pooler") || !secure(app)) add("database", "NEON_POOLED_TLS_REQUIRED");
-      if (!direct.hostname.endsWith(".neon.tech") || direct.hostname.split(".")[0].endsWith("-pooler") || !secure(direct)) add("migrations", "NEON_DIRECT_TLS_REQUIRED");
+      if (!app.hostname.endsWith(".neon.tech") || !app.hostname.split(".")[0]?.endsWith("-pooler") || !secure(app)) add("database", "NEON_POOLED_TLS_REQUIRED");
+      if (!direct.hostname.endsWith(".neon.tech") || direct.hostname.split(".")[0]?.endsWith("-pooler") || !secure(direct)) add("migrations", "NEON_DIRECT_TLS_REQUIRED");
       if (app.hostname.replace(/-pooler(?=\.)/, "") !== direct.hostname || (app.port || "5432") !== (direct.port || "5432") || app.pathname !== direct.pathname) add("database", "DATABASE_TARGETS_DIFFER");
     }
   }

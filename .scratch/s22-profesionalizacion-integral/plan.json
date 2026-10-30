@@ -147,7 +147,13 @@
         "S22-11",
         "S22-29"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-30",
+        "evidence": "docs/s22-04-persistencia-operativa.md",
+        "validation": "Puerta completa aprobada: 54 pruebas de dominio/persistencia, 49 HTTP, 7 seguridad, 19 CLI, 2 tokens UI y build; 3 bloqueos de calidad aprobados. Historia inválida rechazada y evidencia válida de los tres desenlaces conservada al migrar. Servidor/dominio sin diagnósticos estrictos; 80 pendientes globales. Solo recursos aislados y HCS controlado."
+      }
     },
     {
       "id": "05",

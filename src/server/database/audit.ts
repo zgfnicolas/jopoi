@@ -1,14 +1,20 @@
 import { Client } from "pg";
 import { databaseConnection } from "./connection-policy";
+import { inspectOperationHistory } from "../operations/history-audit";
 
 export interface DatabaseControl { id: string; passed: boolean; evidence: "catalog" | "session" }
 
 /** SELECT-only, no row values, connection strings, role names or provider errors in output. */
-export async function auditDatabase(url: string) {
+export async function auditDatabase(url: string, operationsOnly = false) {
   const client = new Client({ ...databaseConnection(url), connectionTimeoutMillis: 3000, statement_timeout: 5000 });
   try {
     await client.connect();
     await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+    const operations = await inspectOperationHistory(client);
+    if (operationsOnly) {
+      await client.query("COMMIT");
+      return { code: "OPERATION_HISTORY_OBSERVED", observedAt: new Date().toISOString(), ...operations };
+    }
     const { rows: [role] } = await client.query<{ restricted: boolean }>(`SELECT NOT EXISTS(SELECT 1 FROM pg_roles
       WHERE (rolsuper OR rolcreaterole OR rolcreatedb OR rolreplication OR rolbypassrls) AND pg_has_role(oid,'MEMBER')) AS restricted`);
     const { rows: [objects] } = await client.query<{ unowned: boolean; no_create: boolean; protected_events: boolean; no_public_execute: boolean; tables: boolean; triggers: boolean }>(`SELECT
@@ -33,13 +39,14 @@ export async function auditDatabase(url: string) {
       AND (SELECT count(*)=7 FROM pg_constraint WHERE conname IN ('DemoRun_sessionId_fkey','CommandReceipt_runId_fkey',
         'OperationEvent_runId_fkey','OperationEvent_commandId_runId_fkey','HcsPublication_eventId_fkey',
         'SessionRunIntent_runId_sessionId_fkey','HcsSubmissionAttempt_eventId_fkey'))
-      AND (SELECT count(*)=6 FROM pg_constraint WHERE conname IN ('DemoSession_run_count','DemoRun_ordinal','DemoRun_humidity',
-        'DemoRun_assignment','OperationEvent_digest','DemoRequest_required_fields')) AS valid`);
+      AND (SELECT count(*)=7 FROM pg_constraint WHERE conname IN ('DemoSession_run_count','DemoRun_ordinal','DemoRun_humidity',
+        'DemoRun_assignment','OperationEvent_digest','DemoRequest_required_fields','DemoRun_state_coherence')) AS valid`);
     const { rows: [indexes] } = await client.query<{ valid: boolean }>(`SELECT count(*)=7 AS valid FROM pg_index x JOIN pg_class i ON i.oid=x.indexrelid
       JOIN pg_namespace n ON n.oid=i.relnamespace WHERE n.nspname='public' AND x.indisunique AND x.indisvalid AND i.relname IN
       ('DemoSession_tokenHash_key','DemoRun_traceId_key','DemoRun_sessionId_creationRequestId_key','CommandReceipt_runId_requestId_key',
         'OperationEvent_runId_ordinal_key','HcsSubmissionAttempt_eventId_slot_key','DemoRequest_requestId_key')`);
     await client.query("COMMIT");
+    if (!role || !objects || !ssl || !timezone || !history || !constraints || !indexes) throw new Error("DATABASE_AUDIT_RESULT_INCOMPLETE");
     const controls: DatabaseControl[] = [
       { id: "DB-ROLE", passed: role.restricted, evidence: "catalog" },
       { id: "DB-OWNER", passed: objects.unowned, evidence: "catalog" },
@@ -53,10 +60,11 @@ export async function auditDatabase(url: string) {
       { id: "DB-TLS", passed: ssl.encrypted, evidence: "session" },
       { id: "DB-TIMEZONE", passed: timezone.utc, evidence: "session" },
       { id: "DB-HISTORIC-TIME", passed: history.valid, evidence: "session" },
+      { id: "DB-OPERATION-HISTORY", passed: operations.passed, evidence: "session" },
     ];
     const local = ["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname);
     return { code: "DATABASE_SECURITY_OBSERVED", observedAt: new Date().toISOString(), local,
-      controls, passed: controls.every(c=>c.passed || local && c.id === "DB-TLS"),
+      controls, operations, passed: controls.every(c=>c.passed || local && c.id === "DB-TLS"),
       external: "BACKUP_NETWORK_POLICY_AND_DEPLOYMENT_PENDING" };
   } catch (error) { await client.query("ROLLBACK").catch(()=>{}); throw error; }
   finally { await client.end(); }

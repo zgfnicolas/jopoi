@@ -9,6 +9,6 @@ export class ApplicationError extends Error {
     super(API_ERROR_CATALOG[code].message);
     this.name = "ApplicationError";
     this.code = code;
-    this.fields = fields;
+    if (fields !== undefined) this.fields = fields;
   }
 }

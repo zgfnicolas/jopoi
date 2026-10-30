@@ -4,6 +4,7 @@ import type { Prisma } from "../../generated/prisma/client";
 import { eventDigest } from "../../domain/event-schemas";
 import type { TraceEvent, TraceEvidence, TraceLinks, TracePublication, TraceVerification } from "../../shared/trace-contracts";
 import type { SimulatedRole } from "../../shared/operation-contracts";
+import type { ScenarioSnapshot } from "../../domain/scenario-types";
 import { ApplicationError } from "../application-error";
 import { inspectPublicEvent } from "../events/payload";
 import { HCS_CODES } from "../hedera/contracts";
@@ -59,9 +60,9 @@ function storedVerification(row: PublicationRow, storedDigest: string | null): T
   return { state: terminal && (evidence === null || !validMatch) ? "UNAVAILABLE" : row.verificationState,
     verifiedAt: row.verifiedAt?.toISOString() ?? null, evidence };
 }
-export function projectTraceEvent(row: TraceEventRow, traceId: string): TraceEvent {
+export function projectTraceEvent(row: TraceEventRow, traceId: string, snapshot: ScenarioSnapshot): TraceEvent {
   if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
-  const inspected = inspectPublicEvent(row, traceId);
+  const inspected = inspectPublicEvent(row, traceId, snapshot);
   const summary = publication(row.publication);
   const roles: Record<TraceEventRow["simulatedRole"], SimulatedRole> = { GENERATOR: "generator", COORDINATOR: "coordinator", CARRIER: "carrier", BUYER: "buyer" };
   return {

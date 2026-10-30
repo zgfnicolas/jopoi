@@ -15,10 +15,10 @@ import { configuredTarget } from "../hedera/target";
 import { privatePublicationSummary } from "../hedera/summary";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun } from "../sessions/service";
-import { jsonObject, readRunOperation, readRunSnapshot, receiptResultSchema, runChanges } from "./storage";
+import { jsonObject, readRunOperation, readRunSnapshot, readReceiptResult, runChanges } from "./storage";
 
 export interface OperationCommandInput {
-  readonly token?: string;
+  readonly token: string | undefined;
   readonly traceId: string;
   readonly requestId: string;
   readonly expectedVersion: number;
@@ -48,7 +48,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
   async function resolve(tx: Prisma.TransactionClient, allowWrite: boolean): Promise<PersistedCommandResult> {
     const { run, session } = await requireOwnedRun(tx, tokenHash, traceId);
     const snapshot = readRunSnapshot(run);
-    const current = readRunOperation(run);
+    const current = readRunOperation(run, snapshot);
     const normalized = normalizeOperationCommand(input.command, snapshot);
     if (!normalized.ok) throw new ApplicationError(normalized.error.code, normalized.error.fields);
     const command = normalized.value;
@@ -59,24 +59,27 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     });
     if (previous !== null) {
       if (previous.intentHash !== intentHash) throw new ApplicationError("IDEMPOTENCY_CONFLICT");
-      const original = receiptResultSchema.safeParse(previous.result);
-      if (!original.success || previous.action !== ACTIONS[command.action] || previous.resultingVersion > run.version
-        || original.data.eventId !== (previous.event?.id ?? null)
+      const original = readReceiptResult(previous.result, snapshot);
+      if (previous.action !== ACTIONS[command.action] || previous.resultingVersion !== expectedVersion + 1 || previous.resultingVersion > run.version
+        || original.eventId !== (previous.event?.id ?? null)
         || (previous.event === null) !== (command.action === "save")) throw new ApplicationError("INTERNAL_ERROR");
-      const event = previous.event === null ? null : readPublicEvent(previous.event, run.traceId);
+      const event = previous.event === null ? null : readPublicEvent(previous.event, run.traceId, snapshot);
+      if ((event === null && original.operation.state !== "DRAFT")
+        || (event !== null && event.payload.type !== eventTypeForAction(command.action))) throw new ApplicationError("INTERNAL_ERROR");
       const publication = previous.event?.publication ?? null;
       if (event !== null && publication === null) throw new ApplicationError("INTERNAL_ERROR");
-      if (event !== null && (event.payload.detail.state !== original.data.operation.state
-        || event.payload.detail.quantityKg !== original.data.operation.quantityKg
-        || event.payload.detail.humidityPercent !== original.data.operation.humidityPercent
-        || event.payload.detail.receivedKg !== original.data.operation.receivedKg
-        || (event.payload.detail.trip?.id ?? null) !== original.data.operation.assignedTripId
-        || (event.payload.detail.reason?.code ?? null) !== (original.data.operation.rejectionReasonCode ?? original.data.operation.incidentReasonCode))) {
+      if (event !== null && (event.payload.detail.state !== original.operation.state
+        || event.payload.detail.quantityKg !== original.operation.quantityKg
+        || event.payload.detail.humidityPercent !== original.operation.humidityPercent
+        || event.payload.detail.receivedKg !== original.operation.receivedKg
+        || event.payload.detail.buyer.id !== snapshot.buyer.id
+        || (event.payload.detail.trip?.id ?? null) !== original.operation.assignedTripId
+        || (event.payload.detail.reason?.code ?? null) !== (original.operation.rejectionReasonCode ?? original.operation.incidentReasonCode))) {
         throw new ApplicationError("INTERNAL_ERROR");
       }
       return {
         replayed: true,
-        applied: { operation: original.data.operation, version: previous.resultingVersion, eventId: original.data.eventId },
+        applied: { operation: original.operation, version: previous.resultingVersion, eventId: original.eventId },
         current: { operation: current, version: run.version }, event,
         publication: publication === null || previous.event === null ? null : await privatePublicationSummary(tx, publication, previous.event, process.env, wallNow()),
       };

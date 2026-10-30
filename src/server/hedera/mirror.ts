@@ -75,6 +75,7 @@ export async function lookupTransaction(id: string, expectedTopic: string | null
   if (successful.length > 1) throw new HcsError("HCS_MIRROR_UNAVAILABLE");
   if (successful.length === 1) {
     const row = successful[0];
+    if (row === undefined) throw new HcsError("HCS_MIRROR_UNAVAILABLE");
     if (row.entity_id === null || (expectedTopic !== null && row.entity_id !== expectedTopic)) throw new HcsError("HCS_MESSAGE_MISMATCH");
     return { kind: "confirmed", topicId: row.entity_id, sequenceNumber: null, consensusTimestamp: row.consensus_timestamp };
   }

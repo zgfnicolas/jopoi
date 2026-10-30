@@ -14,12 +14,13 @@ assert.equal(typeof npmCli, "string", "Usá npm run test:quality.");
 for (const [control, source] of [
   ["typecheck", 'export const s22Probe: number = "invalid";'],
   ["lint", "debugger; export {};"],
+  ["typecheck:report", "const values: readonly number[] = []; export const s22Probe: number = values[0];"],
 ]) {
   test(`S22-31: una infracción real de ${control} detiene el gate antes de las regresiones`, {
     timeout: 120000,
   }, async (context) => {
     // Inyectá un archivo propio nuevo: también demostramos que el gate no omite código sin trackear.
-    const probe = resolve(root, "tests/quality", `probe-${randomUUID()}.ts`);
+    const probe = resolve(root, control === "typecheck:report" ? "src/server" : "tests/quality", `probe-${randomUUID()}.ts`);
     await writeFile(probe, source, { flag: "wx" });
     context.after(() => unlink(probe));
     const child = spawn(process.execPath, [npmCli, "run", "quality:check"], {

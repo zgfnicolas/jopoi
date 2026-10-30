@@ -13,6 +13,8 @@ import { requireOwnedRun } from "../sessions/service";
 import { publicationSummary } from "./summary";
 import { quotaSummary } from "./coordinator";
 import { schedulePublications } from "./service";
+import { readRunOperation, readRunSnapshot } from "../operations/storage";
+import { readPublicEvent } from "../events/payload";
 
 const uuid = z.uuid().transform(v => v.toLowerCase());
 const resultSchema = z.strictObject({ version: z.literal(1), eventId: uuid,
@@ -31,8 +33,11 @@ export async function retryPublicationHttp(request: NextRequest, context: { para
     async function resolve(allowWrite: boolean): Promise<PublicationRetryResponse> {
       return withTransaction(async tx => {
         const { run } = await requireOwnedRun(tx, hash, traceId);
+        const snapshot = readRunSnapshot(run);
+        readRunOperation(run, snapshot);
         let row = await tx.hcsPublication.findFirst({ where: { eventId, event: { runId: run.id } }, include: { event: true, attempts: { orderBy: { slot: "desc" }, take: 1 } } });
         if (!row) throw new ApplicationError("NOT_FOUND");
+        readPublicEvent(row.event, traceId, snapshot);
         const key = { runId: run.id, requestId };
         const previous = await tx.commandReceipt.findUnique({ where: { runId_requestId: key } });
         const blockedBy = (await tx.operationEvent.findFirst({ where: { runId: run.id, ordinal: { lt: row.event.ordinal }, publication: { is: { state: { not: "CONFIRMED" } } } }, orderBy: { ordinal: "asc" }, select: { id: true } }))?.id ?? null;

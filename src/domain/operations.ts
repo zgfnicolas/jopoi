@@ -4,6 +4,7 @@ import { evaluateTripCompatibility } from "./compatibility";
 import { formatFixedDecimal, parseHumidityHundredths, parseOperationQuantityGrams } from "./decimal";
 import { invalidField, type DomainFailure, type DomainResult } from "./result";
 import type { ScenarioSnapshot } from "./scenario-types";
+import { reconstructOperationSnapshot } from "./operation-snapshot";
 
 type OperationErrorCode = Extract<ApiErrorCode, "INVALID_INPUT" | "RULE_VIOLATION" | "WRONG_ROLE" | "STATE_CONFLICT">;
 export type OperationResult<T> = DomainResult<T, OperationErrorCode>;
@@ -67,28 +68,9 @@ export function normalizeOperationCommand(command: OperationCommand, snapshot: S
 }
 
 /** Solo se aplica después de comprobar rol y estado no terminal. */
-function normalizeCurrent(operation: OperationData, snapshot: ScenarioSnapshot): OperationResult<OperationData> {
-  const quantity = parseOperationQuantityGrams(operation.quantityKg);
-  if (!quantity.ok) return quantity;
-  const humidity = parseHumidityHundredths(operation.humidityPercent);
-  if (!humidity.ok) return humidity;
-  const expectsAssignment = operation.state === "ASSIGNED" || operation.state === "PICKED_UP";
-  const assignmentValid = expectsAssignment
-    ? operation.assignedBuyerId === snapshot.buyer.id && snapshot.trips.some((trip) => trip.id === operation.assignedTripId)
-    : operation.assignedBuyerId === null && operation.assignedTripId === null;
-  if (!assignmentValid || operation.receivedKg !== null || operation.rejectionReasonCode !== null || operation.incidentReasonCode !== null) {
-    return operationFailure("STATE_CONFLICT", "state", "La asignación o los datos de cierre no corresponden al estado del recorrido.");
-  }
-  return { ok: true, value: {
-    state: operation.state,
-    quantityKg: formatFixedDecimal(quantity.value, 3),
-    humidityPercent: formatFixedDecimal(humidity.value, 2),
-    assignedBuyerId: operation.assignedBuyerId,
-    assignedTripId: operation.assignedTripId,
-    receivedKg: null,
-    rejectionReasonCode: null,
-    incidentReasonCode: null,
-  } };
+function normalizeCurrent(operation: OperationData, snapshot: ScenarioSnapshot) {
+  const result = reconstructOperationSnapshot(operation, snapshot);
+  return result.ok ? result : operationFailure("STATE_CONFLICT", "state", "Los datos no corresponden al estado y escenario del recorrido.");
 }
 
 function exceedsHumidity(operation: OperationData, snapshot: ScenarioSnapshot): DomainResult<boolean> {
@@ -172,5 +154,7 @@ export function decideOperation(operation: OperationData, command: OperationComm
       break;
     }
   }
-  return { ok: true, value: Object.freeze({ operation: Object.freeze(next), createsMilestone: input.action !== "save" }) };
+  const reconstructed = reconstructOperationSnapshot(next, snapshot);
+  if (!reconstructed.ok) return operationFailure("STATE_CONFLICT", "state", "La decisión no produce una operación coherente.");
+  return { ok: true, value: Object.freeze({ operation: reconstructed.value, createsMilestone: input.action !== "save" }) };
 }
