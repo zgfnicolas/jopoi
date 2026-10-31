@@ -1,6 +1,7 @@
 import "server-only";
 
-import { randomUUID } from "node:crypto";
+import { createRequestContext, type RequestContext } from "./diagnostics";
+export { createRequestContext, type RequestContext } from "./diagnostics";
 
 import {
   API_ERROR_CATALOG,
@@ -10,15 +11,6 @@ import {
 import { ApplicationError } from "./application-error";
 
 export { ApplicationError } from "./application-error";
-
-export interface RequestContext {
-  readonly requestId: string;
-}
-
-/** Crear una vez por solicitud; nunca copiar identificadores de headers del visitante. */
-export function createRequestContext(): RequestContext {
-  return Object.freeze({ requestId: randomUUID() });
-}
 
 /** Solo serializa el contrato público, nunca la excepción o el mensaje del proveedor. */
 export function toApiError(

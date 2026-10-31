@@ -8,7 +8,7 @@ import { requireRateLimit } from "@/server/security/rate-limit";
 export const runtime = "nodejs";
 
 export async function POST(request: Request): Promise<NextResponse> {
-  return apiBoundary(async () => {
+  return apiBoundary("contacts.create", async () => {
     requireBrowserMutation(request);
     const input = parseDemoRequest(await readJsonBody(request, DEMO_REQUEST_LIMITS.bodyBytes));
     await requireRateLimit(request, "CONTACT");

@@ -2,7 +2,8 @@ import { z } from "zod";
 import { canonicalJson } from "../../domain/canonical-json";
 import { eventDigest, hcsEnvelopeSchema } from "../../domain/event-schemas";
 import type { HcsEventEnvelope } from "../../shared/event-contracts";
-import { HcsError, type NetworkOutcome, type VerificationResult } from "./contracts";
+import { HcsError, preserveHcsCause, type NetworkOutcome, type VerificationResult } from "./contracts";
+import { currentRequestContext, logDiagnostic } from "../diagnostics";
 
 const MIRROR = "https://testnet.mirrornode.hedera.com";
 const topic = z.string().max(64).regex(/^0\.0\.[1-9]\d*$/);
@@ -60,7 +61,7 @@ async function mirrorJson(path: string, maxBytes: number): Promise<unknown | nul
       if (context?.source === undefined || !/^[1-9]\d*$/.test(context.source)) throw new Error();
       return context.source;
     });
-  } catch { throw new HcsError("HCS_MIRROR_UNAVAILABLE"); }
+  } catch (error) { throw new HcsError("HCS_MIRROR_UNAVAILABLE", { cause: error }); }
 }
 
 export async function lookupTransaction(id: string, expectedTopic: string | null, kind: "message" | "topic" = "message"): Promise<NetworkOutcome> {
@@ -118,7 +119,7 @@ export async function verifyMessage(input: {
       const bytes = Buffer.from(encoded, "base64");
       if (bytes.length === 0 || bytes.length > 1024 || bytes.toString("base64") !== encoded) throw new Error();
       remote = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
-    } catch { return { state: "MISMATCH", code: "HCS_MESSAGE_MISMATCH", evidence }; }
+    } catch (error) { return preserveHcsCause<VerificationResult>({ state: "MISMATCH", code: "HCS_MESSAGE_MISMATCH", evidence }, error); }
     const parsed = hcsEnvelopeSchema.safeParse(remote);
     if (remote !== null && typeof remote === "object" && "digest" in remote) {
       const digest = eventDigest.safeParse(remote.digest);
@@ -140,9 +141,10 @@ export async function verifyMessage(input: {
       && canonicalJson(parsed.data) === canonicalJson(input.envelope);
     return { state: matches ? "MATCHED" : "MISMATCH", code: matches ? null : "HCS_MESSAGE_MISMATCH", evidence };
   } catch (error) {
+    if (currentRequestContext()) logDiagnostic({ event: "publication.recovered", code: error instanceof HcsError ? error.code : "HCS_MIRROR_UNAVAILABLE", outcome: "partial", severity: "WARN", durationMs: 0, error });
     if (error instanceof HcsError && error.code === "HCS_MESSAGE_MISMATCH") {
-      return { state: "MISMATCH", code: "HCS_MESSAGE_MISMATCH", evidence };
+      return preserveHcsCause<VerificationResult>({ state: "MISMATCH", code: "HCS_MESSAGE_MISMATCH", evidence }, error);
     }
-    return unavailable(false);
+    return preserveHcsCause(unavailable(false), error);
   }
 }

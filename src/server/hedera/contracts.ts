@@ -10,8 +10,12 @@ export const HCS_CODES = [
 ] as const;
 export type HcsCode = typeof HCS_CODES[number];
 export class HcsError extends Error {
-  constructor(readonly code: HcsCode) { super(code); this.name = "HcsError"; }
+  constructor(readonly code: HcsCode, options?: ErrorOptions) { super(code, options); this.name = "HcsError"; }
 }
+const privateCauses = new WeakMap<object, unknown>();
+/** El resultado puede viajar como JSON; su causa privada queda fuera del DTO y se libera con él. */
+export function preserveHcsCause<T extends object>(result: T, cause: unknown): T { privateCauses.set(result, cause); return result; }
+export function hcsCause(result: object): unknown { return privateCauses.get(result); }
 
 export interface PreparedMessage {
   readonly target: HcsTarget;

@@ -27,7 +27,7 @@ export function createFixtures(resources: TestResources) {
     exceptional: {
       snapshot: (traceId: string, snapshot: unknown) => execute('UPDATE "DemoRun" SET "scenarioSnapshot"=$2::jsonb WHERE "traceId"=$1::uuid', [traceId, JSON.stringify(snapshot)], true),
       payload: (eventId: string, payload: unknown) => execute('UPDATE "OperationEvent" SET payload=$2::jsonb WHERE id=$1::uuid', [eventId, JSON.stringify(payload)], true),
-      failEventCommit: () => execute(`CREATE FUNCTION s17_fail_event() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'S17_INJECTED_COMMIT_FAILURE'; END $$;
+      failEventCommit: () => execute(`CREATE FUNCTION s17_fail_event() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'S17_INJECTED_COMMIT_FAILURE person@example.invalid private-password private-signed-bytes'; END $$;
         CREATE CONSTRAINT TRIGGER s17_fail_event AFTER INSERT ON "OperationEvent" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION s17_fail_event();`),
       restoreEventCommit: () => execute('DROP TRIGGER IF EXISTS s17_fail_event ON "OperationEvent"; DROP FUNCTION IF EXISTS s17_fail_event();'),
     },

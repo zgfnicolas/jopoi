@@ -24,14 +24,14 @@ export function mapDatabaseError(error: unknown): unknown {
       : "originalCode" in current && typeof current.originalCode === "string" ? current.originalCode : "";
     const kind = "kind" in current && typeof current.kind === "string" ? current.kind : "";
     if (["P2034", "40001", "40P01"].includes(code) || kind === "TransactionWriteConflict") {
-      return new ApplicationError("VERSION_CONFLICT");
+      return new ApplicationError("VERSION_CONFLICT", undefined, { cause: error });
     }
     if (UNAVAILABLE_CODES.has(code) || code.startsWith("08") || UNAVAILABLE_KINDS.has(kind)) {
-      return new ApplicationError("DATABASE_UNAVAILABLE");
+      return new ApplicationError("DATABASE_UNAVAILABLE", undefined, { cause: error });
     }
     const message = "message" in current && typeof current.message === "string" ? current.message : "";
     if (/timeout exceeded when trying to connect|connection terminated unexpectedly|connection timeout|query read timeout|expired transaction/i.test(message)) {
-      return new ApplicationError("DATABASE_UNAVAILABLE");
+      return new ApplicationError("DATABASE_UNAVAILABLE", undefined, { cause: error });
     }
     if ("cause" in current) pending.push(current.cause);
     if ("meta" in current) pending.push(current.meta);

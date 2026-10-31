@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import type { HcsEventEnvelope } from "../../src/shared/event-contracts";
 import type { HcsTarget } from "../../src/server/hedera/target";
 
-export type NetworkMode = "confirmed" | "rejected" | "unknown" | "timeout" | "mirror-lag" | "altered" | "suspended" | "hold" | "prepare-hold";
+export type NetworkMode = "confirmed" | "rejected" | "unknown" | "timeout" | "mirror-lag" | "altered" | "suspended" | "hold" | "prepare-hold" | "malformed-verification";
 interface Message { transactionId: string; target: HcsTarget; envelope: HcsEventEnvelope; submitted: boolean; mode: NetworkMode; sequence: number; consensusTimestamp: string | null }
 
 /** Simulated external ledger, independent of SQL and of the application's coordinator. */
@@ -74,6 +74,7 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
               localDigest: data.envelope.digest, remoteDigest: unavailable || pending ? null : mismatch ? "0".repeat(64) : message!.envelope.digest,
               identifiersMatch: !unavailable && !pending && identifiersMatch, digestMatch: !unavailable && !pending && !mismatch },
           };
+          if (mode === "malformed-verification") value = null;
         } else throw new Error("UNKNOWN_TEST_OPERATION");
         connection.end(JSON.stringify({ value }) + "\n");
       } catch { connection.end(JSON.stringify({ error: "TEST_LEDGER_ERROR" }) + "\n"); }

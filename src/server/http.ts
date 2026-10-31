@@ -5,6 +5,8 @@ import { createRequestContext, toApiError } from "./api-errors";
 import { ApplicationError } from "./application-error";
 import { getServerConfig, requireConfiguration } from "./config";
 import { RateLimitError } from "./security/rate-limit";
+import { performance } from "node:perf_hooks";
+import { withRequestContext, logDiagnostic, shouldLogHttp, type HttpOperation } from "./diagnostics";
 
 export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie" });
 
@@ -51,15 +53,25 @@ export async function readJsonBody(request: Request, maxBytes: number): Promise<
   }
 }
 
-export async function apiBoundary(work: () => Promise<NextResponse>): Promise<NextResponse> {
-  const context = createRequestContext();
+export async function apiBoundary(operation: HttpOperation, work: () => Promise<NextResponse>): Promise<NextResponse> {
+  const context = createRequestContext(operation), started = performance.now();
+  return withRequestContext(context, async () => {
   try {
-    return await work();
+    const response = await work();
+    response.headers.set("X-Request-Id", context.requestId);
+    logDiagnostic({ event: "http.completed", outcome: "success", code: "OK", status: response.status, durationMs: performance.now() - started });
+    return response;
   } catch (error) {
     const result = toApiError(error, context);
+    // Los rechazos normales se muestrean 1/16 con identidad interna; un fallo 5xx siempre se intenta exportar.
+    if (shouldLogHttp(result.status, context.requestId)) logDiagnostic({ event: "http.completed", outcome: result.status >= 500 ? "error" : "rejected",
+      code: result.body.error.code, severity: result.status >= 500 ? "ERROR" : result.status === 429 ? "WARN" : "INFO", status: result.status,
+      durationMs: performance.now() - started, ...(result.status >= 500 ? { error } : {}) });
     return NextResponse.json(result.body, { status: result.status, headers: {
       ...PRIVATE_RESPONSE_HEADERS,
+      "X-Request-Id": context.requestId,
       ...(error instanceof RateLimitError ? { "Retry-After": String(error.retryAfter) } : {}),
     } });
   }
+  });
 }

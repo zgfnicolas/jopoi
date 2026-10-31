@@ -1,4 +1,5 @@
 import "server-only";
+import { measureDependency } from "../diagnostics";
 
 import { Prisma, type PrismaClient } from "../../generated/prisma/client";
 import { ApplicationError } from "../application-error";
@@ -23,15 +24,14 @@ export function getDatabase(): PrismaClient {
 
 /** Lecturas u operaciones SQL independientes con traducción de errores de dependencia. */
 export async function withDatabase<T>(work: (db: PrismaClient) => Promise<T>): Promise<T> {
-  try {
-    return await work(getDatabase());
-  } catch (error) {
-    throw mapDatabaseError(error);
-  }
+  return measureDependency("database.query", async () => {
+    try { return await work(getDatabase()); } catch (error) { throw mapDatabaseError(error); }
+  });
 }
 
 /** Solo SQL: no llamar Hedera ni otras fronteras externas dentro del callback. */
 export async function withTransaction<T>(work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+  return measureDependency("database.transaction", async () => {
   try {
     return await getDatabase().$transaction(work, {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -41,6 +41,7 @@ export async function withTransaction<T>(work: (tx: Prisma.TransactionClient) =>
   } catch (error) {
     throw mapDatabaseError(error);
   }
+  });
 }
 
 /** El servicio debe autorizar propietario/vigencia dentro de la misma transacción antes de usarlo. */

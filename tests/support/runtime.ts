@@ -104,7 +104,7 @@ export class TestRuntime {
   }
   async cron(secret = this.env.CRON_SECRET) {
     const response = await fetch(this.origin + "/api/cron", { headers: { Authorization: `Bearer ${secret}` } });
-    return { status: response.status, body: await response.json() as Record<string, unknown> };
+    return { status: response.status, body: await response.json() as Record<string, unknown>, headers: response.headers };
   }
   async database(action: "start" | "stop") {
     const args = ["-D", resolve(this.resources.directory, "data")];

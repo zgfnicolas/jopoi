@@ -1,4 +1,5 @@
 import "server-only";
+import { bindBusinessTraceId, logDiagnostic } from "../diagnostics";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -35,24 +36,25 @@ interface TraceContext {
 async function traceFrom(context: TraceContext): Promise<string> {
   const parsed = uuid.safeParse((await context.params).traceId);
   if (!parsed.success) throw new ApplicationError("INVALID_INPUT", { traceId: ["Ingresá un identificador UUID válido."] });
+  bindBusinessTraceId(parsed.data);
   return parsed.data;
 }
 
 export async function getCurrentRunHttp(request: NextRequest): Promise<NextResponse> {
-  return apiBoundary(async () => NextResponse.json(
+  return apiBoundary("runs.current", async () => NextResponse.json(
     await getCurrentRun(request.cookies.get(SESSION_COOKIE)?.value), { headers: PRIVATE_RESPONSE_HEADERS },
   ));
 }
 
 export async function getOwnedRunHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
-  return apiBoundary(async () => NextResponse.json(
+  return apiBoundary("runs.read", async () => NextResponse.json(
     await getOwnedRun(request.cookies.get(SESSION_COOKIE)?.value, await traceFrom(context)),
     { headers: PRIVATE_RESPONSE_HEADERS },
   ));
 }
 
 export async function postCommandHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
-  return apiBoundary(async () => {
+  return apiBoundary("runs.command", async () => {
     requireBrowserMutation(request);
     const traceId = await traceFrom(context);
     const parsed = commandBody.safeParse(await readJsonBody(request, 4096));
@@ -69,6 +71,7 @@ export async function postCommandHttp(request: NextRequest, context: TraceContex
       current: { operation: result.current.operation, version: result.current.version },
       event: result.event, publication: result.publication,
     };
+    logDiagnostic({ event: "operation.committed", outcome: "success", code: "OPERATION_COMMITTED", durationMs: 0 });
     if (result.event !== null) schedulePublications(traceId);
     return NextResponse.json(body, { headers: PRIVATE_RESPONSE_HEADERS });
   });

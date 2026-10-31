@@ -1,5 +1,6 @@
 import type { Environment } from "../config/environment";
-import { HcsError, type HcsProvider } from "./contracts";
+import { HcsError, preserveHcsCause, type HcsProvider, type NetworkOutcome } from "./contracts";
+import { currentRequestContext, logDiagnostic } from "../diagnostics";
 import { lookupTransaction, verifyMessage } from "./mirror";
 import { prepareMessage, queryReceipt, submitMessage } from "./sdk";
 
@@ -17,8 +18,10 @@ export function createHcsProvider(environment: Environment): HcsProvider {
         }
         return mirror;
       } catch (error) {
-        if (receipt.kind === "confirmed") return receipt;
-        return { kind: "unknown", code: error instanceof HcsError ? error.code : "HCS_UNAVAILABLE" };
+        const code = error instanceof HcsError ? error.code : "HCS_UNAVAILABLE";
+        if (currentRequestContext()) logDiagnostic({ event: "publication.recovered", outcome: "partial", severity: "WARN", code, durationMs: 0, error });
+        if (receipt.kind === "confirmed") return preserveHcsCause(receipt, error);
+        return preserveHcsCause<NetworkOutcome>({ kind: "unknown", code }, error);
       }
     },
     verify: (prepared, sequenceNumber, confirmedAt) => verifyMessage({

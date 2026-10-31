@@ -3,6 +3,7 @@ import { performance } from "node:perf_hooks";
 import type { Prisma } from "../../generated/prisma/client";
 import { ApplicationError } from "../application-error";
 import { createCoordinator, utcDay, type CoordinationContext } from "./coordinator";
+import { logDiagnostic } from "../diagnostics";
 
 const NAME = "DAILY_MAINTENANCE";
 /** Shared by authenticated cron and explicit admin CLI. Each category is bounded. */
@@ -75,7 +76,10 @@ export async function runMaintenance(context: CoordinationContext, force = false
     let publications = { processed: 0, hasMore: true };
     let publicationError: string | null = null;
     try { publications = await createCoordinator(context).drain({ maxEvents: 10, deadline: deadline - 7000 }); }
-    catch { publicationError = "PUBLICATION_WORK_PENDING"; }
+    catch (error) {
+      publicationError = "PUBLICATION_WORK_PENDING";
+      logDiagnostic({ event: "background.completed", outcome: "error", severity: "ERROR", code: "PUBLICATION_WORK_PENDING", durationMs: durationMs(), error });
+    }
     const complete = cleanupComplete && !publications.hasMore && publicationError === null;
     await transaction(async (tx) => {
       await fenced(tx);

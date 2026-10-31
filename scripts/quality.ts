@@ -26,6 +26,7 @@ const checks = [
   "test:quality",
   "test:security",
   "test:domain",
+  "test:observability",
   "test:cli",
   "test:ui:tokens",
   "test:api",

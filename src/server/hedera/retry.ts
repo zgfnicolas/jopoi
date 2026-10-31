@@ -1,5 +1,6 @@
 import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
+import { bindBusinessTraceId } from "../diagnostics";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
@@ -21,12 +22,13 @@ const resultSchema = z.strictObject({ version: z.literal(1), eventId: uuid,
   outcome: z.enum(PUBLICATION_RETRY_OUTCOMES) });
 
 export async function retryPublicationHttp(request: NextRequest, context: { params: Promise<{ traceId: string; eventId: string }> }) {
-  return apiBoundary(async () => {
+  return apiBoundary("publications.retry", async () => {
     requireBrowserMutation(request);
     const params = z.strictObject({ traceId: uuid, eventId: uuid }).safeParse(await context.params);
     const body = z.strictObject({ requestId: uuid }).safeParse(await readJsonBody(request, 4096));
     if (!params.success || !body.success) throw new ApplicationError("INVALID_INPUT");
     const { traceId, eventId } = params.data;
+    bindBusinessTraceId(traceId);
     const { requestId } = body.data;
     const hash = sessionTokenHash(request.cookies.get(SESSION_COOKIE)?.value);
     const intentHash = createHash("sha256").update(canonicalJson({ version: 1, action: "retryPublication", eventId })).digest("hex");

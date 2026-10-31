@@ -299,7 +299,13 @@
         "S22-08",
         "S22-09"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-31",
+        "evidence": "docs/s22-08-diagnosticos-correlacionados.md",
+        "validation": "Contexto HTTP/SQL/after, causas privadas y exportación JSON saneada. Puerta completa y build aprobados con cuatro pruebas de observabilidad, 52 HTTP y cero diagnósticos estrictos. Timeout inicial documentado, no reproducido aislado ni en la segunda puerta. RFC 9457 pendiente en 09; W3C y contexto durable pendientes en 23."
+      }
     },
     {
       "id": "09",

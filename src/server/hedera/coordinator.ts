@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { logDiagnostic } from "../diagnostics";
 import { Prisma } from "../../generated/prisma/client";
 import { canonicalJson } from "../../domain/canonical-json";
 import { ApplicationError } from "../application-error";
@@ -250,7 +251,9 @@ export function createCoordinator(context: CoordinationContext) {
       return true;
     } catch (error) {
       if (error instanceof BudgetEnded) return true;
-      if (error instanceof HcsError) await transaction(async (tx) => {
+      if (error instanceof HcsError) {
+        logDiagnostic({ event: "publication.recovered", outcome: "partial", severity: "WARN", code: error.code, durationMs: 0, error });
+        await transaction(async (tx) => {
         const row = await load(tx, eventId, owner);
         const uncertain = row.attempts[0] && ["STARTED", "UNCERTAIN"].includes(row.attempts[0].state);
         await tx.hcsPublication.update({ where: { eventId }, data: {
@@ -258,8 +261,8 @@ export function createCoordinator(context: CoordinationContext) {
           ...(row.state === "CONFIRMED" ? { verificationState: "UNAVAILABLE" } : {}),
           lastErrorCode: error.code, nextAttemptAt: new Date(now().getTime() + 900000),
         } });
-      });
-      else throw error;
+        });
+      } else throw error;
       return true;
     } finally {
       await transaction(async (tx) => { await tx.hcsPublication.updateMany({ where: { eventId, leaseOwner: owner }, data: { leaseOwner: null, leaseExpiresAt: null } }); });

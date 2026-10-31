@@ -16,14 +16,14 @@ const MAX_BODY_BYTES = 4096;
 export { requireBrowserMutation } from "../http";
 
 export async function getSession(request: NextRequest): Promise<NextResponse> {
-  return boundary(async () => NextResponse.json(
+  return boundary("session.read", async () => NextResponse.json(
     await recoverSession(request.cookies.get(SESSION_COOKIE)?.value),
     { headers: privateHeaders },
   ));
 }
 
 export async function postSession(request: NextRequest): Promise<NextResponse> {
-  return boundary(async () => {
+  return boundary("session.create", async () => {
     requireBrowserMutation(request);
     if (!emptyBody.safeParse(await readJsonBody(request, MAX_BODY_BYTES)).success) throw new ApplicationError("INVALID_INPUT");
     await requireRateLimit(request, "SESSION");
@@ -45,7 +45,7 @@ export async function postSession(request: NextRequest): Promise<NextResponse> {
 }
 
 export function postRunIntent(kind: "START" | "RESET") {
-  return async (request: NextRequest): Promise<NextResponse> => boundary(async () => {
+  return async (request: NextRequest): Promise<NextResponse> => boundary(kind === "START" ? "runs.start" : "runs.reset", async () => {
     requireBrowserMutation(request);
     const parsed = runIntentBody.safeParse(await readJsonBody(request, MAX_BODY_BYTES));
     if (!parsed.success) throw new ApplicationError("INVALID_INPUT", { requestId: ["Ingresá un identificador UUID y solo los campos permitidos."] });

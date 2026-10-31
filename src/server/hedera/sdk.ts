@@ -8,7 +8,8 @@ import {
 import { canonicalJson } from "../../domain/canonical-json";
 import type { HcsEventEnvelope } from "../../shared/event-contracts";
 import { createConfigReader, type Environment } from "../config/environment";
-import { HcsError, type HcsCode, type NetworkOutcome, type PreparedMessage } from "./contracts";
+import { HcsError, preserveHcsCause, type HcsCode, type NetworkOutcome, type PreparedMessage } from "./contracts";
+import { currentRequestContext, logDiagnostic } from "../diagnostics";
 import type { HcsTarget } from "./target";
 
 export function readOperator(environment: Environment) {
@@ -18,7 +19,7 @@ export function readOperator(environment: Environment) {
     const key = PrivateKey.fromStringDer(result.config.operatorKey);
     if (key.toStringDer().toLowerCase() !== result.config.operatorKey.toLowerCase()) throw new Error();
     return { operatorId: result.config.operatorId, key };
-  } catch { throw new HcsError("HCS_INVALID_KEY"); }
+  } catch (error) { throw new HcsError("HCS_INVALID_KEY", { cause: error }); }
 }
 
 export async function withTestnetClient<T>(work: (client: Client) => Promise<T>): Promise<T> {
@@ -41,16 +42,20 @@ export function statusCode(status: Status): HcsCode {
 }
 
 export function sendFailure(error: unknown): Exclude<NetworkOutcome, { kind: "confirmed" }> {
-  if (error instanceof HcsError) return { kind: "not_sent", code: error.code };
+  if (error instanceof HcsError) return networkFailure({ kind: "not_sent", code: error.code }, error);
   if (error instanceof PrecheckStatusError) {
     const status = error.status;
     if ([Status.DuplicateTransaction, Status.Unknown, Status.Busy, Status.PlatformNotActive].includes(status)) {
-      return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" };
+      return networkFailure({ kind: "unknown", code: "HCS_RESULT_UNKNOWN" }, error);
     }
-    return { kind: "rejected", code: statusCode(status), source: "PRECHECK" };
+    return networkFailure({ kind: "rejected", code: statusCode(status), source: "PRECHECK" }, error);
   }
   // Transport failures do not prove whether submission reached the network.
-  return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" };
+  return networkFailure({ kind: "unknown", code: "HCS_RESULT_UNKNOWN" }, error);
+}
+function networkFailure(result: Exclude<NetworkOutcome, { kind: "confirmed" }>, error: unknown) {
+  if (currentRequestContext()) logDiagnostic({ event: "publication.recovered", code: result.code, outcome: "partial", severity: "WARN", durationMs: 0, error: new HcsError(result.code, { cause: error }) });
+  return preserveHcsCause(result, error);
 }
 
 export async function validateOperator(client: Client, operator: ReturnType<typeof readOperator>): Promise<void> {
@@ -81,7 +86,7 @@ export async function prepareMessage(environment: Environment, target: HcsTarget
     });
   } catch (error) {
     if (error instanceof HcsError) throw error;
-    throw new HcsError(error instanceof PrecheckStatusError ? statusCode(error.status) : "HCS_UNAVAILABLE");
+    throw new HcsError(error instanceof PrecheckStatusError ? statusCode(error.status) : "HCS_UNAVAILABLE", { cause: error });
   }
 }
 
@@ -99,7 +104,7 @@ export function readSignedTransaction(bytes: Uint8Array, transactionId: string, 
       if (map.size !== 1 || Array.from(map.keys()).some((item) => item.toString() !== transactionId)) throw new Error();
     }
     return tx;
-  } catch { throw new HcsError("HCS_INVALID_PREPARATION"); }
+  } catch (error) { throw new HcsError("HCS_INVALID_PREPARATION", { cause: error }); }
 }
 
 export function readPreparedMessage(environment: Environment, prepared: PreparedMessage): TopicMessageSubmitTransaction {
@@ -148,7 +153,7 @@ export async function queryReceipt(transactionId: string): Promise<NetworkOutcom
       return final === undefined ? { kind: "unknown", code: "HCS_RESULT_UNKNOWN" }
         : { kind: "rejected", code: statusCode(final.status), source: "RECEIPT" };
     });
-  } catch { return { kind: "unknown", code: "HCS_RESULT_UNKNOWN" }; }
+  } catch (error) { return networkFailure({ kind: "unknown", code: "HCS_RESULT_UNKNOWN" }, error); }
 }
 
 export async function prepareTopic(environment: Environment): Promise<{ transactionId: string; operatorId: string; signedBytes: Uint8Array }> {
