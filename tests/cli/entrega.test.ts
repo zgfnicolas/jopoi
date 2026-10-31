@@ -126,9 +126,34 @@ test("CLI: migrations using the native alias still enforce --local-only before S
 });
 test("CLI: every administrative help accepts native selector without reading a missing file", () => {
   for (const [script, command] of [["delivery", "check"], ["database", "status"], ["ops-status"], ["export-contacts"], ["maintenance"], ["create-topic"], ["acceptance", "live"]]) {
+    assert.ok(script, "CLI fixture requires a script");
     const result = cli(script, [...(command ? [command] : []), "--help", "--vercel-env-file", "nonexistent-s19-file"]);
     assert.equal(result.status, 0, `${script}: ${result.stderr}`);
     assert.match(result.stdout, /--vercel-env-file/);
+  }
+});
+
+test("S22 CLI: missing and repeated arguments fail before reading an explicit environment", () => {
+  const cases: readonly (readonly [string, string[]])[] = [
+    ["database", []], ["delivery", []], ["delivery", ["check", "--profile"]],
+    ["acceptance", ["check", "--evidence"]], ["acceptance", ["check", "--journal"]],
+    ["acceptance", ["check", "--evidence", "one", "--evidence", "two"]],
+    ["acceptance", ["live", "--run"]], ["create-topic", ["status", "--file"]],
+  ];
+  for (const [script, args] of cases) {
+    const result = cli(script, [...args, "--env-file", "nonexistent-s22-file"]);
+    assert.equal(result.status, 2, `${script}: ${result.stderr}`);
+    assert.match(result.stderr, /INVALID_CLI_ARGUMENTS/);
+    assert.doesNotMatch(result.stderr, /INVALID_ENVIRONMENT_FILE|ENOENT/);
+  }
+});
+
+test("S22 CLI: an explicit missing file cannot fall back to inherited configuration", () => {
+  for (const selector of ["--env-file", "--vercel-env-file"]) {
+    const result = cli("delivery", ["check", selector, "nonexistent-s22-file"], { DATABASE_URL: pooled, DIRECT_URL: direct });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /ENVIRONMENT_FILE/);
+    assert.equal(result.stdout, "");
   }
 });
 

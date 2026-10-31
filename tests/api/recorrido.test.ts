@@ -1,3 +1,4 @@
+import { requiredEntry } from "../support/required-entry";
 import { afterAll, beforeEach, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { environment, eventually, Visitor } from "../support/client";
@@ -88,7 +89,7 @@ test("API-06 · guardar no publica y publicar crea un solo hito inmutable", asyn
   const replayed = await visitor.post(`/api/demo/runs/${visitor.traceId}/commands`, command);
   expect(replayed.body).toMatchObject({ replayed: true, applied: { eventId: published.body.applied.eventId } });
   expect(settled.events).toHaveLength(1);
-  expect(settled.events[0].event).toEqual(published.body.event);
+  expect(requiredEntry(settled.events, 0).event).toEqual(published.body.event);
   expect((await environment.ledger()).submissions).toHaveLength(1);
 });
 

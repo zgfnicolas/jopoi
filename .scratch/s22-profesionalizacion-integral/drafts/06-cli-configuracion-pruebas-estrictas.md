@@ -12,9 +12,13 @@
 
 ## Acceptance criteria
 
-- [ ] Argumentos CLI, resultados SQL de diagnóstico, objetos opcionales y recursos de prueba comprueban existencia antes de usarse.
-- [ ] CLI, configuración y tests corrigen sus diagnósticos del perfil completo sin casts de escape, non-null assertions nuevas o exclusiones.
-- [ ] Ayuda y rechazo de argumentos siguen sin cargar secretos ni conectar servicios; archivos explícitos mantienen su política de no fallback.
-- [ ] Se verifica exportación, selección de entorno y aislamiento del arnés con entradas sintéticas y sin usar la base habitual.
-- [ ] Las pruebas existentes siguen aprobadas y los reportes distinguen ejecución local, ledger controlado y evidencia externa.
+- [x] Argumentos CLI, resultados SQL de diagnóstico, objetos opcionales y recursos de prueba comprueban existencia antes de usarse.
+- [x] CLI, configuración y tests corrigen sus diagnósticos del perfil completo sin casts de escape, non-null assertions nuevas o exclusiones.
+- [x] Ayuda y rechazo de argumentos siguen sin cargar secretos ni conectar servicios; archivos explícitos mantienen su política de no fallback.
+- [x] Se verifica exportación, selección de entorno y aislamiento del arnés con entradas sintéticas y sin usar la base habitual.
+- [x] Las pruebas existentes siguen aprobadas y los reportes distinguen ejecución local, ledger controlado y evidencia externa.
+
+## Implementación local
+
+Completado el 2026-10-31. Evidencia y límites: [S22-06](../../../docs/s22-06-cli-configuracion-pruebas-estrictas.md). Perfil completo sin diagnósticos; puerta completa y dos escenarios Chromium aprobados, con repeticiones por fallos del entorno documentadas. No se publica el ticket ni se implementa el 07 en esta entrega.
 

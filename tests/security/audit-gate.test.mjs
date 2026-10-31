@@ -49,9 +49,15 @@ async function auditFixture(context, severity) {
       response.writeHead(404).end(JSON.stringify({ error: "synthetic resource not found" }));
     }
   });
+  // Incluí sockets todavía sin request HTTP: npm puede abortar durante el arranque.
+  const sockets = new Set();
+  server.on("connection", socket => {
+    sockets.add(socket);
+    socket.once("close", () => sockets.delete(socket));
+  });
   context.after(() => new Promise((resolveClose, reject) => {
     server.close(error => error ? reject(error) : resolveClose());
-    server.closeAllConnections();
+    for (const socket of sockets) socket.destroy();
   }));
   server.listen(0, "127.0.0.1");
   await once(server, "listening");

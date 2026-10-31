@@ -1,9 +1,11 @@
 import { Client } from "pg";
 import type { TestResources } from "./runtime-provision";
+import { ownedResources } from "./owned-resources";
 
 /** Fixture preparation only. Assertions observe HTTP, the UI or authorized CSV. */
 export function createFixtures(resources: TestResources) {
   async function execute(sql: string, values: unknown[] = [], exceptional = false): Promise<void> {
+    await ownedResources(resources);
     const target = new URL(resources.databaseUrl);
     if (target.hostname !== "127.0.0.1" || target.port !== String(resources.pgPort) || target.pathname !== "/s17_api") throw new Error("TEST_DATABASE_NOT_OWNED");
     const client = new Client({ connectionString: resources.databaseUrl, connectionTimeoutMillis: 3000 });

@@ -14,14 +14,15 @@ async function child(relative: string, args: string[]): Promise<number> {
 async function main() {
   const { args, file, format } = environmentOption(process.argv.slice(2));
   const action = args[0];
-  if (!["check", "build"].includes(action)) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+  if (!action || !["check", "build"].includes(action)) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   if (args.length === 2 && args[1] === "--help") {
     console.log("delivery:check -- [--profile local|candidate] [--env-file ARCHIVO (o --vercel-env-file ARCHIVO)]\ndelivery:build -- --env-file ARCHIVO (o --vercel-env-file ARCHIVO)\nCheck es offline: solo archivos, formatos y clave DER; no demuestra disponibilidad.\nBuild exige perfil candidato válido y ejecuta generate + next build, sin migrar ni desplegar.\nAyuda sin entorno ni conexiones. Código 0: válido sin comprobar red; 1: bloqueado/fallo; 2: argumentos inválidos."); return;
   }
   let profile: DeliveryProfile = action === "build" ? "candidate" : "local";
   if (args.length !== 1) {
-    if (action !== "check" || args.length !== 3 || args[1] !== "--profile" || !["local", "candidate"].includes(args[2])) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
-    profile = args[2] as DeliveryProfile;
+    const selected = args[2];
+    if (action !== "check" || args.length !== 3 || args[1] !== "--profile" || (selected !== "local" && selected !== "candidate")) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+    profile = selected;
   }
   if (profile === "candidate" && file === undefined) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   loadCliEnvironment(ROOT, file, format);

@@ -15,7 +15,8 @@ El usuario autorizó posteriormente implementar los primeros diez tickets, deten
 - **03 completado y validado localmente (2026-10-30):** [contratos operativos expandidos](../../docs/s22-03-contratos-operativos.md). Modelo discriminado y reconstrucción semántica junto al contrato anterior; 39/39 pruebas de dominio, 43/43 HTTP y puerta completa aprobadas. El lote nuevo no agrega diagnósticos estrictos.
 - **04 completado y validado localmente (2026-10-30):** [persistencia operativa válida](../../docs/s22-04-persistencia-operativa.md). 54 pruebas de dominio/persistencia, 49 HTTP, 3 bloqueos de calidad y build aprobados; expansión SQL y auditoría histórica de solo lectura. Servidor/dominio con cero diagnósticos estrictos; quedan 80 globales.
 - **05 completado y validado localmente (2026-10-31):** [intenciones tipadas del panel](../../docs/s22-05-intenciones-panel.md). Nueve escenarios distintos en Chromium, 49 HTTP, 54 dominio/persistencia, 4 bloqueos de calidad y build aprobados. Frontend/componentes con cero diagnósticos estrictos; quedan 59 globales en scripts/tests.
-- **06 pendiente de confirmación para comenzar.** Los tickets 06–10 no se implementaron en esta entrega.
+- **06 completado y validado localmente (2026-10-31):** [CLI, configuración y arneses estrictos](../../docs/s22-06-cli-configuracion-pruebas-estrictas.md). Cero diagnósticos globales, puerta completa con 23 CLI y 49 HTTP, build y dos escenarios Chromium aprobados en tandas separadas. Fallos del entorno y repeticiones documentados.
+- **07 pendiente de confirmación para comenzar.** Los tickets 07–10 no se implementaron en esta entrega.
 - La publicación de tickets, la ejecución del workflow en GitHub y la protección de rama continúan pendientes de configuración remota.
 
 ## Antes de publicar

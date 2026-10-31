@@ -1,14 +1,13 @@
-import { readFile } from "node:fs/promises";
 import { test as base, expect } from "@playwright/test";
 import { TestRuntime } from "../../support/runtime";
-import type { TestResources } from "../../support/runtime-provision";
+import { readOwnedResources } from "../../support/owned-resources";
 import { Journey } from "./journey";
 
 export const test = base.extend<{ journey: Journey }, { runtime: TestRuntime }>({
   runtime: [async ({}, use) => {
     const file = process.env.JOPOI_E2E_RESOURCES_FILE;
     if (!file) throw new Error("BLOCKED_E2E_RESOURCES_MISSING");
-    const runtime = new TestRuntime(JSON.parse(await readFile(file, "utf8")) as TestResources, "webpack");
+    const runtime = new TestRuntime(await readOwnedResources(file), "webpack");
     try { await use(runtime); } finally { await runtime.close(); }
   }, { scope: "worker" }],
   page: [async ({ context, runtime }, use, info) => {

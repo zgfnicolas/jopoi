@@ -44,8 +44,9 @@ async function initialize() {
   const token = randomBytes(32).toString("hex");
   const [pgPort, httpPort, secondaryHttpPort] = [await freePort(), await freePort(), await freePort()];
   const candidates = (await readdir(resolve(".tools", "postgresql"))).filter(name => /^17\.[\d.-]+$/.test(name)).sort();
-  if (!candidates.length) throw new Error("BLOCKED_POSTGRES_BINARIES_MISSING");
-  const pgBin = resolve(".tools", "postgresql", candidates.at(-1)!, "pgsql", "bin");
+  const candidate = candidates.at(-1);
+  if (!candidate) throw new Error("BLOCKED_POSTGRES_BINARIES_MISSING");
+  const pgBin = resolve(".tools", "postgresql", candidate, "pgsql", "bin");
   const password = randomBytes(32).toString("hex");
   const passwordFile = resolve(directory, "pg-password");
   await writeFile(passwordFile, password, { mode: 0o600 });

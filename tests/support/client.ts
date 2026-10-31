@@ -24,7 +24,7 @@ export class Visitor {
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(60000),
     });
     const cookie = response.headers.get("set-cookie");
-    if (cookie) this.cookie = cookie.split(";")[0];
+    if (cookie) this.cookie = cookie.slice(0, cookie.indexOf(";") < 0 ? cookie.length : cookie.indexOf(";"));
     return { status: response.status, body: await response.json() as T, headers: response.headers };
   }
   get<T = DemoRunResponse>(path: string) { return this.request<T>("GET", path); }

@@ -1,3 +1,4 @@
+import { requiredEntry } from "../support/required-entry";
 import { createHash, randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { afterAll, beforeEach, expect, test } from "vitest";
@@ -51,14 +52,14 @@ test("API-14 · vector JCS independiente, orden de claves y alteración de paylo
   expect(published.event).toEqual({ payload: JSON.parse(canonical), digest });
   await exceptional.payload(eventId, Object.fromEntries(Object.entries(JSON.parse(canonical)).reverse()));
   const same = await visitor.trace();
-  expect(same.body.events[0].integrity).toMatchObject({ state: "MATCHED", storedDigest: digest, localDigest: digest });
-  expect(same.body.events[0].event).toEqual(published.event);
-  expect(same.body.events[0].publication.state).toBe("CONFIRMED");
+  expect(requiredEntry(same.body.events, 0).integrity).toMatchObject({ state: "MATCHED", storedDigest: digest, localDigest: digest });
+  expect(requiredEntry(same.body.events, 0).event).toEqual(published.event);
+  expect(requiredEntry(same.body.events, 0).publication.state).toBe("CONFIRMED");
   const changedCanonical = canonical.replace('"quantityKg":"12000.000"', '"quantityKg":"12001.000"');
   await exceptional.payload(eventId, JSON.parse(changedCanonical));
   const altered = await visitor.trace();
-  expect(altered.body.events[0].event).toBeNull();
-  expect(altered.body.events[0].integrity).toEqual({ state: "MISMATCH", storedDigest: digest,
+  expect(requiredEntry(altered.body.events, 0).event).toBeNull();
+  expect(requiredEntry(altered.body.events, 0).integrity).toEqual({ state: "MISMATCH", storedDigest: digest,
     localDigest: createHash("sha256").update(changedCanonical, "utf8").digest("hex") });
   expect((await visitor.verification(eventId)).body.state).toBe("MISMATCH");
 });

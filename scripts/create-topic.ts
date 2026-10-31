@@ -73,7 +73,7 @@ async function main(): Promise<void> {
   }
   const command = args[0];
   if (!(command === "prepare" && args.length === 1)
-    && !((command === "submit" || command === "status") && args.length === 3 && args[1] === "--file")) {
+    && !((command === "submit" || command === "status") && args.length === 3 && args[1] === "--file" && args[2])) {
     throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   }
   loadCliEnvironment(ROOT, file, format);
@@ -91,7 +91,9 @@ async function main(): Promise<void> {
     console.log(JSON.stringify({ code: "TOPIC_PREPARED_NOT_SENT", file: relative(ROOT, path), transactionId: prepared.transactionId }));
     return;
   }
-  const { path, journal, signedBytes } = await readJournal(args[2]);
+  const journalFile = args[2];
+  if (!journalFile) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+  const { path, journal, signedBytes } = await readJournal(journalFile);
   if (command === "status") { printStatus(journal.transactionId, await topicStatus(journal.transactionId)); return; }
   const { readPreparedTopic, sendFailure, transactionExpired, withTestnetClient } = await import("../src/server/hedera/sdk");
   const tx = readPreparedTopic(process.env, { ...journal, signedBytes });

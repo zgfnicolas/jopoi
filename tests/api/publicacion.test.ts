@@ -1,3 +1,4 @@
+import { requiredEntry } from "../support/required-entry";
 import { afterAll, beforeEach, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { environment, eventually, Visitor } from "../support/client";
@@ -11,17 +12,17 @@ test.each(["unknown", "timeout"] as const)("API-15 · %s conserva transactionId 
   const published = await visitor.publish();
   const eventId = published.applied.eventId!;
   const uncertain = await eventually(() => visitor.run(), run => run.events[0]?.publication.state === "UNCERTAIN");
-  const transactionId = uncertain.events[0].publication.transactionId;
+  const transactionId = requiredEntry(uncertain.events, 0).publication.transactionId;
   expect(transactionId).toBeTruthy();
   for (let index = 0; index < 3; index++) { await visitor.trace(); await visitor.verification(eventId); await visitor.run(); }
   expect((await environment.ledger()).submissions).toEqual([transactionId]);
   expect((await visitor.retry(eventId)).body.outcome).toBe("RECONCILE_ONLY");
-  expect((await visitor.run()).events[0].publication.transactionId).toBe(transactionId);
+  expect(requiredEntry((await visitor.run()).events, 0).publication.transactionId).toBe(transactionId);
   await environment.network("confirmed");
   await environment.advance(60001);
   expect((await environment.cron()).status).toBe(200);
   const confirmed = await eventually(() => visitor.run(), run => run.events[0]?.publication.verificationState === "MATCHED");
-  expect(confirmed.events[0].publication).toMatchObject({ state: "CONFIRMED", transactionId, automaticAttempts: 1 });
+  expect(requiredEntry(confirmed.events, 0).publication).toMatchObject({ state: "CONFIRMED", transactionId, automaticAttempts: 1 });
   expect((await environment.ledger()).submissions).toEqual([transactionId]);
 });
 
@@ -53,7 +54,7 @@ test("API-19 · trabajadores solapados no duplican ni adelantan hitos", async ()
   await eventually(() => environment.ledger(), ledger => ledger.submissions.length === 1);
   const second = await visitor.apply({ action: "approve", role: "coordinator" });
   const before = await visitor.run();
-  expect(before.events[1].publication.blockedBy).toBe(first.applied.eventId);
+  expect(requiredEntry(before.events, 1).publication.blockedBy).toBe(first.applied.eventId);
   const cron = await Promise.all([environment.cron(), environment.cron()]);
   expect(cron.some(result => result.status === 200)).toBe(true);
   for (const result of cron) {
@@ -82,7 +83,7 @@ test("API-20 · cron protegido recupera un lease abandonado sin reenviar la tran
   await environment.advance(90001);
   await environment.start();
   expect((await environment.cron()).status).toBe(200);
-  expect((await visitor.run()).events[0].publication).toMatchObject({ state: "CONFIRMED", verificationState: "MATCHED", transactionId, automaticAttempts: 1 });
+  expect(requiredEntry((await visitor.run()).events, 0).publication).toMatchObject({ state: "CONFIRMED", verificationState: "MATCHED", transactionId, automaticAttempts: 1 });
   expect((await environment.cron()).body).toMatchObject({ skipped: true });
   expect((await environment.ledger()).submissions).toEqual([transactionId]);
 });
@@ -97,12 +98,12 @@ test("API-16 · receipt confirmado no inventa coincidencia y mirror alterado dis
   expect(pending.body).toMatchObject({ state: "PENDING", publication: { state: "CONFIRMED" }, observation: { evidence: { digestMatch: false, remoteDigest: null } } });
   await environment.network("altered");
   expect((await visitor.verification(eventId)).body.state).toBe("MISMATCH");
-  expect((await visitor.trace()).body.events[0].storedVerification.state).toBe("PENDING");
+  expect(requiredEntry((await visitor.trace()).body.events, 0).storedVerification.state).toBe("PENDING");
   await environment.advance(900001);
   expect((await environment.cron()).status).toBe(200);
   const mismatch = await visitor.trace();
-  expect(mismatch.body.events[0].storedVerification.state).toBe("MISMATCH");
-  expect(mismatch.body.events[0].event).toEqual(published.event);
+  expect(requiredEntry(mismatch.body.events, 0).storedVerification.state).toBe("MISMATCH");
+  expect(requiredEntry(mismatch.body.events, 0).event).toEqual(published.event);
 });
 
 test("API-18 · tres intentos automáticos y una reactivación manual sin reenvíos por lectura", async () => {
@@ -113,22 +114,22 @@ test("API-18 · tres intentos automáticos y una reactivación manual sin reenv�
   await eventually(() => visitor.run(), run => run.events[0]?.publication.state === "FAILED");
   await environment.advance(60001);
   expect((await environment.cron()).status).toBe(200);
-  expect((await visitor.run()).events[0].publication.automaticAttempts).toBe(2);
+  expect(requiredEntry((await visitor.run()).events, 0).publication.automaticAttempts).toBe(2);
   await environment.advance(300001);
   expect((await visitor.retry(eventId)).body.outcome).toBe("AUTOMATIC_PENDING");
-  const exhausted = await eventually(() => visitor.run(), run => run.events[0]?.publication.automaticAttempts === 3 && run.events[0].publication.state === "FAILED");
-  expect(exhausted.events[0].publication).toMatchObject({ manualAttempts: 0, manualAvailable: true });
+  const exhausted = await eventually(() => visitor.run(), run => run.events[0]?.publication.automaticAttempts === 3 && requiredEntry(run.events, 0).publication.state === "FAILED");
+  expect(requiredEntry(exhausted.events, 0).publication).toMatchObject({ manualAttempts: 0, manualAvailable: true });
   await visitor.verification(eventId);
   await visitor.trace();
   expect((await environment.ledger()).submissions).toHaveLength(3);
   const manualRequestId = randomUUID();
   const manual = await visitor.retry(eventId, manualRequestId);
   expect(manual.body.outcome).toBe("MANUAL_AUTHORIZED");
-  await eventually(() => visitor.run(), run => run.events[0]?.publication.manualAttempts === 1 && run.events[0].publication.state === "FAILED");
+  await eventually(() => visitor.run(), run => run.events[0]?.publication.manualAttempts === 1 && requiredEntry(run.events, 0).publication.state === "FAILED");
   const replayed = await visitor.retry(eventId, manualRequestId);
   expect(replayed.status).toBe(200);
   expect(replayed.body).toMatchObject({ replayed: true, outcome: "MANUAL_AUTHORIZED" });
   expect((await visitor.retry(eventId)).body.outcome).toBe("EXHAUSTED");
   expect((await environment.ledger()).submissions).toHaveLength(4);
-  expect((await visitor.run()).events[0].publication).toMatchObject({ automaticAttempts: 3, manualAttempts: 1, manualAvailable: false });
+  expect(requiredEntry((await visitor.run()).events, 0).publication).toMatchObject({ automaticAttempts: 3, manualAttempts: 1, manualAvailable: false });
 });

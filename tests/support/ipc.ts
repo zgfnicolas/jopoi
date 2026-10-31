@@ -11,7 +11,7 @@ export function rpc<T>(socket: string, operation: string, data?: unknown): Promi
     connection.on("data", chunk => {
       input += chunk;
       if (!input.includes("\n")) return;
-      const response = JSON.parse(input.split("\n")[0]);
+      const response = JSON.parse(input.slice(0, input.indexOf("\n")));
       connection.end();
       if (response.error) reject(new Error(response.error));
       else resolve(response.value);

@@ -1,3 +1,4 @@
+import { requiredEntry } from "../support/required-entry";
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
@@ -25,7 +26,7 @@ test("S21-01 · límites exactos y compartidos entre dos instancias", async () =
     const denied=results.filter(r=>r.status===429);
     expect(denied).toHaveLength(4);
     expect(denied.every(r=>r.headers.get("retry-after")==="600")).toBe(true);
-    expect(await denied[0].json()).toMatchObject({error:{code:"RATE_LIMITED"}});
+    expect(await requiredEntry(denied).json()).toMatchObject({error:{code:"RATE_LIMITED"}});
     const other=new Visitor();
     expect((await other.begin()).status).toBe(201);
     await environment.advance(600000);
@@ -126,7 +127,7 @@ test("S21-08 · un trabajador vencido no confirma ni libera el lease recuperado"
   await environment.network("confirmed",true);
   await eventually(()=>visitor.run(),run=>run.events[0]?.publication.verificationState==="MATCHED");
   expect((await environment.ledger()).submissions).toEqual([transactionId]);
-  expect((await visitor.run()).events[0].publication.transactionId).toBe(transactionId);
+  expect(requiredEntry((await visitor.run()).events, 0).publication.transactionId).toBe(transactionId);
 });
 
 test("S21-09 · backup sintético restaura evidencia confirmada tras reinicio",async()=>{
@@ -145,7 +146,7 @@ test("S21-09 · backup sintético restaura evidencia confirmada tras reinicio",a
     const rows=(await db.query('SELECT e.payload,e.digest,p.state,p."transactionId" FROM "OperationEvent" e JOIN "HcsPublication" p ON p."eventId"=e.id')).rows;
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({payload:published.event!.payload,digest:published.event!.digest,state:"CONFIRMED",
-      transactionId:confirmed.events[0].publication.transactionId});
+      transactionId:requiredEntry(confirmed.events, 0).publication.transactionId});
   }finally{await db.end();}
   await environment.close();await environment.database("stop");await environment.database("start");await environment.start();
   expect((await visitor.run()).operation.state).toBe("PUBLISHED");

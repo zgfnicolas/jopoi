@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { percentile } from "../../scripts/lib/s21-measurements";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
@@ -95,9 +96,16 @@ try {
             const report = await lighthouse(local, { port: debugPort, onlyCategories: ["performance"], output: "json", logLevel: "error", formFactor: "mobile", throttlingMethod: "simulate" });
             assert(report && !report.lhr.runtimeError, "Lighthouse completed");
             await writeFile(resolve(directory, `lighthouse-mobile-${run}.json`), JSON.stringify(report.lhr, null, 2));
-            samples.push({ lcp: report.lhr.audits["largest-contentful-paint"].numericValue!, cls: report.lhr.audits["cumulative-layout-shift"].numericValue!, tbt: report.lhr.audits["total-blocking-time"].numericValue!, score: report.lhr.categories.performance.score });
+            const metric = (id: string) => {
+              const value = report.lhr.audits[id]?.numericValue;
+              assert.ok(value !== undefined && Number.isFinite(value) && value >= 0, `Lighthouse metric missing: ${id}`);
+              return value;
+            };
+            const category = report.lhr.categories.performance;
+            assert.ok(category, "Lighthouse performance category missing");
+            samples.push({ lcp: metric("largest-contentful-paint"), cls: metric("cumulative-layout-shift"), tbt: metric("total-blocking-time"), score: category.score });
           }
-          const median = (values: number[]) => values.sort((a, b) => a - b)[1];
+          const median = (values: number[]) => percentile(values.sort((a, b) => a - b), 1);
           const measurements = { mode: "LOCAL_PRODUCTION_LAB", profile: "Lighthouse default mobile, simulated throttling, loopback, headless Chromium", samples,
             median: { lcp: median(samples.map(sample => sample.lcp)), cls: median(samples.map(sample => sample.cls)), tbt: median(samples.map(sample => sample.tbt)) },
             fieldINP: "PENDIENTE_DATOS_REALES", note: "TBT no equivale a INP. Sin CDN ni red móvil real; no acredita métricas de campo." };

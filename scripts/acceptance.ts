@@ -14,11 +14,13 @@ async function main() {
   }
   let run = false, evidence: string | undefined, journal: string | undefined;
   for (let index = 0; index < args.length; index++) {
-    if (args[index] === "--run" && !run) { run = true; continue; }
-    if (!["--evidence", "--journal"].includes(args[index]) || !args[index + 1] || args[index + 1].startsWith("--")) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
-    if (args[index] === "--evidence" && !evidence) evidence = args[++index];
-    else if (args[index] === "--journal" && !journal) journal = args[++index];
+    const option = args[index], value = args[index + 1];
+    if (option === "--run" && !run) { run = true; continue; }
+    if ((option !== "--evidence" && option !== "--journal") || !value || value.startsWith("--")) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+    if (option === "--evidence" && !evidence) evidence = value;
+    else if (option === "--journal" && !journal) journal = value;
     else throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
+    index++;
   }
   if (action === "check" && run || action === "live" && (!run || !file || !evidence || !journal)) throw new CliEnvironmentError("INVALID_CLI_ARGUMENTS");
   const root = resolve(".cache/acceptance");
@@ -34,12 +36,13 @@ async function main() {
   await mkdir(root, { recursive: true });
   if (action === "live") {
     const source = evidenceRevision();
-    if (!configured || !origin || source.dirty || process.env.JOPOI_API_TEST_DIRECTORY || !readProof(evidence, origin, source.revision)) {
+    const topicId = process.env.HEDERA_TOPIC_ID, operatorId = process.env.HEDERA_OPERATOR_ID;
+    if (!configured || !origin || !journal || !topicId || !operatorId || source.dirty || process.env.JOPOI_API_TEST_DIRECTORY || !readProof(evidence, origin, source.revision)) {
       console.log(JSON.stringify({ status: "BLOQUEADO", code: "LIVE_CANDIDATE_OR_PROVIDER_EVIDENCE_MISSING" })); process.exitCode = 1; return;
     }
-    await mkdir(resolve(journal!, ".."), { recursive: true });
+    await mkdir(resolve(journal, ".."), { recursive: true });
     const { runLive } = await import("./lib/live-acceptance");
-    const result = await runLive(origin, process.env.HEDERA_TOPIC_ID!, process.env.HEDERA_OPERATOR_ID!, resolve(journal!));
+    const result = await runLive(origin, topicId, operatorId, resolve(journal));
     console.log(JSON.stringify({ status: result.status, traceId: result.traceId, events: result.events.length, recovery: result.recovery }));
     process.exitCode = result.status === "APROBADO" ? 0 : 1;
     return;

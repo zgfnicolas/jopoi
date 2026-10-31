@@ -1,3 +1,4 @@
+import { requiredEntry } from "../support/required-entry";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeEach, expect, test } from "vitest";
 import type { DemoRequestConfirmation } from "../../src/shared/contact-contracts";
@@ -104,15 +105,15 @@ test("API-24 · 12000 kg conserva los importes ilustrativos de S02", async () =>
 test("API-25 · red suspendida y cambio de topic no reescriben evidencia histórica", async () => {
   const visitor = await new Visitor().setup();
   const published = await visitor.publish();
-  const initial = (await visitor.trace()).body.events[0];
+  const initial = requiredEntry((await visitor.trace()).body.events, 0);
   await environment.network("suspended");
   await environment.restart({ HEDERA_TOPIC_ID: "0.0.171" });
   const unavailable = await visitor.verification(published.applied.eventId!);
   expect(unavailable.body).toMatchObject({ network: "testnet", state: "UNAVAILABLE", publication: { state: "CONFIRMED", topicId: "0.0.170" }, storedVerification: { state: "MATCHED" } });
   await visitor.apply({ action: "approve", role: "coordinator" });
   const paused = await eventually(() => visitor.run(), run => run.events[1]?.publication.state === "PAUSED_CONFIG");
-  expect(paused.events[1].publication.lastErrorCode).toBe("HCS_CONFIG_CHANGED");
-  expect((await visitor.trace()).body.events[0]).toEqual(initial);
+  expect(requiredEntry(paused.events, 1).publication.lastErrorCode).toBe("HCS_CONFIG_CHANGED");
+  expect(requiredEntry((await visitor.trace()).body.events, 0)).toEqual(initial);
   expect((await environment.ledger()).submissions).toHaveLength(1);
 });
 

@@ -225,7 +225,13 @@
         "S22-29",
         "S22-31"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-31",
+        "evidence": "docs/s22-06-cli-configuracion-pruebas-estrictas.md",
+        "validation": "59 diagnósticos corregidos; perfil completo con cero errores. Puerta completa aprobada: 4 controles negativos, 7 seguridad, 54 dominio/persistencia, 23 CLI, 2 tokens, 49 HTTP y build. Dos escenarios Chromium aprobados en tandas separadas, con fallos transitorios y repeticiones documentados. Solo PostgreSQL aislado y ledger controlado; sin HCS real. La exigencia global queda para el 07."
+      }
     },
     {
       "id": "07",
@@ -1319,4 +1325,3 @@
     }
   ]
 }
-

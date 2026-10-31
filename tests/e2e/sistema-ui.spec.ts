@@ -37,7 +37,7 @@ test("S20-01 · temas, semántica y accesibilidad del inicio, formulario, operac
   await page.getByLabel("Apariencia").selectOption("system");
   await page.emulateMedia({ colorScheme: "dark" });
   expect(await page.locator("html").evaluate(element => getComputedStyle(element).colorScheme)).toBe("dark");
-  await page.emulateMedia({ colorScheme: info.project.use.colorScheme });
+  await page.emulateMedia({ colorScheme: info.project.use.colorScheme ?? null });
   await journey.start();
   await accessible(page, info, "panel-borrador");
   await journey.pickup();

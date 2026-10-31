@@ -48,7 +48,9 @@ test("E2E-10 · teclado de escritorio, uso táctil móvil y controles sin recort
     await journey.action(name, activate);
   };
   const role = async (index: number) => {
-    if (mobile) { await journey.role((["generator", "coordinator", "carrier", "buyer"] as const)[index]); return; }
+    const selected = (["generator", "coordinator", "carrier", "buyer"] as const)[index];
+    if (selected === undefined) throw new Error("TEST_ROLE_INDEX_INVALID");
+    if (mobile) { await journey.role(selected); return; }
     await keyboardTo(page, page.getByLabel("Rol que estás representando")); await page.keyboard.press("Home");
     for (let count = 0; count < index; count++) await page.keyboard.press("ArrowDown");
   };

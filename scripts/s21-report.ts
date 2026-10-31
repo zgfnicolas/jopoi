@@ -1,12 +1,16 @@
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import { evidenceRevision } from "./lib/evidence";
+import { z } from "zod";
 
-type Evidence={cases?:{id:string;result:string;observations?:unknown[]}[];passed?:boolean;code?:string;revision?:string;fingerprint?:string;observations?:{errors:number;maxConnections:number}[]};
-async function read(path:string):Promise<Evidence|undefined>{try{return JSON.parse(await readFile(path,"utf8"));}catch{return undefined;}}
+const evidenceSchema=z.object({cases:z.array(z.object({id:z.string(),result:z.string(),observations:z.array(z.unknown()).optional()})).optional(),passed:z.boolean().optional(),code:z.string().optional(),revision:z.string().optional(),fingerprint:z.string().optional(),observations:z.array(z.object({errors:z.number().int().nonnegative(),maxConnections:z.number().int().nonnegative()})).optional()});
+type Evidence=z.infer<typeof evidenceSchema>;
+async function read(path:string):Promise<Evidence|undefined>{try{const result=evidenceSchema.safeParse(JSON.parse(await readFile(path,"utf8")));return result.success?result.data:undefined;}catch{return undefined;}}
 const args=process.argv.slice(2);
 if(args.length && (args.length!==2||args[0]!=="--browser-base"))throw new Error("S21_REPORT_ARGUMENTS_INVALID");
-const basePath=args.length?resolve(args[1]):undefined;
+const baseArgument=args[1];
+if(args.length && !baseArgument)throw new Error("S21_REPORT_ARGUMENTS_INVALID");
+const basePath=baseArgument?resolve(baseArgument):undefined;
 if(basePath&&!basePath.startsWith(resolve(".cache")+sep))throw new Error("S21_BROWSER_BASE_OUTSIDE_EVIDENCE_DIRECTORY");
 const api=await read(".cache/s21/api-report.json"),latestBrowser=await read(".cache/e2e/report.json"),https=await read(".cache/s21/https-cookie.json");
 // Combining a focused rerun requires an explicit base. Preserve both snapshots;
@@ -14,7 +18,7 @@ const api=await read(".cache/s21/api-report.json"),latestBrowser=await read(".ca
 const browserFull=basePath?await read(basePath):undefined;
 const observed=latestBrowser?.cases?.filter(c=>c.observations?.length)??[];
 if(basePath&&(!browserFull?.cases||!observed.length||browserFull.revision!==latestBrowser?.revision))throw new Error("S21_BROWSER_BASE_UNAVAILABLE_OR_REVISION_MISMATCH");
-const browser:Evidence|undefined=browserFull?{cases:browserFull.cases?.map(c=>observed.find(latest=>latest.id===c.id)??c)}:latestBrowser;
+const browser:Evidence|undefined=browserFull?.cases?{cases:browserFull.cases.map(c=>observed.find(latest=>latest.id===c.id)??c)}:latestBrowser;
 const benchmark=await read(".cache/s21/benchmark-comparison.json"),metrics=await read(".cache/s21/query-metrics.json");
 const passed=(evidence:Evidence|undefined,ids:string[])=>ids.every(id=>evidence?.cases?.find(c=>c.id===id)?.result==="APROBADO");
 const apiIds=(...numbers:number[])=>numbers.map(n=>`API-${String(n).padStart(2,"0")}`);

@@ -8,6 +8,7 @@ import { sealedEnvironment } from "./test-environment";
 import { createFixtures } from "./sql-fixtures";
 import { rpc } from "./ipc";
 import type { NetworkMode } from "./ledger";
+import { ownedResources } from "./owned-resources";
 
 export interface HttpResult<T> { status: number; body: T; headers: Headers }
 export async function eventually<T>(read: () => Promise<T>, ready: (value: T) => boolean, label = "observable state", timeout = 20000): Promise<T> {
@@ -27,7 +28,7 @@ export class TestRuntime {
     if (!this.context) throw new Error("TEST_RESOURCES_MISSING");
     return this.context;
   }
-  process?: ChildProcess;
+  process: ChildProcess | undefined;
   mode: NetworkMode = "confirmed";
   overrides: Record<string, string | undefined> = {};
   get origin() { return `http://127.0.0.1:${this.resources.httpPort}`; }
@@ -44,6 +45,7 @@ export class TestRuntime {
   async network(mode: NetworkMode, release = false) { this.mode = mode; await rpc(this.resources.socket, "control", { mode, release }); }
   async ledger() { return rpc<{ submissions: string[]; messages: Array<{ transactionId: string; envelope: { eventId: string; ordinal: number }; submitted: boolean }> }>(this.resources.socket, "inspect"); }
   async start() {
+    await ownedResources(this.resources);
     this.process = child(process.execPath, ["node_modules/next/dist/bin/next", "dev", ...(this.bundler === "webpack" ? ["--webpack"] : []), "--hostname", "127.0.0.1", "--port", String(this.resources.httpPort)], this.env, resolve(this.resources.directory, "next.log"));
     await eventually(async () => {
       if (this.process?.exitCode !== null || this.process?.signalCode !== null) throw new Error("BLOCKED_NEXT_SERVER_EXITED; revisar next.log");
@@ -63,7 +65,9 @@ export class TestRuntime {
         const html = await response.text();
         if (response.headers.get("content-type")?.includes("text/html")) {
           for (const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="([^" ]+)"/g)) {
-            if (match[1].startsWith("/_next/static/")) assets.add(match[1].replaceAll("&amp;", "&"));
+            const asset = match[1];
+            if (asset === undefined) throw new Error("TEST_ASSET_CAPTURE_MISSING");
+            if (asset.startsWith("/_next/static/")) assets.add(asset.replaceAll("&amp;", "&"));
           }
         }
         if (response.status >= 500) throw new Error("BLOCKED_NEXT_PAGE_FAILED; revisar next.log");

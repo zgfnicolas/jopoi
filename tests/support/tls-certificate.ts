@@ -12,7 +12,10 @@ export function localhostCertificate() {
   const date=(at:Date)=>der(0x17,Buffer.from(at.toISOString().slice(2,19).replace(/[-:T]/g,"")+"Z"));
   const {privateKey,publicKey}=generateKeyPairSync("rsa",{modulusLength:2048});
   const san=sequence(oid([0x55,0x1d,0x11]),der(4,sequence(der(0x82,Buffer.from("localhost")),der(0x87,Buffer.from([127,0,0,1])))));
-  const serial=randomBytes(16);serial[0]|=128;
+  const serial=randomBytes(16);
+  const firstByte=serial[0];
+  if(firstByte===undefined)throw new Error("TEST_CERTIFICATE_SERIAL_MISSING");
+  serial[0]=firstByte|128;
   const tbs=sequence(der(0xa0,integer(Buffer.from([2]))),integer(Buffer.concat([Buffer.from([0]),serial])),algorithm,name,
     sequence(date(new Date(Date.now()-86400000)),date(new Date(Date.now()+86400000))),name,
     publicKey.export({type:"spki",format:"der"}),der(0xa3,sequence(san)));

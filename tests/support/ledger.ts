@@ -23,7 +23,7 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
       if (!input.includes("\n")) return;
       connection.pause();
       try {
-        const { operation, data } = JSON.parse(input.split("\n")[0]);
+        const { operation, data } = JSON.parse(input.slice(0, input.indexOf("\n")));
         let value: unknown;
         if (operation === "control") {
           if (data.reset) { messages.clear(); submissions.length = 0; sequence = 0; }
