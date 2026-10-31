@@ -336,7 +336,13 @@
         "S22-12",
         "S22-31"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-31",
+        "evidence": "docs/s22-09-problem-details-y-openapi.md",
+        "validation": "Problem Details negociado con compatibilidad anterior y tres transportes seguros. OpenAPI 3.2 validado y contrastado por HTTP; ocho pruebas de contrato, 55 HTTP y build aprobados en la puerta completa, cero diagnósticos estrictos. Seis escenarios Chromium/WebKit móvil aprobados; preparación y fallo P2028 inicial documentados. El ticket 10 espera confirmación."
+      }
     },
     {
       "id": "10",

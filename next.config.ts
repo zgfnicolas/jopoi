@@ -27,6 +27,17 @@ export default function configuration(phase: string): NextConfig {
     // Keep the local browser harness usable on memory-constrained Windows hosts.
     // The normal production configuration above does not enable experimental flags.
     experimental: { webpackMemoryOptimizations: true },
+    ...(process.env.JOPOI_E2E_BUNDLER === "webpack" ? {
+      webpack(configuration: Record<string, unknown>) {
+        const watch = configuration.watchOptions;
+        if (watch === null || typeof watch !== "object") throw new Error("TEST_WEBPACK_WATCH_OPTIONS_UNEXPECTED");
+        const ignored = Reflect.get(watch, "ignored");
+        if (!(ignored instanceof RegExp)) throw new Error("TEST_WEBPACK_IGNORES_UNEXPECTED");
+        const workspace = resolve(".").split(/[\\/]/).map(part => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("[\\\\/]");
+        // Conservá las exclusiones de Next y no vigiles C:\\ por dependencias faltantes fuera del workspace aislado.
+        return { ...configuration, watchOptions: { ...watch, ignored: new RegExp(`(?:${ignored.source})|^(?!${workspace}(?:[\\\\/]|$))`, "i") } };
+      },
+    } : {}),
     typescript: { tsconfigPath: "tsconfig.api.json" },
     turbopack: { resolveAlias: {
       "@/server/runtime/clock": "./tests/support/clock.ts",

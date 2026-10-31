@@ -56,13 +56,21 @@ export class TestRuntime {
       return status;
     }, status => status === 401, "NEXT_READY", 90000);
     if (this.bundler === "webpack") {
+      const warmup = async <T>(phase: string, path: string, consume: (response: Response) => Promise<T>) => {
+        try {
+          const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
+          return { response, body: await consume(response) };
+        } catch (cause) {
+          // Identificá la lectura bloqueada sin ampliar el presupuesto ni confundir setup con un caso ejecutado.
+          throw new Error(`BLOCKED_NEXT_WARMUP_${phase}`, { cause });
+        }
+      };
       // Compile every UI entry before the browser's 15s request budget starts.
       // GETs without cookies use protected/unknown resources or unsupported methods; no commands run.
       const sample = "00000000-0000-4000-8000-000000000000";
       const assets = new Set<string>();
-      for (const path of ["/", "/demo", `/trazabilidad/${sample}`]) {
-        const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
-        const html = await response.text();
+      for (const [index, path] of ["/", "/demo", `/trazabilidad/${sample}`].entries()) {
+        const { response, body: html } = await warmup(`PAGE_${index}`, path, response => response.text());
         if (response.headers.get("content-type")?.includes("text/html")) {
           for (const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="([^" ]+)"/g)) {
             const asset = match[1];
@@ -74,18 +82,16 @@ export class TestRuntime {
       }
       // HTML prewarming alone leaves dev JS/CSS cold. Complete those read-only
       // downloads before the browser's navigation and action budgets begin.
-      for (const asset of assets) {
-        const response = await fetch(this.origin + asset, { signal: AbortSignal.timeout(60000) });
-        await response.arrayBuffer();
+      for (const [index, asset] of [...assets].entries()) {
+        const { response } = await warmup(`ASSET_${index}`, asset, response => response.arrayBuffer());
         if (!response.ok) throw new Error("BLOCKED_NEXT_ASSET_FAILED; revisar next.log");
       }
       // Compile API entries last: creating the client graph can invalidate dev entries.
-      for (const path of ["/api/demo/session", "/api/demo/runs/current", "/api/demo/runs", "/api/demo/runs/reset",
+      for (const [index, path] of ["/api/demo/session", "/api/demo/runs/current", "/api/demo/runs", "/api/demo/runs/reset",
         `/api/demo/runs/${sample}`, `/api/demo/runs/${sample}/commands`,
         `/api/demo/runs/${sample}/events/${sample}/retry`, "/api/demo-requests",
-        `/api/traces/${sample}`, `/api/traces/${sample}/events/${sample}/verification`, "/api/cron"]) {
-        const response = await fetch(this.origin + path, { signal: AbortSignal.timeout(60000) });
-        await response.text();
+        `/api/traces/${sample}`, `/api/traces/${sample}/events/${sample}/verification`, "/api/cron"].entries()) {
+        const { response } = await warmup(`API_${index}`, path, response => response.text());
         if (response.status >= 500) throw new Error("BLOCKED_NEXT_API_FAILED; revisar next.log");
       }
     }

@@ -9,6 +9,7 @@ import {
   type ApiErrorStatus,
 } from "../shared/api-errors";
 import { ApplicationError } from "./application-error";
+import { publicFields, problemType } from "../shared/problem-details";
 
 export { ApplicationError } from "./application-error";
 
@@ -19,7 +20,7 @@ export function toApiError(
 ): { readonly status: ApiErrorStatus; readonly body: ApiErrorBody } {
   const code = error instanceof ApplicationError ? error.code : "INTERNAL_ERROR";
   const definition = API_ERROR_CATALOG[code];
-  const fields = error instanceof ApplicationError ? error.fields : undefined;
+  const fields = error instanceof ApplicationError && definition.status < 500 && error.fields !== undefined ? publicFields(error.fields) : undefined;
 
   return {
     status: definition.status,
@@ -32,4 +33,12 @@ export function toApiError(
       },
     },
   };
+}
+
+export function toProblemDetails(body: ApiErrorBody, context: RequestContext) {
+  const { code, requestId, fields } = body.error;
+  const definition = API_ERROR_CATALOG[code];
+  const titles = { 400: "Solicitud inválida", 401: "Autenticación requerida", 403: "Acceso denegado", 404: "Recurso no disponible", 409: "Conflicto", 410: "Recurso vencido", 422: "Acción inválida", 429: "Límite alcanzado", 500: "Error interno", 503: "Servicio no disponible" };
+  return { type: problemType(code), title: titles[definition.status], status: definition.status, detail: definition.message,
+    code, requestId, traceId: context.telemetryTraceId, ...(fields === undefined ? {} : { fields }) };
 }

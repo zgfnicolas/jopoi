@@ -22,7 +22,7 @@ const resultSchema = z.strictObject({ version: z.literal(1), eventId: uuid,
   outcome: z.enum(PUBLICATION_RETRY_OUTCOMES) });
 
 export async function retryPublicationHttp(request: NextRequest, context: { params: Promise<{ traceId: string; eventId: string }> }) {
-  return apiBoundary("publications.retry", async () => {
+  return apiBoundary("publications.retry", request, async () => {
     requireBrowserMutation(request);
     const params = z.strictObject({ traceId: uuid, eventId: uuid }).safeParse(await context.params);
     const body = z.strictObject({ requestId: uuid }).safeParse(await readJsonBody(request, 4096));

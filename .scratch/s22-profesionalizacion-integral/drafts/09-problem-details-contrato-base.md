@@ -12,9 +12,13 @@
 
 ## Acceptance criteria
 
-- [ ] Servidor y tres transportes admiten application/problem+json con type/title/status/detail seguros, code y referencias; errores de campo no reproducen valores recibidos.
-- [ ] La transición conserva compatibilidad entre versiones desplegadas; una respuesta desconocida no se toma por éxito ni crea otra intención.
-- [ ] Se introduce el documento OpenAPI 3.2 válido con inventario actual, seguridad, schemas, errores y headers; futuras entregas lo extienden al cambiar contratos.
-- [ ] 429 y 503 admiten Retry-After conforme al plazo conocido; las vistas preservan datos y ofrecen recuperación manual.
-- [ ] Pruebas HTTP/cliente y contraste del contrato demuestran fallos esperables e inesperados, sin filtrar stack, SQL o topología.
+- [x] Servidor y tres transportes admiten application/problem+json con type/title/status/detail seguros, code y referencias; errores de campo no reproducen valores recibidos.
+- [x] La transición conserva compatibilidad entre versiones desplegadas; una respuesta desconocida no se toma por éxito ni crea otra intención.
+- [x] Se introduce el documento OpenAPI 3.2 válido con inventario actual, seguridad, schemas, errores y headers; futuras entregas lo extienden al cambiar contratos.
+- [x] 429 y 503 admiten Retry-After conforme al plazo conocido; las vistas preservan datos y ofrecen recuperación manual.
+- [x] Pruebas HTTP/cliente y contraste del contrato demuestran fallos esperables e inesperados, sin filtrar stack, SQL o topología.
+
+## Implementación local
+
+Completado el 2026-10-31. Evidencia, revisión y límites: [S22-09](../../../docs/s22-09-problem-details-y-openapi.md). Negociación compatible por Accept, mensajes seguros, tres transportes y documento OpenAPI 3.2 contrastado con respuestas reales. Ocho pruebas de contrato, 55 HTTP, seis escenarios Chromium/WebKit móvil, puerta completa y build aprobados; cero diagnósticos estrictos. Se documentan los bloqueos de preparación del navegador, el ajuste del watcher exclusivo del arnés y el fallo P2028 inicial, que no se reprodujo aislado ni en la segunda puerta. El ticket 10 no se implementa en esta entrega.
 

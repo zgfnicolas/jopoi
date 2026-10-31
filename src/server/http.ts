@@ -1,14 +1,15 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { createRequestContext, toApiError } from "./api-errors";
+import { createRequestContext, toApiError, toProblemDetails } from "./api-errors";
+import { acceptsProblemDetails, PROBLEM_MEDIA_TYPE } from "../shared/problem-details";
 import { ApplicationError } from "./application-error";
 import { getServerConfig, requireConfiguration } from "./config";
 import { RateLimitError } from "./security/rate-limit";
 import { performance } from "node:perf_hooks";
 import { withRequestContext, logDiagnostic, shouldLogHttp, type HttpOperation } from "./diagnostics";
 
-export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie" });
+export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie, Accept" });
 
 /** Origen configurado, nunca Host o X-Forwarded-Host aportados por el visitante. */
 export function requireBrowserMutation(request: Request): void {
@@ -53,7 +54,7 @@ export async function readJsonBody(request: Request, maxBytes: number): Promise<
   }
 }
 
-export async function apiBoundary(operation: HttpOperation, work: () => Promise<NextResponse>): Promise<NextResponse> {
+export async function apiBoundary(operation: HttpOperation, request: Request, work: () => Promise<NextResponse>): Promise<NextResponse> {
   const context = createRequestContext(operation), started = performance.now();
   return withRequestContext(context, async () => {
   try {
@@ -67,10 +68,13 @@ export async function apiBoundary(operation: HttpOperation, work: () => Promise<
     if (shouldLogHttp(result.status, context.requestId)) logDiagnostic({ event: "http.completed", outcome: result.status >= 500 ? "error" : "rejected",
       code: result.body.error.code, severity: result.status >= 500 ? "ERROR" : result.status === 429 ? "WARN" : "INFO", status: result.status,
       durationMs: performance.now() - started, ...(result.status >= 500 ? { error } : {}) });
-    return NextResponse.json(result.body, { status: result.status, headers: {
+    const problem = acceptsProblemDetails(request.headers.get("accept"));
+    const retryAfter = error instanceof RateLimitError ? error.retryAfter : error instanceof ApplicationError ? error.retryAfterSeconds : undefined;
+    return NextResponse.json(problem ? toProblemDetails(result.body, context) : result.body, { status: result.status, headers: {
       ...PRIVATE_RESPONSE_HEADERS,
+      ...(problem ? { "Content-Type": PROBLEM_MEDIA_TYPE } : {}),
       "X-Request-Id": context.requestId,
-      ...(error instanceof RateLimitError ? { "Retry-After": String(error.retryAfter) } : {}),
+      ...((result.status === 429 || result.status === 503) && retryAfter !== undefined ? { "Retry-After": String(retryAfter) } : {}),
     } });
   }
   });

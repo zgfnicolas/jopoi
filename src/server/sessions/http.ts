@@ -2,28 +2,26 @@ import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import { emptyBody, runIntentBody } from "../../shared/request-contracts";
 import { ApplicationError } from "../application-error";
 import { apiBoundary as boundary, PRIVATE_RESPONSE_HEADERS as privateHeaders, readJsonBody, requireBrowserMutation } from "../http";
 import { SESSION_COOKIE } from "./credentials";
 import { beginSession, recoverSession, resolveRunIntent } from "./service";
 import { requireRateLimit } from "../security/rate-limit";
 
-const emptyBody = z.strictObject({});
-const runIntentBody = z.strictObject({ requestId: z.uuid().transform((value) => value.toLowerCase()) });
 const MAX_BODY_BYTES = 4096;
 
 export { requireBrowserMutation } from "../http";
 
 export async function getSession(request: NextRequest): Promise<NextResponse> {
-  return boundary("session.read", async () => NextResponse.json(
+  return boundary("session.read", request, async () => NextResponse.json(
     await recoverSession(request.cookies.get(SESSION_COOKIE)?.value),
     { headers: privateHeaders },
   ));
 }
 
 export async function postSession(request: NextRequest): Promise<NextResponse> {
-  return boundary("session.create", async () => {
+  return boundary("session.create", request, async () => {
     requireBrowserMutation(request);
     if (!emptyBody.safeParse(await readJsonBody(request, MAX_BODY_BYTES)).success) throw new ApplicationError("INVALID_INPUT");
     await requireRateLimit(request, "SESSION");
@@ -45,7 +43,7 @@ export async function postSession(request: NextRequest): Promise<NextResponse> {
 }
 
 export function postRunIntent(kind: "START" | "RESET") {
-  return async (request: NextRequest): Promise<NextResponse> => boundary(kind === "START" ? "runs.start" : "runs.reset", async () => {
+  return async (request: NextRequest): Promise<NextResponse> => boundary(kind === "START" ? "runs.start" : "runs.reset", request, async () => {
     requireBrowserMutation(request);
     const parsed = runIntentBody.safeParse(await readJsonBody(request, MAX_BODY_BYTES));
     if (!parsed.success) throw new ApplicationError("INVALID_INPUT", { requestId: ["Ingresá un identificador UUID y solo los campos permitidos."] });

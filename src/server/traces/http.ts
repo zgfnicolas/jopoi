@@ -11,14 +11,14 @@ const uuid = z.uuid().transform(value => value.toLowerCase());
 const traceParams = z.strictObject({ traceId: uuid });
 const verificationParams = z.strictObject({ traceId: uuid, eventId: uuid });
 
-async function publicBoundary(operation: HttpOperation, work: () => Promise<unknown>) {
-  const response = await apiBoundary(operation, async () => NextResponse.json(await work()));
+async function publicBoundary(operation: HttpOperation, request: Request, work: () => Promise<unknown>) {
+  const response = await apiBoundary(operation, request, async () => NextResponse.json(await work()));
   response.headers.set("Cache-Control", "no-store");
-  response.headers.delete("Vary");
+  response.headers.set("Vary", "Accept");
   return response;
 }
 export async function getTraceHttp(request: NextRequest, context: { params: Promise<{ traceId: string }> }) {
-  return publicBoundary("traces.read", async () => {
+  return publicBoundary("traces.read", request, async () => {
     const params = traceParams.safeParse(await context.params);
     if (!params.success) throw new ApplicationError("INVALID_INPUT");
     bindBusinessTraceId(params.data.traceId);
@@ -27,7 +27,7 @@ export async function getTraceHttp(request: NextRequest, context: { params: Prom
   });
 }
 export async function getVerificationHttp(request: NextRequest, context: { params: Promise<{ traceId: string; eventId: string }> }) {
-  return publicBoundary("traces.verify", async () => {
+  return publicBoundary("traces.verify", request, async () => {
     const params = verificationParams.safeParse(await context.params);
     if (!params.success) throw new ApplicationError("INVALID_INPUT");
     bindBusinessTraceId(params.data.traceId);

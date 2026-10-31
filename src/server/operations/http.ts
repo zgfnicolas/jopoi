@@ -1,9 +1,10 @@
 import "server-only";
+import { commandBody } from "../../shared/request-contracts";
 import { bindBusinessTraceId, logDiagnostic } from "../diagnostics";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import type { DemoCommandInput, DemoCommandResponse } from "../../shared/run-contracts";
+import type { DemoCommandResponse } from "../../shared/run-contracts";
 import { ApplicationError } from "../application-error";
 import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMutation } from "../http";
 import { SESSION_COOKIE } from "../sessions/credentials";
@@ -12,22 +13,7 @@ import { schedulePublications } from "../hedera/service";
 import { getCurrentRun, getOwnedRun } from "./queries";
 
 const uuid = z.uuid().transform((value) => value.toLowerCase());
-const common = {
-  requestId: uuid,
-  expectedVersion: z.number().int().positive().max(2147483647),
-  role: z.enum(["generator", "coordinator", "carrier", "buyer"]),
-};
-// Forma estricta HTTP; precisión, catálogos y reglas se resuelven en S06/S07.
-const commandBody: z.ZodType<DemoCommandInput> = z.discriminatedUnion("action", [
-  z.strictObject({ ...common, action: z.literal("save"), quantityKg: z.string(), humidityPercent: z.string() }),
-  z.strictObject({ ...common, action: z.literal("publish"), quantityKg: z.string(), humidityPercent: z.string() }),
-  z.strictObject({ ...common, action: z.literal("approve") }),
-  z.strictObject({ ...common, action: z.literal("reject"), reasonCode: z.string() }),
-  z.strictObject({ ...common, action: z.literal("assign"), tripId: z.string() }),
-  z.strictObject({ ...common, action: z.literal("pickup") }),
-  z.strictObject({ ...common, action: z.literal("receive"), receivedKg: z.string() }),
-  z.strictObject({ ...common, action: z.literal("incident"), receivedKg: z.string(), reasonCode: z.string() }),
-]);
+
 
 interface TraceContext {
   readonly params: Promise<{ traceId: string }>;
@@ -41,20 +27,20 @@ async function traceFrom(context: TraceContext): Promise<string> {
 }
 
 export async function getCurrentRunHttp(request: NextRequest): Promise<NextResponse> {
-  return apiBoundary("runs.current", async () => NextResponse.json(
+  return apiBoundary("runs.current", request, async () => NextResponse.json(
     await getCurrentRun(request.cookies.get(SESSION_COOKIE)?.value), { headers: PRIVATE_RESPONSE_HEADERS },
   ));
 }
 
 export async function getOwnedRunHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
-  return apiBoundary("runs.read", async () => NextResponse.json(
+  return apiBoundary("runs.read", request, async () => NextResponse.json(
     await getOwnedRun(request.cookies.get(SESSION_COOKIE)?.value, await traceFrom(context)),
     { headers: PRIVATE_RESPONSE_HEADERS },
   ));
 }
 
 export async function postCommandHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
-  return apiBoundary("runs.command", async () => {
+  return apiBoundary("runs.command", request, async () => {
     requireBrowserMutation(request);
     const traceId = await traceFrom(context);
     const parsed = commandBody.safeParse(await readJsonBody(request, 4096));

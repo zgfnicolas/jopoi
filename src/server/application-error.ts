@@ -4,11 +4,14 @@ import { API_ERROR_CATALOG, type ApiErrorCode, type FieldErrors } from "../share
 export class ApplicationError extends Error {
   readonly code: ApiErrorCode;
   readonly fields?: FieldErrors;
+  readonly retryAfterSeconds?: number;
 
-  constructor(code: ApiErrorCode, fields?: FieldErrors, options?: ErrorOptions) {
+  constructor(code: ApiErrorCode, fields?: FieldErrors, options?: ErrorOptions & { readonly retryAfterSeconds?: number }) {
     super(API_ERROR_CATALOG[code].message, options);
     this.name = "ApplicationError";
     this.code = code;
     if (fields !== undefined) this.fields = fields;
+    const seconds = options?.retryAfterSeconds;
+    if (seconds !== undefined && Number.isSafeInteger(seconds) && seconds >= 0 && seconds <= 86400) this.retryAfterSeconds = seconds;
   }
 }

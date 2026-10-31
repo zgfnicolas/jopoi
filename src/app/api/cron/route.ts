@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export async function GET(request: NextRequest) {
-  const response = await apiBoundary("maintenance.run", async () => {
+  const response = await apiBoundary("maintenance.run", request, async () => {
     const config = createConfigReader(process.env).maintenance();
     if (config.status !== "configured") throw new ApplicationError("CONFIGURATION_UNAVAILABLE");
     const expected = Buffer.from(`Bearer ${config.config.secret}`);
@@ -19,8 +19,8 @@ export async function GET(request: NextRequest) {
     if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) throw new ApplicationError("MAINTENANCE_UNAUTHORIZED");
     const result = await runMaintenance(serverCoordinationContext());
     logMaintenanceResult(result);
-    return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store", Vary: "Authorization" } });
+    return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store", Vary: "Authorization, Accept" } });
   });
-  response.headers.set("Vary", "Authorization");
+  response.headers.set("Vary", "Authorization, Accept");
   return response;
 }

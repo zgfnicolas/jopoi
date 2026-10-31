@@ -14,6 +14,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs originales y
 | [Calidad reproducible S22-02](docs/s22-02-calidad-reproducible.md) | Puerta local/CI, lint, suites explícitas y transición al perfil TypeScript completo. |
 | [Perfil estricto global S22-07](docs/s22-07-perfil-estricto-global.md) | Opciones estrictas obligatorias en todos los perfiles e informe sin tolerancia a regresiones. |
 | [Diagnósticos seguros S22-08](docs/s22-08-diagnosticos-correlacionados.md) | Referencias públicas, contexto HTTP/SQL/publicación y exportación JSON saneada a stderr. |
+| [Contrato HTTP S22-09](docs/s22-09-problem-details-y-openapi.md) | Problem Details negociado, transportes compatibles y OpenAPI 3.2 contrastado con respuestas reales. |
 | [Contratos operativos S22-03](docs/s22-03-contratos-operativos.md) | Modelo discriminado, reconstrucción semántica y compatibilidad temporal con operaciones e intenciones actuales. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
 | [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |

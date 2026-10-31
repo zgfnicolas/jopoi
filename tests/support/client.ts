@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { assertApiContract } from "./api-contract";
 import { inject } from "vitest";
 import type { DemoRunIntentResponse, DemoSessionResponse } from "../../src/shared/session-contracts";
 import type { DemoCommandResponse, DemoRunResponse } from "../../src/shared/run-contracts";
@@ -25,7 +26,9 @@ export class Visitor {
     });
     const cookie = response.headers.get("set-cookie");
     if (cookie) this.cookie = cookie.slice(0, cookie.indexOf(";") < 0 ? cookie.length : cookie.indexOf(";"));
-    return { status: response.status, body: await response.json() as T, headers: response.headers };
+    const responseBody: unknown = await response.json();
+    assertApiContract(method, path, response.status, response.headers, responseBody);
+    return { status: response.status, body: responseBody as T, headers: response.headers };
   }
   get<T = DemoRunResponse>(path: string) { return this.request<T>("GET", path); }
   post<T = DemoCommandResponse>(path: string, body: unknown, headers?: Record<string, string>) { return this.request<T>("POST", path, body, headers); }

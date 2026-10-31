@@ -23,6 +23,8 @@ const checks = [
   "typecheck:api",
   "lint",
   "typecheck:report",
+  "api:check",
+  "test:contracts",
   "test:quality",
   "test:security",
   "test:domain",
