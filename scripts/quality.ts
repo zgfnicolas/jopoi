@@ -20,6 +20,7 @@ const checks = [
   "db:generate",
   "db:validate",
   "typecheck",
+  "typecheck:api",
   "lint",
   "typecheck:report",
   "test:quality",

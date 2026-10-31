@@ -29,7 +29,7 @@ const diagnostics = [...output.matchAll(/^(.+?)\((\d+),(\d+)\): error (TS\d+): (
   code: match[4],
   message: match[5].trim(),
 }));
-// Tolerá solamente diagnósticos identificables del perfil futuro, nunca una falla de la herramienta.
+// Conservá los diagnósticos reconocidos; un fallo de herramienta tampoco puede aprobar el chequeo.
 const compilerErrors = [...output.matchAll(/(?:^|\n).*?error TS\d+:/g)].length;
 if (
   (result.status !== 0 && result.status !== 1 && result.status !== 2) ||
@@ -40,7 +40,7 @@ if (
 }
 const compiler = JSON.parse(await readFile(resolve(root, "node_modules/typescript/package.json"), "utf8"));
 const hash = createHash("sha256");
-for (const name of ["tsconfig.json", "tsconfig.strict.json"]) hash.update(await readFile(resolve(root, name)));
+for (const name of ["tsconfig.json", "tsconfig.strict.json", "tsconfig.api.json"]) hash.update(await readFile(resolve(root, name)));
 const areas = new Map();
 const files = new Map();
 for (const diagnostic of diagnostics) {
@@ -54,7 +54,7 @@ const summary = {
   generatedAt: new Date().toISOString(),
   compiler: compiler.version,
   configSha256: hash.digest("hex"),
-  mode: "temporary-diagnostic-until-ticket-07",
+  mode: "enforced-global-strict",
   compilerExitCode: result.status,
   total: diagnostics.length,
   areas: Object.fromEntries([...areas].sort()),
@@ -62,9 +62,9 @@ const summary = {
 };
 const markdown = `# S22-02 · Diagnóstico del perfil estricto completo
 
-Informe temporal: **${diagnostics.length} diagnósticos pendientes** con TypeScript ${compiler.version}. No acredita aceptación de S22-10. El ticket 07 debe exigir cero diagnósticos y retirar esta tolerancia.
+Perfil obligatorio: **${diagnostics.length} diagnósticos** con TypeScript ${compiler.version}. Cualquier diagnóstico o fallo del compilador devuelve un código distinto de cero, en todas las carpetas.
 
-Configuración SHA-256: \`${summary.configSha256}\`. Se heredan íntegramente include/exclude del perfil vigente; se agregan noUncheckedIndexedAccess y exactOptionalPropertyTypes sin quitar strict.
+Configuración SHA-256: \`${summary.configSha256}\` (principal, estricto y API). Las tres opciones están activas en la configuración principal y se heredan en las variantes, conservando sus include/exclude.
 
 ## Por área
 
@@ -92,11 +92,7 @@ await writeFile(resolve(directory, "strict-report.json"), JSON.stringify(summary
 await writeFile(resolve(directory, "strict-report.txt"), output);
 await writeFile(resolve(directory, "strict-report.md"), markdown);
 if (snapshot[0] === "--snapshot") await writeFile(resolve(root, "docs/s22-02-diagnosticos-estrictos.md"), markdown);
-// Los tickets 04 y 05 cerraron estas áreas; no ocultes una regresión con la tolerancia global.
-const migratedAreas = ["src/server/", "src/domain/", "src/frontend/", "src/components/"];
-if (diagnostics.some(({ file }) => migratedAreas.some(area => file.startsWith(area)))) {
-  throw new Error("STRICT_MIGRATED_AREA_REGRESSION");
-}
+if (result.status !== 0 || diagnostics.length > 0) process.exitCode = 1;
 console.log(
-  `DIAGNÓSTICO TEMPORAL: ${diagnostics.length} pendientes. Detalle: .cache/quality/strict-report.json. Obligatorio sin tolerancia en ticket 07.`,
+  `PERFIL ESTRICTO OBLIGATORIO: ${diagnostics.length} diagnósticos. Detalle: .cache/quality/strict-report.json.`,
 );

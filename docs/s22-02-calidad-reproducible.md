@@ -1,5 +1,7 @@
 # S22-02 · Calidad reproducible y transición estricta
 
+Actualización del ticket 07: la [migración estricta global](s22-07-perfil-estricto-global.md) cerró la tolerancia descrita en esta evidencia histórica. Las tres opciones ya son obligatorias desde `tsconfig.json`, la puerta agrega `typecheck:api` y el informe falla ante cualquier diagnóstico. Los nueve controles actuales verifican también scripts, tests y configuraciones raíz. Las secciones siguientes conservan el diseño y los resultados originales del ticket 02.
+
 Ticket 02 de S22. Fecha: 2026-10-30. Se prepara una puerta exigible sin adelantar la migración de dominio de los tickets 03–06. El ticket 07 debe retirar la tolerancia temporal y exigir el perfil completo.
 
 ## Ejecutar la puerta

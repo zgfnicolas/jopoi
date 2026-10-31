@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { OperationData } from "../shared/operation-contracts";
 import type { OperationSnapshot } from "../shared/operation-snapshot";
 import { evaluateTripCompatibility } from "./compatibility";
 import { parseHumidityHundredths } from "./decimal";
@@ -110,9 +109,4 @@ export function reconstructOperationSnapshot(input: unknown, scenario: unknown):
     return invalidField("operation", "Los datos de la operación no corresponden a su estado y escenario.");
   }
   return { ok: true, value: parsed.data };
-}
-
-/** Adaptador saliente temporal: el subtipo conserva todos los campos y null del JSON anterior, sin casts ni rellenos. */
-export function toLegacyOperationData(operation: OperationSnapshot): OperationData {
-  return operation;
 }

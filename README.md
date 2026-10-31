@@ -12,6 +12,7 @@ La definición del proyecto quedó confirmada en Q31 y las 18 specs originales y
 | [Specs ordenadas](docs/specs/README.md) | 18 specs originales y S19 para persistencia gestionada desde Vercel. |
 | [Seguridad y datos S21](docs/s21-validacion.md) | Límites compartidos, sesiones, TLS/UTC, auditoría SQL, integridad, recuperación y evidencia local/remota separada. |
 | [Calidad reproducible S22-02](docs/s22-02-calidad-reproducible.md) | Puerta local/CI, lint, suites explícitas y transición al perfil TypeScript completo. |
+| [Perfil estricto global S22-07](docs/s22-07-perfil-estricto-global.md) | Opciones estrictas obligatorias en todos los perfiles e informe sin tolerancia a regresiones. |
 | [Contratos operativos S22-03](docs/s22-03-contratos-operativos.md) | Modelo discriminado, reconstrucción semántica y compatibilidad temporal con operaciones e intenciones actuales. |
 | [Configuración y entorno](docs/configuracion-y-entorno.md) | Base S01, inventario privado, versiones, contratos y estado de los comandos. |
 | [Escenario y cálculo](docs/escenario-y-calculo.md) | Base S02, snapshots, precisión, fórmula, recursos y atribuciones. |

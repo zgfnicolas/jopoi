@@ -34,9 +34,9 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Preparar binarios PostgreSQL con checksum, sin crear bases ni entorno local
         run: npm run db:local:prepare
-      - name: Exigir generación, validación, tipos vigentes, lint, regresiones y build
+      - name: Exigir generación, validación, tipos estrictos globales, lint, regresiones y build
         run: npm run quality:check
-      - name: Publicar diagnóstico temporal de la migración estricta
+      - name: Publicar informe obligatorio del perfil estricto
         if: always()
         shell: pwsh
         run: |

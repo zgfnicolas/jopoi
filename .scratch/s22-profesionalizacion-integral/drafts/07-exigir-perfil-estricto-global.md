@@ -12,9 +12,13 @@
 
 ## Acceptance criteria
 
-- [ ] Las tres opciones quedan activas en la configuración principal y todas sus variantes; código propio, scripts, configuración y tests dan cero diagnósticos.
-- [ ] Se retiran tipos y adaptadores sólo de la migración mecánica que ya no tengan consumidores; no se eliminan adaptadores HTTP de compatibilidad pública.
-- [ ] Se elimina la tolerancia diagnóstica temporal; una regresión de tipos o lint bloquea integración.
-- [ ] No se reducen carpetas comprobadas, reglas o validación runtime para pasar el gate; las assertions residuales tienen justificación concreta.
-- [ ] Build y suites requeridas aprueban con el mismo perfil y una revisión identificable.
+- [x] Las tres opciones quedan activas en la configuración principal y todas sus variantes; código propio, scripts, configuración y tests dan cero diagnósticos.
+- [x] Se retiran tipos y adaptadores sólo de la migración mecánica que ya no tengan consumidores; no se eliminan adaptadores HTTP de compatibilidad pública.
+- [x] Se elimina la tolerancia diagnóstica temporal; una regresión de tipos o lint bloquea integración.
+- [x] No se reducen carpetas comprobadas, reglas o validación runtime para pasar el gate; las assertions residuales tienen justificación concreta.
+- [x] Build y suites requeridas aprueban con el mismo perfil y una revisión identificable.
+
+## Implementación local
+
+Completado el 2026-10-31. Evidencia, revisión y límites: [S22-07](../../../docs/s22-07-perfil-estricto-global.md). Perfil global sin tolerancia, nueve controles de calidad, regresiones y build aprobados. Se conserva compatibilidad HTTP y validación runtime. La ejecución del workflow remoto y la protección de rama siguen pendientes; no se implementa el 08 en esta entrega.
 

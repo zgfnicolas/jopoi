@@ -12,6 +12,7 @@
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit --pretty false",
+    "typecheck:api": "tsc -p tsconfig.api.json --noEmit --pretty false",
     "typecheck:report": "node scripts/strict-report.mjs",
     "lint": "biome lint . --error-on-warnings",
     "format:check": "biome format",

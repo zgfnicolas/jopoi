@@ -9,6 +9,11 @@ import { test } from "node:test";
 
 const project = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8"));
 const fixtureName = "jopoi-audit-fixture";
+// Ejecutá el mismo npm/argv sin npm run → cmd.exe → npm: al abortar, no quedan nietos del shell.
+const [runner, ...auditArgs] = project.scripts["security:audit"].trim().split(/\s+/);
+assert.equal(runner, "npm");
+assert.equal(auditArgs[0], "audit");
+assert.ok(auditArgs.every(argument => /^[\w=-]+$/.test(argument)), "El comando de auditoría debe ser npm audit con argumentos simples, sin shell.");
 
 /**
  * Probá el comando real contra un registro local: no dependemos de que npm tenga
@@ -66,7 +71,6 @@ async function auditFixture(context, severity) {
   const registry = `http://127.0.0.1:${address.port}`;
   const fixture = {
     name: "jopoi-security-gate-fixture", version: "1.0.0", private: true,
-    scripts: { "security:audit": project.scripts["security:audit"] },
     dependencies: { [fixtureName]: "1.0.0" },
   };
   await writeFile(join(directory, "package.json"), JSON.stringify(fixture));
@@ -85,7 +89,7 @@ async function auditFixture(context, severity) {
   assert.equal(typeof npmCli, "string", "Usá npm run test:security para comprobar el mismo npm del gate.");
   const environment = Object.fromEntries(Object.entries(process.env).filter(([key]) =>
     /^(path|systemroot|windir|comspec|temp|tmp|home|userprofile)$/i.test(key)));
-  const child = spawn(process.execPath, [npmCli, "run", "security:audit", "--",
+  const child = spawn(process.execPath, [npmCli, ...auditArgs,
     `--registry=${registry}`, `--cache=${join(directory, "cache")}`,
     `--userconfig=${userConfig}`, `--globalconfig=${globalConfig}`,
     "--fetch-retries=0", "--fetch-timeout=2000", "--no-fund",

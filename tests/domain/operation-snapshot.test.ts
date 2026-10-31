@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { canonicalJson } from "../../src/domain/canonical-json";
 import { operationDataSchema } from "../../src/domain/event-schemas";
 import { MAX_OPERATION_GRAMS, formatFixedDecimal } from "../../src/domain/decimal";
-import { reconstructOperationSnapshot, toLegacyOperationData } from "../../src/domain/operation-snapshot";
+import { reconstructOperationSnapshot } from "../../src/domain/operation-snapshot";
 import { decideOperation } from "../../src/domain/operations";
 import { createScenarioSnapshot } from "../../src/domain/scenario";
 import type { ScenarioSnapshot } from "../../src/domain/scenario-types";
@@ -57,9 +57,9 @@ for (const input of valid) {
     const result = reconstructOperationSnapshot(JSON.parse(json), JSON.parse(JSON.stringify(scenario)));
     assert.equal(result.ok, true);
     if (!result.ok) return;
-    assert.deepEqual(toLegacyOperationData(result.value), input);
-    assert.deepEqual(operationDataSchema.parse(toLegacyOperationData(result.value)), input);
-    assert.equal(canonicalJson(toLegacyOperationData(result.value)), json);
+    assert.deepEqual(result.value, input);
+    assert.deepEqual(operationDataSchema.parse(result.value), input);
+    assert.equal(canonicalJson(result.value), json);
     assert.equal(Object.isFrozen(result.value), true);
   });
 }
@@ -171,7 +171,7 @@ function decide(operation: OperationData, command: OperationCommand, context: Sc
   assert(result.ok);
   const reconstructed = reconstructOperationSnapshot(result.value.operation, context);
   assert(reconstructed.ok);
-  return toLegacyOperationData(reconstructed.value);
+  return reconstructed.value;
 }
 
 test("S22-11: el motor vigente conserva conformidad, rechazo, incidencia y guardado al atravesar el adaptador", () => {

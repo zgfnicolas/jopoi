@@ -265,7 +265,13 @@
         "S22-10",
         "S22-31"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-31",
+        "evidence": "docs/s22-07-perfil-estricto-global.md",
+        "validation": "Tres opciones estrictas en configuración principal y variantes, cero diagnósticos y tolerancia temporal retirada. Adaptador mecánico sin consumidores de producción eliminado; contratos HTTP conservados. Puerta completa aprobada con 9 controles de calidad, 7 seguridad, 54 dominio/persistencia, 23 CLI, 2 tokens, 49 HTTP y build. Fixture npm audit sin shell intermedio y con límites originales; fallo inicial documentado. Revisión y huella de fuentes en la evidencia. CI remoto pendiente."
+      }
     },
     {
       "id": "08",

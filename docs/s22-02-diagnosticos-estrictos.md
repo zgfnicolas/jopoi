@@ -1,8 +1,8 @@
 # S22-02 · Diagnóstico del perfil estricto completo
 
-Informe temporal: **0 diagnósticos pendientes** con TypeScript 7.0.2. No acredita aceptación de S22-10. El ticket 07 debe exigir cero diagnósticos y retirar esta tolerancia.
+Perfil obligatorio: **0 diagnósticos** con TypeScript 7.0.2. Cualquier diagnóstico o fallo del compilador devuelve un código distinto de cero, en todas las carpetas.
 
-Configuración SHA-256: `ff76897c7df754690eaafadda2bede8eccd072f19a39ebb5b07d3324dc5eea2a`. Se heredan íntegramente include/exclude del perfil vigente; se agregan noUncheckedIndexedAccess y exactOptionalPropertyTypes sin quitar strict.
+Configuración SHA-256: `2f0f570149092eefa6caef90a536a13f93d18252d8c8d6c1b38e51d76c8277de` (principal, estricto y API). Las tres opciones están activas en la configuración principal y se heredan en las variantes, conservando sus include/exclude.
 
 ## Por área
 

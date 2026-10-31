@@ -16,7 +16,8 @@ El usuario autorizó posteriormente implementar los primeros diez tickets, deten
 - **04 completado y validado localmente (2026-10-30):** [persistencia operativa válida](../../docs/s22-04-persistencia-operativa.md). 54 pruebas de dominio/persistencia, 49 HTTP, 3 bloqueos de calidad y build aprobados; expansión SQL y auditoría histórica de solo lectura. Servidor/dominio con cero diagnósticos estrictos; quedan 80 globales.
 - **05 completado y validado localmente (2026-10-31):** [intenciones tipadas del panel](../../docs/s22-05-intenciones-panel.md). Nueve escenarios distintos en Chromium, 49 HTTP, 54 dominio/persistencia, 4 bloqueos de calidad y build aprobados. Frontend/componentes con cero diagnósticos estrictos; quedan 59 globales en scripts/tests.
 - **06 completado y validado localmente (2026-10-31):** [CLI, configuración y arneses estrictos](../../docs/s22-06-cli-configuracion-pruebas-estrictas.md). Cero diagnósticos globales, puerta completa con 23 CLI y 49 HTTP, build y dos escenarios Chromium aprobados en tandas separadas. Fallos del entorno y repeticiones documentados.
-- **07 pendiente de confirmación para comenzar.** Los tickets 07–10 no se implementaron en esta entrega.
+- **07 completado y validado localmente (2026-10-31):** [perfil estricto global obligatorio](../../docs/s22-07-perfil-estricto-global.md). Tres opciones estrictas en la configuración principal y variantes, cero diagnósticos y sin tolerancia por áreas. Puerta completa con nueve controles de calidad, 49 HTTP y build aprobados; se retira únicamente el adaptador mecánico sin consumidores de producción.
+- **08 pendiente de confirmación para comenzar.** Los tickets 08–10 no se implementaron en esta entrega.
 - La publicación de tickets, la ejecución del workflow en GitHub y la protección de rama continúan pendientes de configuración remota.
 
 ## Antes de publicar
