@@ -18,6 +18,8 @@ const { WebSocketServer } = WebSocket;
 async function connectedPair(context, options = {}) {
   const server = new WebSocketServer({ ...options, host: "127.0.0.1", port: 0 });
   const sockets = new Set();
+  // Registrá el peer aunque el cliente falle antes de completar su handshake y devolverlo al test.
+  server.on("connection", socket => sockets.add(socket));
   context.after(async () => {
     for (const socket of sockets) socket.terminate();
     await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
@@ -30,7 +32,6 @@ async function connectedPair(context, options = {}) {
   sockets.add(client);
   await once(client, "open");
   const [peer] = await connection;
-  sockets.add(peer);
   return { client, peer };
 }
 

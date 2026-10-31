@@ -186,7 +186,13 @@
         "S22-10",
         "S22-11"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-10-31",
+        "evidence": "docs/s22-05-intenciones-panel.md",
+        "validation": "Nueve escenarios distintos de navegador aprobados en Chromium desktop en dos tandas; puerta completa aprobada con 4 controles negativos, 7 seguridad, 54 dominio/persistencia, 19 CLI, 2 tokens UI, 49 HTTP y build. Frontend/componentes y servidor/dominio sin diagnósticos estrictos; 59 pendientes en scripts/tests. Solo recursos aislados y HCS controlado."
+      }
     },
     {
       "id": "06",

@@ -12,7 +12,7 @@ import styles from "./trace-reader.module.css";
 
 export const traceEventNames = { LOT_PUBLISHED: "Publicación del lote", LOT_APPROVED: "Aprobación del lote", LOT_REJECTED: "Rechazo del lote", TRANSPORT_ASSIGNED: "Asignación del transporte", PICKUP_CONFIRMED: "Confirmación de retiro", RECEIPT_ACCEPTED: "Recepción conforme", RECEIPT_ISSUE_REPORTED: "Incidencia de recepción" };
 const roles = { generator: "Generador", coordinator: "Coordinador Jopói", carrier: "Transportista", buyer: "Comprador" };
-export function TraceEventView({ event, current, busyEvent, verify }: { event: TraceEvent; current?: CurrentVerification; busyEvent: string | null; verify: () => void }) {
+export function TraceEventView({ event, current, busyEvent, verify }: { event: TraceEvent; current: CurrentVerification | undefined; busyEvent: string | null; verify: () => void }) {
   const feedback = useRef<HTMLDivElement>(null);
   useEffect(() => { if (current && current.status !== "loading") feedback.current?.focus(); }, [current]);
   const payload = event.event?.payload;

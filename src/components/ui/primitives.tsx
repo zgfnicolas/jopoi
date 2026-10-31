@@ -14,7 +14,8 @@ export function ActionButton({ busy = false, busyLabel = "Procesando…", childr
 export function ActionLink({ children, variant = "primary", size = "default", className, ...props }: ComponentProps<typeof Link> & ActionStyle) {
   return <Link prefetch={false} {...props} className={actionClass(variant, size, className)}>{children}</Link>;
 }
-type FieldDescription = { id: string; label: string; help?: string; error?: string };
+// En props de presentación, undefined significa que todavía no hay ayuda o error para mostrar.
+type FieldDescription = { id: string; label: string; help?: string | undefined; error?: string | undefined };
 function descriptions(id: string, help?: string, error?: string, existing?: string) {
   return [existing, help && `${id}-help`, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
 }

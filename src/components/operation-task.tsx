@@ -2,13 +2,16 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { decideOperation, normalizeOperationCommand } from "@/domain/operations";
 import type { DemoRunDetail } from "@/shared/run-contracts";
-import type { OperationAction, OperationCommand, SimulatedRole } from "@/shared/operation-contracts";
+import type { OperationAction, OperationCommand, OperationState, SimulatedRole } from "@/shared/operation-contracts";
 import { formatHumidity, formatKg } from "@/frontend/format";
 import { ActionButton, Field, Notice, SelectField } from "./ui/primitives";
 import styles from "./operation-panel.module.css";
 
 export const roleLabels: Record<SimulatedRole, string> = { generator: "Generador", coordinator: "Coordinador Jopói", carrier: "Transportista", buyer: "Comprador" };
-export const nextRoles = { DRAFT: "generator", PUBLISHED: "coordinator", APPROVED: "coordinator", ASSIGNED: "carrier", PICKED_UP: "buyer" } as const;
+export const nextRoles: Readonly<Record<OperationState, SimulatedRole | null>> = {
+  DRAFT: "generator", PUBLISHED: "coordinator", APPROVED: "coordinator", ASSIGNED: "carrier", PICKED_UP: "buyer",
+  RECEIVED: null, REJECTED: null, INCIDENT: null,
+};
 const separator = (value: string) => value.replace(",", ".");
 function decimalInput(value: string) { return /^\d+(?:[.,]\d+)?$/.test(value) ? separator(value) : value; }
 function pickupTime(minute: number) { return `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`; }
@@ -55,7 +58,7 @@ export function OperationTask({ run, role, blocked, conflict, reviewBlocked, rev
     setBase({ version: run.version, quantity: run.operation.quantityKg, humidity: run.operation.humidityPercent }); setErrors({}); reviewed();
   }
   const state = run.operation.state;
-  const requiredRole = state in nextRoles ? nextRoles[state as keyof typeof nextRoles] : null;
+  const requiredRole = nextRoles[state];
   const approval = decision({ role: "coordinator", action: "approve" });
   const reception = decision({ role: "buyer", action: "receive", receivedKg: decimalInput(received) });
   function formSubmit(event: FormEvent) { event.preventDefault(); if (state === "DRAFT" && role === "generator") send("publish"); }
@@ -113,7 +116,7 @@ export function OperationTask({ run, role, blocked, conflict, reviewBlocked, rev
     {Object.keys(errors).length > 0 && <div id="task-errors" tabIndex={-1}><Notice title="Revisá la acción" tone="error" announce>{Object.entries(errors).map(([key, value]) => <p key={key}>{value.join(" ")}</p>)}</Notice></div>}
   </div>;
 }
-function ReasonSelect({ reasons, value, change, error }: { reasons: readonly { code: string; label: string }[]; value: string; change: (value: string) => void; error?: string }) {
+function ReasonSelect({ reasons, value, change, error }: { reasons: readonly { code: string; label: string }[]; value: string; change: (value: string) => void; error: string | undefined }) {
   return <SelectField label="Motivo de ejemplo" id="operation-reasonCode" name="reasonCode" value={value} onChange={e => change(e.target.value)} error={error}>
     <option value="">Elegí un motivo</option>{reasons.map(reason => <option key={reason.code} value={reason.code}>{reason.label}</option>)}</SelectField>;
 }

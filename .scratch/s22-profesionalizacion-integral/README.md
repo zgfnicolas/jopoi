@@ -14,7 +14,8 @@ El usuario autorizó posteriormente implementar los primeros diez tickets, deten
 - **02 completado y validado localmente (2026-10-30):** [puerta reproducible y perfil estricto](../../docs/s22-02-calidad-reproducible.md). Build y suites requeridas aprobados; Biome como único linter. Perfil completo temporal con 106 diagnósticos pendientes, conservando el perfil vigente aprobado.
 - **03 completado y validado localmente (2026-10-30):** [contratos operativos expandidos](../../docs/s22-03-contratos-operativos.md). Modelo discriminado y reconstrucción semántica junto al contrato anterior; 39/39 pruebas de dominio, 43/43 HTTP y puerta completa aprobadas. El lote nuevo no agrega diagnósticos estrictos.
 - **04 completado y validado localmente (2026-10-30):** [persistencia operativa válida](../../docs/s22-04-persistencia-operativa.md). 54 pruebas de dominio/persistencia, 49 HTTP, 3 bloqueos de calidad y build aprobados; expansión SQL y auditoría histórica de solo lectura. Servidor/dominio con cero diagnósticos estrictos; quedan 80 globales.
-- **05 pendiente de confirmación para comenzar.** Los tickets 05–10 no se implementaron en esta entrega.
+- **05 completado y validado localmente (2026-10-31):** [intenciones tipadas del panel](../../docs/s22-05-intenciones-panel.md). Nueve escenarios distintos en Chromium, 49 HTTP, 54 dominio/persistencia, 4 bloqueos de calidad y build aprobados. Frontend/componentes con cero diagnósticos estrictos; quedan 59 globales en scripts/tests.
+- **06 pendiente de confirmación para comenzar.** Los tickets 06–10 no se implementaron en esta entrega.
 - La publicación de tickets, la ejecución del workflow en GitHub y la protección de rama continúan pendientes de configuración remota.
 
 ## Antes de publicar

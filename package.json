@@ -22,7 +22,7 @@
     "test": "vitest run",
     "test:api": "vitest run",
     "test:cli": "node --import tsx --test --test-concurrency=1 tests/cli/entrega.test.ts tests/cli/seguridad.test.ts",
-    "test:security": "node --test tests/security/dependencies.test.mjs tests/security/audit-gate.test.mjs",
+    "test:security": "node --test --test-concurrency=1 tests/security/dependencies.test.mjs tests/security/audit-gate.test.mjs",
     "security:audit": "npm audit --omit=dev --audit-level=high",
     "security:audit:all": "npm audit --audit-level=high",
     "db:audit": "node --import tsx scripts/database-audit.ts",

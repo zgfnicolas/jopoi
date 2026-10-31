@@ -8,12 +8,12 @@ export default class E2EReporter implements Reporter {
   onBegin(_config: unknown, suite: Suite) { this.suite = suite; }
   onEnd(result: FullResult) {
     const tests = this.suite?.allTests() ?? [];
-    const cases = [...Array.from({ length: 15 }, (_, index) => `E2E-${String(index + 1).padStart(2, "0")}`), "S20-01", "S20-02", "S21-UI-01", "S21-UI-02"].map(id => {
+    const cases = [...Array.from({ length: 15 }, (_, index) => `E2E-${String(index + 1).padStart(2, "0")}`), "S20-01", "S20-02", "S21-UI-01", "S21-UI-02", "S22-UI-01", "S22-UI-02", "S22-UI-03", "S22-UI-04"].map(id => {
       const matching = tests.filter(test => test.title.includes(id));
       const observations = matching.map(test => ({ project: test.parent.project()?.name, title: test.title,
         status: test.results.at(-1)?.status ?? "skipped", blocked: test.results.some(attempt => attempt.errors.some(error => /BLOCKED_|Executable doesn't exist/.test(error.message ?? ""))) }));
       const complete = ["chromium-desktop", "webkit-mobile", "chromium-desktop-dark", "webkit-mobile-dark"].every(project =>
-        observations.filter(item => item.project === project).length === (id === "E2E-09" ? 2 : 1));
+        observations.filter(item => item.project === project).length === (id === "E2E-09" || id === "S22-UI-02" ? 2 : 1));
       return { id, result: observations.some(item => !item.blocked && ["failed", "timedOut", "interrupted"].includes(item.status)) ? "FALLIDO"
         : !complete || observations.some(item => item.blocked || item.status !== "passed") ? "BLOQUEADO" : "APROBADO", observations };
     });

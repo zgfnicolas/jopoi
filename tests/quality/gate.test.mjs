@@ -11,16 +11,17 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const npmCli = process.env.npm_execpath;
 assert.equal(typeof npmCli, "string", "Usá npm run test:quality.");
 
-for (const [control, source] of [
+for (const [control, source, directory = "tests/quality"] of [
   ["typecheck", 'export const s22Probe: number = "invalid";'],
   ["lint", "debugger; export {};"],
-  ["typecheck:report", "const values: readonly number[] = []; export const s22Probe: number = values[0];"],
+  ["typecheck:report", "const values: readonly number[] = []; export const s22Probe: number = values[0];", "src/server"],
+  ["typecheck:report", "const values: readonly number[] = []; export const s22Probe: number = values[0];", "src/frontend"],
 ]) {
-  test(`S22-31: una infracción real de ${control} detiene el gate antes de las regresiones`, {
+  test(`S22-31: una infracción real de ${control} en ${directory} detiene el gate antes de las regresiones`, {
     timeout: 120000,
   }, async (context) => {
     // Inyectá un archivo propio nuevo: también demostramos que el gate no omite código sin trackear.
-    const probe = resolve(root, control === "typecheck:report" ? "src/server" : "tests/quality", `probe-${randomUUID()}.ts`);
+    const probe = resolve(root, directory, `probe-${randomUUID()}.ts`);
     await writeFile(probe, source, { flag: "wx" });
     context.after(() => unlink(probe));
     const child = spawn(process.execPath, [npmCli, "run", "quality:check"], {

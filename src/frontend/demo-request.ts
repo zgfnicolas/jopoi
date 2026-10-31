@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { API_ERROR_CATALOG, type ApiErrorCode } from "@/shared/api-errors";
+import { API_ERROR_CATALOG, isApiErrorCode, type ApiErrorCode } from "@/shared/api-errors";
 import { retryAfterSeconds } from "./retry-after";
 import { DEMO_REQUEST_CONFIRMATION, type DemoRequestConfirmation } from "@/shared/contact-contracts";
 
@@ -27,10 +27,11 @@ export async function postDemoRequest(body: string, signal: AbortSignal): Promis
     }
     const parsed = failure.safeParse(value);
     if (!parsed.success) return invalid("INVALID_RESPONSE", response.status);
-    const code = Object.keys(API_ERROR_CATALOG).find(key => key === parsed.data.error.code) as ApiErrorCode | undefined;
-    if (!code) return invalid("INVALID_RESPONSE", response.status);
+    const code = parsed.data.error.code;
+    if (!isApiErrorCode(code) || API_ERROR_CATALOG[code].status !== response.status) return invalid("INVALID_RESPONSE", response.status);
     const fields: Record<string, readonly string[]> = {};
     for (const [key, messages] of Object.entries(parsed.data.error.fields ?? {})) if (messages) fields[key] = messages;
-    return { ok: false, error: { code, status: response.status, fields, diagnosticId: parsed.data.error.requestId, retryAfter: retryAfterSeconds(response) } };
+    const retryAfter = retryAfterSeconds(response);
+    return { ok: false, error: { code, status: response.status, fields, diagnosticId: parsed.data.error.requestId, ...(retryAfter === undefined ? {} : { retryAfter }) } };
   } catch { return invalid("NETWORK_UNAVAILABLE"); }
 }

@@ -22,6 +22,9 @@ export const API_ERROR_CATALOG = Object.freeze({
 
 export type ApiErrorCode = keyof typeof API_ERROR_CATALOG;
 export type ApiErrorStatus = (typeof API_ERROR_CATALOG)[ApiErrorCode]["status"];
+export function isApiErrorCode(value: string): value is ApiErrorCode {
+  return Object.hasOwn(API_ERROR_CATALOG, value);
+}
 export type FieldErrors = Readonly<Record<string, readonly string[]>>;
 
 export interface ApiErrorBody {

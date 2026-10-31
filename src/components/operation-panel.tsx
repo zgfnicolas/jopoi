@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { DemoRunDetail } from "@/shared/run-contracts";
 import type { SimulatedRole } from "@/shared/operation-contracts";
 import type { PublicEventType } from "@/shared/event-contracts";
+import { eventRole } from "@/domain/event-schemas";
 import { useOperationPanel } from "@/frontend/use-operation-panel";
 import { formatArs, formatDate, formatHumidity, formatKg } from "@/frontend/format";
 import { ActionButton, Notice, SelectField } from "./ui/primitives";
@@ -25,7 +26,7 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
   useEffect(() => { if (!panel.busy && (panel.message || panel.error || panel.conflict)) feedback.current?.focus(); }, [panel.busy, panel.message, panel.error, panel.conflict]);
   useEffect(() => { setConfirmReset(false); }, [run?.traceId]);
   const fields = panel.error && "fields" in panel.error ? panel.error.fields : {};
-  const requiredRole = run && run.operation.state in nextRoles ? nextRoles[run.operation.state as keyof typeof nextRoles] : null;
+  const requiredRole = run ? nextRoles[run.operation.state] : null;
   const startAllowed = !panel.data && (panel.error?.code === "SESSION_REQUIRED" || panel.error?.code === "SESSION_EXPIRED") || panel.data?.run === null;
   return <div className="stack">
     <div ref={feedback} tabIndex={-1} className="stack">
@@ -49,7 +50,10 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
       })}</ol>
       <div className={styles.workspace}>
         <section className={`${styles.task} stack`} aria-labelledby="task-title"><h2 id="task-title" tabIndex={-1}>Tu siguiente acción</h2>
-          <SelectField label="Rol que estás representando" id="simulated-role" value={role} disabled={panel.blocked} onChange={event => setRole(event.target.value as SimulatedRole)}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</SelectField>
+          <SelectField label="Rol que estás representando" id="simulated-role" value={role} disabled={panel.blocked} onChange={event => {
+            const parsed = eventRole.safeParse(event.target.value);
+            if (parsed.success) setRole(parsed.data);
+          }}>{Object.entries(roleLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</SelectField>
           {requiredRole && requiredRole !== role && <div><ActionButton type="button" variant="secondary" disabled={panel.blocked} onClick={() => { setRole(requiredRole); requestAnimationFrame(() => document.getElementById("task-title")?.focus()); }}>Representar a {roleLabels[requiredRole]}</ActionButton></div>}
           <OperationTask key={`${run.traceId}:${panel.draftRevision}`} run={run} role={role} blocked={panel.blocked} conflict={panel.conflict} reviewBlocked={panel.busy || panel.stale || panel.uncertain} reviewed={panel.acknowledgeConflict} submit={panel.command} />
         </section>
@@ -57,9 +61,9 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
           {panel.stale && <p>Estos datos corresponden a la última lectura; actualizalos antes de otra acción.</p>}
           <dl className="facts"><div><dt>Cantidad declarada</dt><dd>{formatKg(run.operation.quantityKg)}</dd></div><div><dt>Humedad</dt><dd>{formatHumidity(run.operation.humidityPercent)}</dd></div><div><dt>Generador ficticio</dt><dd>{run.scenario.generator.name}</dd></div><div><dt>Comprador ficticio</dt><dd>{run.scenario.buyer.name}</dd></div>{run.operation.receivedKg !== null && <div><dt>Peso recibido, separado de la declaración</dt><dd>{formatKg(run.operation.receivedKg)}</dd></div>}</dl>
           <p>{run.scenario.route.label}</p>
-          <details className={styles.detail}><summary>Ver economía ilustrativa</summary><dl className={styles.economics}>{[
+          <details className={styles.detail}><summary>Ver economía ilustrativa</summary><dl className={styles.economics}>{([
             ["Material", run.economics.materialCost], ["Flete de retorno", run.economics.returnFreight], ["Coordinación supuesta", run.economics.jopoiFee], ["Total con retorno", run.economics.jopoiTotal], ["Alternativa dedicada", run.economics.alternativeTotal], ["Diferencia (alternativa menos retorno)", run.economics.difference],
-          ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatArs(value)}</dd></div>)}</dl><p>{run.economics.disclaimer} El peso recibido no sustituye la cantidad declarada para este cálculo.</p></details>
+          ] satisfies readonly (readonly [string, string])[]).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{formatArs(value)}</dd></div>)}</dl><p>{run.economics.disclaimer} El peso recibido no sustituye la cantidad declarada para este cálculo.</p></details>
           <Evidence run={run} />
         </aside>
       </div>

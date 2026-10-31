@@ -42,7 +42,7 @@ export const publicTraceSchema: z.ZodType<PublicTraceResponse> = z.object({
   reception: z.object({ eventId: eventUuid, outcome: z.enum(["RECEIVED", "INCIDENT"]), receivedKg: eventQuantity, reason: reason.nullable() }).nullable(),
   events: z.array(z.object({ eventId: eventUuid, ordinal: version, type: eventType, role: eventRole, appliedAt: date, payloadVersion: version,
     event: z.object({ payload: publicEventSchema, digest: eventDigest }).nullable(), integrity, publication, storedVerification, links })),
-}).refine(value => value.events.every((event, index) => (index === 0 || event.ordinal > value.events[index - 1].ordinal)
+}).refine(value => value.events.every((event, index) => (index === 0 || event.ordinal > (value.events[index - 1]?.ordinal ?? Infinity))
   && (event.event === null ? event.integrity.state === "MISMATCH" : event.integrity.state === "MATCHED"
     && event.event.digest === event.integrity.storedDigest && event.payloadVersion === 1 && event.event.payload.traceId === value.traceId
     && event.event.payload.eventId === event.eventId && event.event.payload.ordinal === event.ordinal && event.event.payload.type === event.type

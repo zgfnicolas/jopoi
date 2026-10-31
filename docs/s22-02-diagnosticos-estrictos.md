@@ -1,6 +1,6 @@
 # S22-02 · Diagnóstico del perfil estricto completo
 
-Informe temporal: **80 diagnósticos pendientes** con TypeScript 7.0.2. No acredita aceptación de S22-10. El ticket 07 debe exigir cero diagnósticos y retirar esta tolerancia.
+Informe temporal: **59 diagnósticos pendientes** con TypeScript 7.0.2. No acredita aceptación de S22-10. El ticket 07 debe exigir cero diagnósticos y retirar esta tolerancia.
 
 Configuración SHA-256: `ff76897c7df754690eaafadda2bede8eccd072f19a39ebb5b07d3324dc5eea2a`. Se heredan íntegramente include/exclude del perfil vigente; se agregan noUncheckedIndexedAccess y exactOptionalPropertyTypes sin quitar strict.
 
@@ -9,8 +9,6 @@ Configuración SHA-256: `ff76897c7df754690eaafadda2bede8eccd072f19a39ebb5b07d332
 | Área | Diagnósticos |
 | --- | ---: |
 | scripts | 15 |
-| src/components | 16 |
-| src/frontend | 5 |
 | tests | 44 |
 
 ## Por archivo
@@ -23,17 +21,6 @@ Configuración SHA-256: `ff76897c7df754690eaafadda2bede8eccd072f19a39ebb5b07d332
 | scripts/delivery.ts | 2 |
 | scripts/s21-benchmark.ts | 7 |
 | scripts/s21-report.ts | 2 |
-| src/components/demo-request-form.tsx | 4 |
-| src/components/operation-panel.tsx | 1 |
-| src/components/operation-task.tsx | 6 |
-| src/components/trace-locator.tsx | 1 |
-| src/components/trace-reader.tsx | 1 |
-| src/components/ui/primitives.tsx | 3 |
-| src/frontend/api.ts | 1 |
-| src/frontend/demo-request.ts | 1 |
-| src/frontend/format.ts | 1 |
-| src/frontend/operation-api.ts | 1 |
-| src/frontend/trace-models.ts | 1 |
 | tests/api/contactos-y-consulta.test.ts | 1 |
 | tests/api/persistencia.test.ts | 5 |
 | tests/api/publicacion.test.ts | 11 |
