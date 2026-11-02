@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { databaseConnection, migrationConnection } from "../../src/server/database/connection-policy";
+import { CLEANUP_POLICY, MAX_CASCADE_ROWS_PER_BATCH, MAX_ROWS_PER_RUN_AGGREGATE, RUN_BATCH_SIZE } from "../../src/server/hedera/maintenance-policy";
 import { normalizeClientAddress, runIntentSubject, visitorSubject } from "../../src/server/security/visitor-identity";
 import { DEMO_POLICY } from "../../src/shared/demo-policy";
 import { localhostCertificate } from "../support/tls-certificate";
@@ -113,4 +114,10 @@ test("S22-04: normalización de visitante para NAT/IPv6 y rotación diaria UTC d
   assert.notEqual(runSubject, runIntentSubject("00000000-0000-4000-8000-000000000002"));
   assert.equal(DEMO_POLICY.maxReceiptsPerRun, 100);
   assert.equal(DEMO_POLICY.intentDailyLimit, 5000);
+  assert.equal(MAX_ROWS_PER_RUN_AGGREGATE, 231);
+  assert.equal(RUN_BATCH_SIZE, 25);
+  assert.ok(RUN_BATCH_SIZE * MAX_ROWS_PER_RUN_AGGREGATE <= MAX_CASCADE_ROWS_PER_BATCH);
+  assert.equal(CLEANUP_POLICY.maxRounds * CLEANUP_POLICY.runsSubBatchesPerRound * CLEANUP_POLICY.batchLimits.runs, 900);
+  assert.equal(CLEANUP_POLICY.maxRounds * CLEANUP_POLICY.batchLimits.sessions, 300);
+  assert.equal(CLEANUP_POLICY.maxRounds * CLEANUP_POLICY.batchLimits.contacts, 300);
 });

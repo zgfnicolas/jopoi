@@ -459,7 +459,13 @@
         "S22-06",
         "S22-27"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-02",
+        "evidence": "docs/s22-12-limpieza-sostenible.md",
+        "validation": "Limpieza por rondas deterministas e intercaladas dentro de 45 s cooperativos con reserva de cierre de 14 s; RUN_BATCH_SIZE=25 calculado sobre 231 filas máximas por agregado DemoRun (hasta 900 recorridos, 300 sesiones y 300 contactos por ejecución). Convergencia tras 7 días sin cron a <= 1 día en 3 ejecuciones, objetivo físico de 36 h separado de denegación lógica y schedulerHealthy, y observabilidad sin PII en /api/cron, maintenance.ts y ops-status.ts con reloj controlado. 24 CLI, 61 HTTP, puerta completa y build aprobados; cero diagnósticos estrictos. El ticket 13 espera confirmación."
+      }
     },
     {
       "id": "13",

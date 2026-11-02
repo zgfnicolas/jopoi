@@ -18,7 +18,7 @@ export type HttpOperation = keyof typeof HTTP_OPERATIONS;
 type Operation = HttpOperation | "database.transaction" | "database.query" | "publications.drain" | "database.pool";
 type Event = "http.completed" | "dependency.completed" | "operation.committed" | "background.completed" | "maintenance.completed" | "database.connection" | "publication.recovered";
 type Outcome = "success" | "rejected" | "error" | "partial" | "skipped";
-const customCodes = ["OK", "OPERATION_COMMITTED", "PUBLICATION_WORK_PENDING", "PUBLICATION_WORK_NOT_SCHEDULED", "DATABASE_POOL_ERROR", "DATABASE_CONNECTION_ERROR", "MAINTENANCE_COMPLETE", "MAINTENANCE_PARTIAL", "MAINTENANCE_SKIPPED"] as const;
+const customCodes = ["OK", "OPERATION_COMMITTED", "PUBLICATION_WORK_PENDING", "PUBLICATION_WORK_NOT_SCHEDULED", "DATABASE_POOL_ERROR", "DATABASE_CONNECTION_ERROR", "MAINTENANCE_COMPLETE", "MAINTENANCE_PARTIAL", "MAINTENANCE_SKIPPED", "MAINTENANCE_CATEGORY_FAILED"] as const;
 type Code = keyof typeof API_ERROR_CATALOG | HcsCode | typeof customCodes[number];
 function isHcsCode(value: string): value is HcsCode { return HCS_CODES.some(known => known === value); }
 function isCode(value: string): value is Code { return isApiErrorCode(value) || isHcsCode(value) || customCodes.some(known => known === value); }
@@ -90,14 +90,19 @@ export function diagnosticCode(error: unknown): Code {
   return typeof code === "string" && (isApiErrorCode(code) || isHcsCode(code)) ? code : "INTERNAL_ERROR";
 }
 interface Diagnostic {
-  readonly event: Event;
-  readonly outcome: Outcome;
-  readonly code: Code;
-  readonly durationMs: number;
-  readonly severity?: "INFO" | "WARN" | "ERROR";
-  readonly status?: number;
-  readonly error?: unknown;
-  readonly counts?: Readonly<Record<string, number>>;
+  readonly event: Event; readonly outcome: Outcome; readonly code: Code; readonly durationMs: number;
+  readonly severity?: "INFO" | "WARN" | "ERROR"; readonly status?: number; readonly error?: unknown;
+  readonly counts?: Readonly<Record<string, number>>; readonly pending?: Readonly<Record<string, number>>;
+  readonly oldestExpiredAgeMs?: number; readonly withinRetentionTarget?: boolean; readonly stalledCategories?: readonly string[];
+  readonly lastCompletedAt?: string | null; readonly lastPartialAt?: string | null;
+}
+function safeCounts(source: Readonly<Record<string, number>> | undefined) {
+  const counts: Record<string, number> = {};
+  for (const key of ["runs", "contacts", "sessions", "quotas", "leases", "rateBuckets", "processed"]) {
+    const value = source?.[key];
+    if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) counts[key] = value;
+  }
+  return counts;
 }
 let blocked = false;
 let exporterInitialized = false;
@@ -111,12 +116,7 @@ export function logDiagnostic(input: Diagnostic): void {
       if (output.listenerCount("error") === 0) output.on("error", () => { blocked = true; });
       exporterInitialized = true;
     }
-    const context = storage.getStore();
-    const counts: Record<string, number> = {};
-    for (const key of ["runs", "contacts", "sessions", "quotas", "leases", "rateBuckets", "processed"]) {
-      const value = input.counts?.[key];
-      if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) counts[key] = value;
-    }
+    const context = storage.getStore(), counts = safeCounts(input.counts);
     const line = JSON.stringify({ timestamp: new Date().toISOString(), severity: input.severity === "ERROR" ? "ERROR" : input.severity === "WARN" ? "WARN" : "INFO",
       "service.name": "jopoi", "service.version": packageInfo.version,
       environment: process.env.NODE_ENV === "production" ? "production" : process.env.NODE_ENV === "test" ? "test" : "development",
@@ -125,7 +125,13 @@ export function logDiagnostic(input: Diagnostic): void {
       operation: context?.operation ?? "database.pool", method: context?.method ?? null, route: context?.route ?? null,
       code: isCode(input.code) ? input.code : "INTERNAL_ERROR", outcome: ["success", "rejected", "error", "partial", "skipped"].includes(input.outcome) ? input.outcome : "error", durationMs: Number.isFinite(input.durationMs) ? Math.max(0, Math.round(input.durationMs)) : 0,
       ...(input.status === undefined || !Number.isInteger(input.status) || input.status < 100 || input.status > 599 ? {} : { status: input.status }),
-      ...(Object.hasOwn(input, "error") ? { error: safeErrorChain(input.error) } : {}), counts });
+      ...(Object.hasOwn(input, "error") ? { error: safeErrorChain(input.error) } : {}), counts,
+      ...(input.pending === undefined ? {} : { pending: safeCounts(input.pending) }),
+      ...(typeof input.oldestExpiredAgeMs === "number" && Number.isFinite(input.oldestExpiredAgeMs) ? { oldestExpiredAgeMs: Math.max(0, Math.round(input.oldestExpiredAgeMs)) } : {}),
+      ...(typeof input.withinRetentionTarget === "boolean" ? { withinRetentionTarget: input.withinRetentionTarget } : {}),
+      ...(Array.isArray(input.stalledCategories) ? { stalledCategories: input.stalledCategories.filter((c): c is string => typeof c === "string") } : {}),
+      ...(input.lastCompletedAt !== undefined ? { lastCompletedAt: input.lastCompletedAt } : {}),
+      ...(input.lastPartialAt !== undefined ? { lastPartialAt: input.lastPartialAt } : {}) });
     if (Buffer.byteLength(line) > 8192) return;
     if (!output.write(line + "\n", error => { if (error) blocked = true; })) {
       blocked = true;

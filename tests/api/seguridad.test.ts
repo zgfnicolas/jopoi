@@ -108,10 +108,10 @@ test("S21-06 · rol de aplicación restringido, integridad y triggers efectivos"
 
 test("S21-07 · limpieza acotada no declara completo un backlog pendiente",async()=>{
   await fixture(`INSERT INTO "DemoRequest" (id,"requestId","intentHash",name,email,company,"createdAt","expiresAt")
-    SELECT md5('cleanup-'||g)::uuid,md5('intent-'||g)::uuid,repeat('a',64),'Synthetic','synthetic@example.invalid','Synthetic','2025-01-01','2025-02-01' FROM generate_series(1,201) g`);
+    SELECT md5('cleanup-'||g)::uuid,md5('intent-'||g)::uuid,repeat('a',64),'Synthetic','synthetic@example.invalid','Synthetic','2025-01-01','2025-02-01' FROM generate_series(1,601) g`);
   await fixture(`INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt") VALUES ('TRACE','GLOBAL','2025-01-01',1,'2025-01-04')`);
-  const first=await environment.cron();expect(first.status).toBe(200);expect(first.body).toMatchObject({complete:false,counts:{contacts:100,rateBuckets:1}});
-  expect((await environment.cron()).body).toMatchObject({complete:false,counts:{contacts:100}});
+  const first=await environment.cron();expect(first.status).toBe(200);expect(first.body).toMatchObject({complete:false,counts:{contacts:300,rateBuckets:1}});
+  expect((await environment.cron()).body).toMatchObject({complete:false,counts:{contacts:300}});
   expect((await environment.cron()).body).toMatchObject({complete:true,counts:{contacts:1}});
   expect((await environment.cron()).body).toMatchObject({skipped:true});
 });
@@ -425,15 +425,205 @@ test("S22-04 · identidad de visitante agrupa prefijo IPv6 /64 y NAT sin persist
   }finally{await db.end();}
 });
 
-test("S22-05 · retención limpia el tope diario de 100 sesiones y 100 contactos en una ejecución",async()=>{
-  await fixture(`INSERT INTO "DemoSession" (id,"tokenHash","createdAt","expiresAt")
-    SELECT md5('s22-session-'||g)::uuid,md5('s22-token-'||g)||md5('s22-token-b-'||g),'2025-01-01','2025-01-02' FROM generate_series(1,100) g`);
+test("S22-05 · convergencia tras 7 días sin cron en 3 ejecuciones y objetivo físico de 36 h separado de denegación lógica",async()=>{
+  const resources=inject("resources");
+  const opsEnv=resolve(resources.directory,"s22-ops.env");
+  await writeFile(opsEnv,`DATABASE_URL=${JSON.stringify(resources.applicationUrl)}\n`,{mode:0o600});
+  const runOpsStatus=async()=>{
+    const outFile=resolve(resources.directory,`ops-${randomUUID()}.json`);
+    await completed(child(process.execPath,["--import","tsx","scripts/ops-status.ts","--env-file",opsEnv],environment.env,outFile));
+    const raw=await readFile(outFile,"utf8");
+    expect(raw).not.toMatch(/synthetic@example\.invalid|s22-token/);
+    return JSON.parse(raw);
+  };
+  const runMaintenanceCli=async()=>{
+    const outFile=resolve(resources.directory,`maint-${randomUUID()}.json`);
+    await completed(child(process.execPath,["--import","tsx","scripts/maintenance.ts","--run","--env-file",opsEnv],environment.env,outFile));
+    const raw=await readFile(outFile,"utf8");
+    expect(raw).not.toMatch(/synthetic@example\.invalid|s22-token/);
+    return JSON.parse(raw);
+  };
+
+  const visitor=await new Visitor().setup();
+  await environment.clock("2026-01-08T03:00:00.000Z");
+  expect((await environment.cron()).status).toBe(200);
+  await environment.clock("2026-01-08T13:00:00.000Z");
+  expect((await visitor.trace()).status).toBe(410);
+  expect((await visitor.get("/api/demo/session")).status).toBe(401);
+
+  const beforeNormalCron=await runOpsStatus();
+  expect(beforeNormalCron).toMatchObject({
+    expiredAwaitingCleanup:{runs:1,sessions:1,contacts:0,quotas:0,leases:0,rateBuckets:0},
+    oldestExpiredAgeMs:3600000,
+    withinRetentionTarget:true,
+    schedulerHealthy:true,
+    stalledCategories:[],
+  });
+
+  await environment.clock("2026-01-09T13:00:00.000Z");
+  const normalCron=await environment.cron();
+  expect(normalCron.status).toBe(200);
+  expect(normalCron.body).toMatchObject({
+    complete:true,
+    cleanupComplete:true,
+    withinRetentionTarget:true,
+    oldestExpiredAgeMs:0,
+    stalledCategories:[],
+    lastCompletedAt:"2026-01-09T13:00:00.000Z",
+    counts:{runs:1,sessions:1,rateBuckets:0},
+  });
+
+  await fixture(`INSERT INTO "DemoSession" (id,"tokenHash","createdAt","expiresAt","runCount")
+    SELECT md5('s22-outage-sess-'||g)::uuid,md5('s22-token-a-'||g)||md5('s22-token-b-'||g),
+      ('2025-12-18T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day'),
+      ('2025-12-25T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day'),
+      3
+    FROM generate_series(1,700) g`);
+  await fixture(`INSERT INTO "DemoRun" (id,"traceId","sessionId","creationRequestId",ordinal,version,state,"createdAt","expiresAt","scenarioVersion","scenarioSnapshot","declaredGrams","humidityHundredths")
+    SELECT md5('s22-outage-run-'||g||'-'||ord)::uuid,md5('s22-outage-trace-'||g||'-'||ord)::uuid,
+      md5('s22-outage-sess-'||g)::uuid,md5('s22-outage-req-'||g||'-'||ord)::uuid,ord,1,'DRAFT',
+      ('2025-12-18T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day'),
+      ('2025-12-25T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day'),
+      's22','{"version":"s22","isIllustrative":true}'::jsonb,12000000,2800
+    FROM generate_series(1,700) g CROSS JOIN generate_series(1,3) ord`);
   await fixture(`INSERT INTO "DemoRequest" (id,"requestId","intentHash",name,email,company,"createdAt","expiresAt")
-    SELECT md5('s22-contact-'||g)::uuid,md5('s22-intent-'||g)::uuid,repeat('b',64),'Synthetic','synthetic@example.invalid','Synthetic','2025-01-01','2025-04-01' FROM generate_series(1,100) g`);
+    SELECT md5('s22-outage-contact-'||g)::uuid,md5('s22-outage-c-intent-'||g)::uuid,repeat('b',64),'Synthetic','synthetic@example.invalid','Synthetic',
+      ('2025-09-26T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day'),
+      ('2025-12-25T00:00:00Z'::timestamptz + ((g - 1) / 100) * interval '1 day')
+    FROM generate_series(1,700) g`);
+  await fixture(`INSERT INTO "DailyQuota" (scope,date,used)
+    SELECT 'HCS_GLOBAL',('2025-12-20'::date + g),10 FROM generate_series(1,7) g`);
+  await fixture(`INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt")
+    SELECT 'SESSION_CREATE','GLOBAL',('2025-12-20T00:00:00Z'::timestamptz + g * interval '1 day'),100,('2025-12-23T00:00:00Z'::timestamptz + g * interval '1 day')
+    FROM generate_series(1,7) g`);
+
+  await environment.clock("2026-01-11T03:00:00.000Z");
+  const outageObserved=await runOpsStatus();
+  expect(outageObserved).toMatchObject({
+    expiredAwaitingCleanup:{runs:2100,sessions:700,contacts:700,quotas:7,leases:0,rateBuckets:11},
+    withinRetentionTarget:false,
+    schedulerHealthy:false,
+    stalledCategories:["rateBuckets","runs","contacts","sessions","quotas"],
+  });
+
+  const exec1=await environment.cron();
+  expect(exec1.status).toBe(200);
+  expect(exec1.body).toMatchObject({
+    complete:false,
+    cleanupComplete:false,
+    counts:{runs:900,sessions:300,contacts:300,quotas:7,leases:0,rateBuckets:11},
+    pending:{runs:1200,sessions:400,contacts:400,quotas:0,leases:0,rateBuckets:0},
+    stalledCategories:[],
+    lastPartialAt:"2026-01-11T03:00:00.000Z",
+  });
+
+  await environment.clock("2026-01-11T03:05:00.000Z");
+  const exec2=await runMaintenanceCli();
+  expect(exec2).toMatchObject({
+    complete:false,
+    cleanupComplete:false,
+    counts:{runs:900,sessions:300,contacts:300,quotas:0,leases:0,rateBuckets:0},
+    pending:{runs:300,sessions:100,contacts:100,quotas:0,leases:0,rateBuckets:0},
+    stalledCategories:[],
+    lastPartialAt:"2026-01-11T03:05:00.000Z",
+  });
+
+  await environment.clock("2026-01-12T03:00:00.000Z");
+  const exec3=await environment.cron();
+  expect(exec3.status).toBe(200);
+  expect(exec3.body).toMatchObject({
+    complete:true,
+    cleanupComplete:true,
+    withinRetentionTarget:true,
+    oldestExpiredAgeMs:0,
+    stalledCategories:[],
+    counts:{runs:300,sessions:100,contacts:100,quotas:0,leases:0,rateBuckets:0},
+    pending:{runs:0,sessions:0,contacts:0,quotas:0,leases:0,rateBuckets:0},
+    lastCompletedAt:"2026-01-12T03:00:00.000Z",
+  });
+
+  const converged=await runOpsStatus();
+  expect(converged).toMatchObject({
+    expiredAwaitingCleanup:{runs:0,sessions:0,contacts:0,quotas:0,leases:0,rateBuckets:0},
+    oldestExpiredAgeMs:0,
+    withinRetentionTarget:true,
+    schedulerHealthy:true,
+    stalledCategories:[],
+    lastCompletedAt:"2026-01-12T03:00:00.000Z",
+  });
+},180000);
+
+test("S22-06 · limpieza justa y recuperable con hijos máximos y lease activo sin reescribir evidencia vigente",async()=>{
+  const activeVisitor=await new Visitor().setup();
+  const published=await activeVisitor.publish();
+  const confirmedActive=await eventually(()=>activeVisitor.run(),run=>run.events[0]?.publication.verificationState==="MATCHED");
+  const activeTxId=requiredEntry(confirmedActive.events,0).publication.transactionId;
+  const activeDigest=published.event!.digest;
+
+  const heavySessionId=randomUUID(),heavyRunId=randomUUID();
+  const leasedSessionId=randomUUID(),leasedRunId=randomUUID(),leasedCommandId=randomUUID(),leasedEventId=randomUUID();
+  await fixture(`INSERT INTO "DemoSession" (id,"tokenHash","createdAt","expiresAt","runCount") VALUES
+    ('${heavySessionId}',repeat('1',64),'2025-12-01T00:00:00Z','2025-12-08T00:00:00Z',1),
+    ('${leasedSessionId}',repeat('2',64),'2025-12-01T00:00:00Z','2025-12-08T00:00:00Z',1)`);
+  await fixture(`INSERT INTO "DemoRun" (id,"traceId","sessionId","creationRequestId",ordinal,version,state,"createdAt","expiresAt","scenarioVersion","scenarioSnapshot","declaredGrams","humidityHundredths") VALUES
+    ('${heavyRunId}','${randomUUID()}','${heavySessionId}','${randomUUID()}',1,100,'DRAFT','2025-12-01T00:00:00Z','2025-12-08T00:00:00Z','s22','{"version":"s22","isIllustrative":true}'::jsonb,12000000,2800),
+    ('${leasedRunId}','${randomUUID()}','${leasedSessionId}','${randomUUID()}',1,2,'PUBLISHED','2025-12-01T00:00:00Z','2025-12-08T00:00:00Z','s22','{"version":"s22","isIllustrative":true}'::jsonb,12000000,2800)`);
+  await fixture(`INSERT INTO "SessionRunIntent" ("sessionId","requestId",kind,"runId","createdAt")
+    SELECT '${heavySessionId}'::uuid,md5('heavy-intent-'||g)::uuid,CASE WHEN g=1 THEN 'START'::"SessionIntentKind" ELSE 'RESET'::"SessionIntentKind" END,'${heavyRunId}'::uuid,'2025-12-01T00:00:00Z'
+    FROM generate_series(1,100) g`);
+  await fixture(`INSERT INTO "CommandReceipt" (id,"runId","requestId","intentHash",action,"resultingVersion",result,"createdAt")
+    SELECT md5('heavy-cmd-'||g)::uuid,'${heavyRunId}'::uuid,md5('heavy-cmd-req-'||g)::uuid,repeat('a',64),'SAVE'::"CommandAction",g,'{}'::jsonb,'2025-12-01T00:00:00Z'
+    FROM generate_series(1,100) g`);
+  await fixture(`INSERT INTO "OperationEvent" (id,"runId","commandId",ordinal,type,"simulatedRole","appliedAt","payloadVersion",payload,digest)
+    SELECT md5('heavy-evt-'||g)::uuid,'${heavyRunId}'::uuid,md5('heavy-cmd-'||g)::uuid,g,'LOT_PUBLISHED'::"EventType",'GENERATOR'::"SimulatedRole",'2025-12-01T00:00:00Z',1,'{}'::jsonb,repeat('c',64)
+    FROM generate_series(1,5) g`);
+  await fixture(`INSERT INTO "HcsPublication" ("eventId",state,"verificationState",network,"updatedAt")
+    SELECT md5('heavy-evt-'||g)::uuid,'FAILED'::"PublicationState",'NOT_CHECKED'::"VerificationState",'testnet','2025-12-01T00:00:00Z'
+    FROM generate_series(1,5) g`);
+  await fixture(`INSERT INTO "HcsSubmissionAttempt" (id,"eventId",slot,kind,state,"transactionId","signedTransactionBytes","topicId","operatorId","configurationGeneration","quotaDate","createdAt")
+    SELECT md5('heavy-att-'||g||'-'||s)::uuid,md5('heavy-evt-'||g)::uuid,s,
+      CASE WHEN s<=3 THEN 'AUTOMATIC'::"HcsAttemptKind" ELSE 'MANUAL'::"HcsAttemptKind" END,
+      'REJECTED'::"HcsAttemptState",'0.0.1002@1700000000.0000000'||g||s,decode('0102','hex'),'0.0.1001','0.0.1002',repeat('d',64),'2025-12-01','2025-12-01T00:00:00Z'
+    FROM generate_series(1,5) g CROSS JOIN generate_series(1,4) s`);
+
+  await fixture(`INSERT INTO "CommandReceipt" (id,"runId","requestId","intentHash",action,"resultingVersion",result,"createdAt") VALUES
+    ('${leasedCommandId}','${leasedRunId}','${randomUUID()}',repeat('e',64),'PUBLISH',2,'{}'::jsonb,'2025-12-01T00:00:00Z')`);
+  await fixture(`INSERT INTO "OperationEvent" (id,"runId","commandId",ordinal,type,"simulatedRole","appliedAt","payloadVersion",payload,digest) VALUES
+    ('${leasedEventId}','${leasedRunId}','${leasedCommandId}',1,'LOT_PUBLISHED','GENERATOR','2025-12-01T00:00:00Z',1,'{}'::jsonb,repeat('f',64))`);
+  await fixture(`INSERT INTO "HcsPublication" ("eventId",state,"verificationState",network,"leaseOwner","leaseExpiresAt","updatedAt") VALUES
+    ('${leasedEventId}','IN_FLIGHT','NOT_CHECKED','testnet','${randomUUID()}','2026-01-01T12:05:00.000Z','2025-12-01T00:00:00Z')`);
+  await fixture(`INSERT INTO "DemoRequest" (id,"requestId","intentHash",name,email,company,"createdAt","expiresAt") VALUES
+    ('${randomUUID()}','${randomUUID()}',repeat('b',64),'Synthetic','synthetic@example.invalid','Synthetic','2025-09-01T00:00:00Z','2025-12-01T00:00:00Z')`);
   await fixture(`INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt") VALUES
-    ('SESSION_CREATE','GLOBAL','2025-01-01',100,'2025-01-04'),
-    ('CONTACT_CREATE','GLOBAL','2025-01-01',100,'2025-01-04')`);
-  const result=await environment.cron();
-  expect(result.status).toBe(200);
-  expect(result.body).toMatchObject({complete:true,cleanupComplete:true,counts:{sessions:100,contacts:100,rateBuckets:2}});
+    ('TRACE','GLOBAL','2025-12-01T00:00:00Z',5,'2025-12-04T00:00:00Z')`);
+
+  const partial=await environment.cron();
+  expect(partial.status).toBe(200);
+  expect(partial.body).toMatchObject({
+    complete:false,
+    cleanupComplete:false,
+    counts:{runs:1,sessions:1,contacts:1,rateBuckets:1,quotas:0,leases:0},
+    pending:{runs:1,sessions:1,contacts:0,rateBuckets:0,quotas:0,leases:0},
+    stalledCategories:["runs","sessions"],
+    lastPartialAt:"2026-01-01T12:00:00.000Z",
+  });
+
+  await fixture(`UPDATE "HcsPublication" SET state='FAILED',"leaseOwner"=NULL,"leaseExpiresAt"=NULL WHERE "eventId"='${leasedEventId}'`);
+  await environment.clock("2026-01-01T12:06:00.000Z");
+  const resumed=await environment.cron();
+  expect(resumed.status).toBe(200);
+  expect(resumed.body).toMatchObject({
+    complete:true,
+    cleanupComplete:true,
+    counts:{runs:1,sessions:1,contacts:0,rateBuckets:0,quotas:0,leases:0},
+    pending:{runs:0,sessions:0,contacts:0,rateBuckets:0,quotas:0,leases:0},
+    stalledCategories:[],
+    lastCompletedAt:"2026-01-01T12:06:00.000Z",
+    lastPartialAt:"2026-01-01T12:00:00.000Z",
+  });
+
+  const activeAfter=await activeVisitor.run();
+  expect(activeAfter.operation.state).toBe("PUBLISHED");
+  expect(requiredEntry(activeAfter.events,0).publication.transactionId).toBe(activeTxId);
+  expect((await activeVisitor.trace()).body).toMatchObject({events:[{event:{digest:activeDigest}}]});
 });

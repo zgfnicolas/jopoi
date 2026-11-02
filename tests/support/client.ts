@@ -59,11 +59,7 @@ export class Visitor {
     // Ordinary guided flows wait for the network result before their next step.
     // Race/fault scenarios use command()/post() directly and assert intermediate states.
     if (result.body.event && environment.mode === "confirmed") {
-      let stable = 0;
-      await eventually(() => this.run(), run => {
-        stable = run.events.every(event => event.publication.verificationState === "MATCHED") ? stable + 1 : 0;
-        return stable >= 2;
-      });
+      await eventually(() => this.run(), run => run.events.every(event => event.publication.verificationState === "MATCHED"));
     }
     return result.body;
   }

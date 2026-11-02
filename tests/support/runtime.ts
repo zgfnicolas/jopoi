@@ -35,8 +35,15 @@ export class TestRuntime {
   get env(): NodeJS.ProcessEnv { return { ...sealedEnvironment(this.resources), ...(this.bundler === "webpack" ? { JOPOI_E2E_BUNDLER: "webpack" } : {}), ...this.overrides }; }
   async clock(iso: string) {
     const file = resolve(this.resources.directory, "clock.json");
-    await writeFile(file + ".next", JSON.stringify(iso));
-    await rename(file + ".next", file);
+    const next = `${file}.${randomUUID()}.next`;
+    await writeFile(next, JSON.stringify(iso));
+    for (let attempt = 0; ; attempt++) {
+      try { await rename(next, file); return; }
+      catch (error) {
+        if (attempt >= 20) throw error;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    }
   }
   async advance(milliseconds: number) {
     const iso = JSON.parse(await readFile(resolve(this.resources.directory, "clock.json"), "utf8"));

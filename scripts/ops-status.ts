@@ -15,28 +15,43 @@ async function main() {
   if (configuration.status !== "configured") { console.error("DATABASE_UNAVAILABLE"); process.exitCode = 1; return; }
   const { createDatabaseClient } = await import("../src/server/database/client");
   const { HCS_CODES } = await import("../src/server/hedera/contracts");
+  const { CLEANUP_POLICY, observeCleanupState } = await import("../src/server/hedera/maintenance-policy");
+  const { now } = await import("@/server/runtime/clock");
   const db = createDatabaseClient(configuration.config.url);
   try {
-    const observedAt = new Date();
+    const observedAt = now();
     const report = await db.$transaction(async tx => {
       await tx.$executeRaw`SET TRANSACTION READ ONLY`;
       const publication = await tx.hcsPublication.groupBy({ by: ["state"], _count: { _all: true } });
       const verification = await tx.hcsPublication.groupBy({ by: ["verificationState"], _count: { _all: true } });
       const attempts = await tx.hcsSubmissionAttempt.groupBy({ by: ["kind", "state"], _count: { _all: true } });
       const errors = await tx.hcsPublication.groupBy({ by: ["lastErrorCode"], where: { lastErrorCode: { not: null } }, _count: { _all: true } });
-      const expiredRuns = await tx.demoRun.count({ where: { expiresAt: { lte: observedAt } } });
-      const expiredContacts = await tx.demoRequest.count({ where: { expiresAt: { lte: observedAt } } });
-      const expiredRateBuckets = await tx.requestRateBucket.count({ where: { expiresAt: { lte: observedAt } } });
-      const maintenance = await tx.maintenanceLease.findUnique({ where: { name: "DAILY_MAINTENANCE" }, select: { lastCompletedDate: true } });
+      const cleanup = await observeCleanupState(tx, observedAt);
+      const maintenance = await tx.maintenanceLease.findUnique({
+        where: { name: "DAILY_MAINTENANCE" },
+        select: { lastCompletedDate: true, lastCompletedAt: true, lastPartialAt: true },
+      });
       const safeErrors: Record<string, number> = {};
       for (const row of errors) {
         const code = HCS_CODES.find(code => code === row.lastErrorCode) ?? "UNKNOWN_PUBLICATION_ERROR";
         safeErrors[code] = (safeErrors[code] ?? 0) + row._count._all;
       }
-      return { publication: Object.fromEntries(publication.map(row => [row.state, row._count._all])),
+      const lastCompletedAt = maintenance?.lastCompletedAt ?? null;
+      const schedulerHealthy = lastCompletedAt !== null && observedAt.getTime() - lastCompletedAt.getTime() <= CLEANUP_POLICY.retentionTargetMs;
+      return {
+        publication: Object.fromEntries(publication.map(row => [row.state, row._count._all])),
         verification: Object.fromEntries(verification.map(row => [row.verificationState, row._count._all])),
-        attempts: attempts.map(row => ({ kind: row.kind, state: row.state, count: row._count._all })), errors: safeErrors,
-        expiredAwaitingCleanup: { runs: expiredRuns, contacts: expiredContacts, rateBuckets: expiredRateBuckets }, lastCompletedMaintenanceDate: maintenance?.lastCompletedDate?.toISOString() ?? null };
+        attempts: attempts.map(row => ({ kind: row.kind, state: row.state, count: row._count._all })),
+        errors: safeErrors,
+        expiredAwaitingCleanup: cleanup.pending,
+        oldestExpiredAgeMs: cleanup.oldestExpiredAgeMs,
+        withinRetentionTarget: cleanup.withinRetentionTarget,
+        stalledCategories: cleanup.stalledCategories,
+        schedulerHealthy,
+        lastCompletedMaintenanceDate: maintenance?.lastCompletedDate?.toISOString() ?? null,
+        lastCompletedAt: lastCompletedAt?.toISOString() ?? null,
+        lastPartialAt: maintenance?.lastPartialAt?.toISOString() ?? null,
+      };
     }, { isolationLevel: "RepeatableRead", maxWait: 2000, timeout: 5000 });
     console.log(JSON.stringify({ code: "OPERATIONS_OBSERVED", observedAt: observedAt.toISOString(), ...report }));
   } finally { await db.$disconnect(); }

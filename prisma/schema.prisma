@@ -238,6 +238,8 @@ model MaintenanceLease {
   owner             String?   @db.Uuid
   expiresAt         DateTime? @db.Timestamptz(3)
   lastCompletedDate DateTime? @db.Date
+  lastCompletedAt   DateTime? @db.Timestamptz(3)
+  lastPartialAt     DateTime? @db.Timestamptz(3)
 }
 
 model DailyQuota {

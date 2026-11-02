@@ -1,0 +1,3 @@
+ALTER TABLE "MaintenanceLease"
+  ADD COLUMN IF NOT EXISTS "lastCompletedAt" TIMESTAMPTZ(3),
+  ADD COLUMN IF NOT EXISTS "lastPartialAt" TIMESTAMPTZ(3);

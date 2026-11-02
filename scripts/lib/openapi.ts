@@ -10,10 +10,14 @@ import { publicTraceSchema, publicVerificationSchema } from "../../src/frontend/
 const jsonSchema = (schema: z.ZodType) => z.toJSONSchema(schema, { io: "input" });
 const uuid = z.uuid(), integer = z.number().int().nonnegative();
 const confirmation = z.strictObject({ id: uuid, createdAt: z.iso.datetime({ precision: 3 }), message: z.literal(DEMO_REQUEST_CONFIRMATION) });
+const cleanupCounts = z.object({ runs: integer, contacts: integer, sessions: integer, quotas: integer, leases: integer, rateBuckets: integer });
+const cleanupCategory = z.enum(["rateBuckets", "runs", "contacts", "sessions", "quotas", "leases"]);
 const maintenance = z.discriminatedUnion("skipped", [
   z.object({ skipped: z.literal(true), executionId: uuid, durationMs: integer }),
   z.object({ skipped: z.literal(false), executionId: uuid, durationMs: integer,
-    counts: z.object({ runs: integer, contacts: integer, sessions: integer, quotas: integer, leases: integer, rateBuckets: integer }),
+    counts: cleanupCounts, pending: cleanupCounts, oldestExpiredAgeMs: integer, withinRetentionTarget: z.boolean(),
+    stalledCategories: z.array(cleanupCategory), lastCompletedAt: z.iso.datetime({ precision: 3 }).nullable(),
+    lastPartialAt: z.iso.datetime({ precision: 3 }).nullable(),
     cleanupComplete: z.boolean(), complete: z.boolean(), publications: z.object({ processed: integer, hasMore: z.boolean() }),
     publicationError: z.literal("PUBLICATION_WORK_PENDING").nullable() }),
 ]);
