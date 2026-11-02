@@ -1,5 +1,6 @@
 import { test, expect } from "./support/fixtures";
 import { randomUUID } from "node:crypto";
+import { createFixtures } from "../support/sql-fixtures";
 
 test("S21-UI-01 · credencial HttpOnly no aparece en JavaScript ni almacenamiento",async({page,journey,context},info)=>{
   const sessionResponse=page.waitForResponse(response=>response.request().method()==="POST"&&new URL(response.url()).pathname==="/api/demo/session");
@@ -46,4 +47,32 @@ test("S21-UI-02 · límite de contacto conserva intención y espera reintento ma
   await page.getByRole("button",{name:"Reintentar guardado",exact:true}).click();
   await expect(page.getByText("Tu solicitud para conocer el prototipo quedó guardada.",{exact:true})).toBeVisible();
   expect(requests).toHaveLength(3);expect(new Set(requests).size).toBe(1);
+});
+
+test("S22-UI-01 · techo diario de creación de contactos devuelve 429 Problem Details y confirma al cambiar el día UTC",async({page,journey,runtime})=>{
+  await runtime.clock("2026-01-01T23:59:30.000Z");
+  await createFixtures(runtime.resources).execute(
+    `INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt") VALUES ('CONTACT_CREATE','GLOBAL','2026-01-01T00:00:00Z',100,'2026-01-04')`,
+  );
+  await page.goto(journey.origin+"/#book-a-demo");
+  await page.getByLabel("Nombre",{exact:true}).fill("Synthetic S22");
+  await page.getByLabel("Email",{exact:true}).fill("s22-daily@example.invalid");
+  await page.getByLabel("Empresa",{exact:true}).fill("Synthetic Daily");
+  const requests:string[]=[];
+  page.on("request",request=>{if(request.method()==="POST" && new URL(request.url()).pathname==="/api/demo-requests")requests.push(request.postData()!);});
+  const firstResponse=page.waitForResponse(response=>response.request().method()==="POST"&&new URL(response.url()).pathname==="/api/demo-requests");
+  await page.getByRole("button",{name:"Solicitar conocer el prototipo",exact:true}).click();
+  const denied=await firstResponse;
+  expect(denied.status()).toBe(429);
+  expect(await denied.headerValue("retry-after")).toBe("30");
+  expect(await denied.headerValue("content-type")).toContain("application/problem+json");
+  await expect(page.getByText(/Podés volver a intentar en 30 segundos/)).toBeVisible();
+  await expect(page.getByLabel("Nombre",{exact:true})).toHaveValue("Synthetic S22");
+  await expect(page.getByLabel("Nombre",{exact:true})).toBeDisabled();
+  expect(requests).toHaveLength(1);
+  await runtime.clock("2026-01-02T00:00:05.000Z");
+  await page.getByRole("button",{name:"Reintentar guardado",exact:true}).click();
+  await expect(page.getByText("Tu solicitud para conocer el prototipo quedó guardada.",{exact:true})).toBeVisible();
+  expect(requests).toHaveLength(2);
+  expect(requests[0]).toBe(requests[1]);
 });

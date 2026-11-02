@@ -12,9 +12,12 @@
 
 ## Acceptance criteria
 
-- [ ] Se conservan ventanas actuales y se agregan techos iniciales globales de 100 sesiones nuevas/día y 100 contactos nuevos/día, sin relajar reglas previas.
-- [ ] La reserva duradera y creación/replay son atómicas entre dos instancias; repetir una creación confirmada no consume otro cupo de creación.
-- [ ] La política distingue solicitudes de reservas nuevas, fija UTC y falla cerrada ante contador/configuración indisponible.
-- [ ] Identidad de visitante usa HMAC y política explícita para NAT/IPv6/ingreso confiable, sin IP cruda en persistencia o logs.
-- [ ] Al alcanzar el límite, HTTP devuelve 429/Problem Details/Retry-After sin escritura parcial y el formulario conserva sus campos e intención.
+- [x] Se conservan ventanas actuales y se agregan techos iniciales globales de 100 sesiones nuevas/día y 100 contactos nuevos/día, sin relajar reglas previas.
+- [x] La reserva duradera y creación/replay son atómicas entre dos instancias; repetir una creación confirmada no consume otro cupo de creación.
+- [x] La política distingue solicitudes de reservas nuevas, fija UTC y falla cerrada ante contador/configuración indisponible.
+- [x] Identidad de visitante usa HMAC y política explícita para NAT/IPv6/ingreso confiable, sin IP cruda en persistencia o logs.
+- [x] Al alcanzar el límite, HTTP devuelve 429/Problem Details/Retry-After sin escritura parcial y el formulario conserva sus campos e intención.
 
+## Implementación local
+
+Completado el 2026-11-02. Evidencia, revisión y límites: [S22-10](../../../docs/s22-10-admision-sesiones-contactos.md). Se mantienen las cuatro ventanas de admisión por solicitud y se agregan techos globales de 100 sesiones nuevas/día UTC (`SESSION_CREATE`) y 100 contactos nuevos/día UTC (`CONTACT_CREATE`) en `RequestRateBucket`, sin penalizar recuperaciones de sesión activa ni replays idempotentes de contacto. Normalización explícita para NAT (`/32` e IPv4-mapped IPv6), prefijo IPv6 `/64` e ingreso confiable con HMAC rotado por día UTC. Seis escenarios Chromium/WebKit móvil, 24 pruebas CLI, 58 HTTP, puerta completa y build aprobados; cero diagnósticos estrictos. El ticket 11 no se implementa en esta entrega.

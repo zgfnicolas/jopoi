@@ -233,3 +233,90 @@ test("S21-15 · migración aditiva sobre esquema anterior conserva datos",async(
     expect((await db.query('SELECT count(*)::int AS count FROM "RequestRateBucket"')).rows[0].count).toBe(1);
   }finally{await db.end();}
 });
+
+test("S22-01 · techo diario de 100 sesiones y 100 contactos compartido entre instancias sin penalizar replays",async()=>{
+  const resources=inject("resources");
+  const second=new TestRuntime({...resources,httpPort:resources.secondaryHttpPort});
+  await second.start();
+  try{
+    const owner=new Visitor();
+    expect((await owner.begin()).status).toBe(201);
+    await fixture(`UPDATE "RequestRateBucket" SET used=99 WHERE scope='SESSION_CREATE' AND subject='GLOBAL'`);
+    const sessionRace=await Promise.all([
+      fetch(environment.origin+"/api/demo/session",{method:"POST",headers:{Origin:environment.origin,"X-Jopoi-Request":"demo","Content-Type":"application/json",Accept:"application/problem+json","X-S21-Visitor":"203.0.113.10"},body:"{}"}),
+      fetch(second.origin+"/api/demo/session",{method:"POST",headers:{Origin:second.origin,"X-Jopoi-Request":"demo","Content-Type":"application/json",Accept:"application/problem+json","X-S21-Visitor":"203.0.113.11"},body:"{}"}),
+    ]);
+    expect(sessionRace.map(r=>r.status).sort()).toEqual([201,429]);
+    const deniedSession=requiredEntry(sessionRace.filter(r=>r.status===429));
+    expect(deniedSession.headers.get("retry-after")).toBe("43200");
+    expect(deniedSession.headers.get("content-type")).toContain("application/problem+json");
+    expect(await deniedSession.json()).toMatchObject({code:"RATE_LIMITED",status:429});
+    expect((await owner.post("/api/demo/session",{})).status).toBe(200);
+
+    await fixture(`INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt") VALUES ('CONTACT_CREATE','GLOBAL','2026-01-01T00:00:00Z',99,'2026-01-04')`);
+    const sharedContact={requestId:randomUUID(),name:"Synthetic S22",email:"s22@example.invalid",company:"Synthetic",message:"Idempotent across instances"};
+    const contactRace=await Promise.all([
+      fetch(environment.origin+"/api/demo-requests",{method:"POST",headers:{Origin:environment.origin,"X-Jopoi-Request":"demo","Content-Type":"application/json",Accept:"application/problem+json","X-S21-Visitor":"203.0.113.20"},body:JSON.stringify(sharedContact)}),
+      fetch(second.origin+"/api/demo-requests",{method:"POST",headers:{Origin:second.origin,"X-Jopoi-Request":"demo","Content-Type":"application/json",Accept:"application/problem+json","X-S21-Visitor":"203.0.113.20"},body:JSON.stringify(sharedContact)}),
+    ]);
+    expect(contactRace.map(r=>r.status).sort()).toEqual([200,201]);
+    expect((await new Visitor().post("/api/demo-requests",sharedContact)).status).toBe(200);
+
+    const pendingContact={...sharedContact,requestId:randomUUID()};
+    const deniedContact=await new Visitor().post("/api/demo-requests",pendingContact,{Accept:"application/problem+json"});
+    expect(deniedContact.status).toBe(429);
+    expect(deniedContact.headers.get("retry-after")).toBe("43200");
+    expect(deniedContact.headers.get("content-type")).toContain("application/problem+json");
+
+    const db=new Client({connectionString:resources.databaseUrl});await db.connect();
+    try{
+      expect((await db.query('SELECT count(*)::int AS count FROM "DemoSession"')).rows[0].count).toBe(2);
+      expect((await db.query('SELECT count(*)::int AS count FROM "DemoRequest"')).rows[0].count).toBe(1);
+      expect((await db.query('SELECT used FROM "RequestRateBucket" WHERE scope=$1 AND subject=$2',["SESSION_CREATE","GLOBAL"])).rows[0].used).toBe(100);
+      expect((await db.query('SELECT used FROM "RequestRateBucket" WHERE scope=$1 AND subject=$2',["CONTACT_CREATE","GLOBAL"])).rows[0].used).toBe(100);
+    }finally{await db.end();}
+
+    await environment.clock("2026-01-02T00:00:05.000Z");
+    expect((await new Visitor().post("/api/demo-requests",pendingContact)).status).toBe(201);
+    expect((await new Visitor().begin()).status).toBe(201);
+  }finally{await second.close();}
+},180000);
+
+test("S22-04 · identidad de visitante agrupa prefijo IPv6 /64 y NAT sin persistir IP cruda",async()=>{
+  const ipv6A=new Visitor();ipv6A.identity="2001:0db8:000a:000b:0001:0002:0003:0004";
+  const ipv6B=new Visitor();ipv6B.identity="2001:db8:a:b:ffff:eeee:dddd:cccc";
+  const ipv6Other=new Visitor();ipv6Other.identity="2001:db8:a:c::1";
+  for(let index=0;index<3;index++)expect((await ipv6A.post("/api/demo-requests",{requestId:randomUUID(),name:"IPv6 A",email:"a@example.invalid",company:"Synthetic"})).status).toBe(201);
+  for(let index=0;index<2;index++)expect((await ipv6B.post("/api/demo-requests",{requestId:randomUUID(),name:"IPv6 B",email:"b@example.invalid",company:"Synthetic"})).status).toBe(201);
+  expect((await ipv6B.post("/api/demo-requests",{requestId:randomUUID(),name:"IPv6 B",email:"b@example.invalid",company:"Synthetic"})).status).toBe(429);
+  expect((await ipv6Other.post("/api/demo-requests",{requestId:randomUUID(),name:"IPv6 C",email:"c@example.invalid",company:"Synthetic"})).status).toBe(201);
+
+  const natV4=new Visitor();natV4.identity="203.0.113.25";
+  const natMapped=new Visitor();natMapped.identity="::ffff:203.0.113.25";
+  for(let index=0;index<4;index++)expect((await natV4.post("/api/demo-requests",{requestId:randomUUID(),name:"NAT v4",email:"nat@example.invalid",company:"Synthetic"})).status).toBe(201);
+  expect((await natMapped.post("/api/demo-requests",{requestId:randomUUID(),name:"NAT mapped",email:"nat@example.invalid",company:"Synthetic"})).status).toBe(201);
+  expect((await natMapped.post("/api/demo-requests",{requestId:randomUUID(),name:"NAT mapped",email:"nat@example.invalid",company:"Synthetic"})).status).toBe(429);
+
+  const resources=inject("resources");
+  const db=new Client({connectionString:resources.databaseUrl});await db.connect();
+  try{
+    const subjects=(await db.query('SELECT subject FROM "RequestRateBucket" WHERE subject<>$1',["GLOBAL"])).rows.map(r=>String(r.subject));
+    expect(subjects).toHaveLength(3);
+    expect(subjects.every(subject=>/^[a-f0-9]{64}$/.test(subject))).toBe(true);
+    const serialized=JSON.stringify(subjects)+(await readFile(resolve(resources.directory,"next.log"),"utf8"));
+    for(const raw of ["203.0.113.25","2001:0db8","2001:db8"])expect(serialized).not.toContain(raw);
+  }finally{await db.end();}
+});
+
+test("S22-05 · retención limpia el tope diario de 100 sesiones y 100 contactos en una ejecución",async()=>{
+  await fixture(`INSERT INTO "DemoSession" (id,"tokenHash","createdAt","expiresAt")
+    SELECT md5('s22-session-'||g)::uuid,md5('s22-token-'||g)||md5('s22-token-b-'||g),'2025-01-01','2025-01-02' FROM generate_series(1,100) g`);
+  await fixture(`INSERT INTO "DemoRequest" (id,"requestId","intentHash",name,email,company,"createdAt","expiresAt")
+    SELECT md5('s22-contact-'||g)::uuid,md5('s22-intent-'||g)::uuid,repeat('b',64),'Synthetic','synthetic@example.invalid','Synthetic','2025-01-01','2025-04-01' FROM generate_series(1,100) g`);
+  await fixture(`INSERT INTO "RequestRateBucket" (scope,subject,"windowStart",used,"expiresAt") VALUES
+    ('SESSION_CREATE','GLOBAL','2025-01-01',100,'2025-01-04'),
+    ('CONTACT_CREATE','GLOBAL','2025-01-01',100,'2025-01-04')`);
+  const result=await environment.cron();
+  expect(result.status).toBe(200);
+  expect(result.body).toMatchObject({complete:true,cleanupComplete:true,counts:{sessions:100,contacts:100,rateBuckets:2}});
+});

@@ -377,7 +377,13 @@
         "S22-04",
         "S22-05"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-02",
+        "evidence": "docs/s22-10-admision-sesiones-contactos.md",
+        "validation": "Techos globales de 100 sesiones nuevas/día y 100 contactos nuevos/día UTC en RequestRateBucket sin penalizar recuperaciones ni replays; normalización NAT (/32 e IPv4-mapped IPv6), prefijo IPv6 /64 e ingreso confiable con HMAC rotado por día UTC. Seis escenarios Chromium/WebKit móvil, 24 CLI, 58 HTTP, puerta completa y build aprobados; cero diagnósticos estrictos. El ticket 11 espera confirmación."
+      }
     },
     {
       "id": "11",

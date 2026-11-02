@@ -911,7 +911,7 @@
             }
           }
         },
-        "x-rate-limit": "20 por visitante / 200 global cada 600 segundos"
+        "x-rate-limit": "20 por visitante / 200 global cada 600 segundos; hasta 100 sesiones nuevas por día UTC global (recuperar una sesión vigente no consume cupo de creación)"
       }
     },
     "/api/demo/runs": {
@@ -5007,7 +5007,7 @@
             }
           }
         },
-        "x-rate-limit": "5 por visitante / 100 global cada 3600 segundos"
+        "x-rate-limit": "5 por visitante / 100 global cada 3600 segundos; hasta 100 solicitudes nuevas por día UTC global (un replay confirmado no consume otro cupo de creación)"
       }
     },
     "/api/cron": {

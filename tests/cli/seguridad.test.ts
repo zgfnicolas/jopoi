@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { databaseConnection, migrationConnection } from "../../src/server/database/connection-policy";
+import { normalizeClientAddress, visitorSubject } from "../../src/server/security/visitor-identity";
 import { localhostCertificate } from "../support/tls-certificate";
 import { X509Certificate } from "node:crypto";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -73,4 +74,37 @@ test("S22: recursos completos y marcador propio antes de usar el arnés", async 
     assert.ok(directory.startsWith(root));
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("S22-04: normalización de visitante para NAT/IPv6 y rotación diaria UTC del HMAC", () => {
+  assert.equal(normalizeClientAddress("203.0.113.25", false), "local-shared");
+  for (const invalid of [null, undefined, "", "   ", "not-an-ip", "999.1.1.1", "203.0.113.10, 10.0.0.1"]) {
+    assert.equal(normalizeClientAddress(invalid, true), "unknown-shared");
+  }
+  const ipv4 = normalizeClientAddress("203.0.113.25", true);
+  assert.equal(ipv4, "ipv4:203.0.113.25/32");
+  assert.equal(normalizeClientAddress("::ffff:203.0.113.25", true), ipv4);
+  assert.equal(normalizeClientAddress("::FFFF:203.0.113.25", true), ipv4);
+  const ipv6First = normalizeClientAddress("2001:0db8:000a:000b:0001:0002:0003:0004", true);
+  const ipv6Second = normalizeClientAddress("2001:db8:a:b:ffff:eeee:dddd:cccc", true);
+  const ipv6Other = normalizeClientAddress("2001:db8:a:c::1", true);
+  assert.equal(ipv6First, "ipv6:2001:0db8:000a:000b::/64");
+  assert.equal(ipv6Second, ipv6First);
+  assert.notEqual(ipv6Other, ipv6First);
+
+  const secret = "s22-synthetic-session-secret-0123456789";
+  const morning = new Date("2026-01-01T00:00:00.000Z");
+  const night = new Date("2026-01-01T23:59:59.999Z");
+  const nextDay = new Date("2026-01-02T00:00:00.000Z");
+  const subjectMorning = visitorSubject(secret, morning, "SESSION", ipv6First);
+  assert.match(subjectMorning, /^[a-f0-9]{64}$/);
+  assert.ok(!subjectMorning.includes("2001") && !subjectMorning.includes("0db8"));
+  assert.equal(visitorSubject(secret, night, "SESSION", ipv6Second), subjectMorning);
+  assert.notEqual(visitorSubject(secret, nextDay, "SESSION", ipv6First), subjectMorning);
+  assert.notEqual(visitorSubject(secret, morning, "CONTACT", ipv6First), subjectMorning);
+  assert.notEqual(visitorSubject("rotated-s22-synthetic-session-secret", morning, "SESSION", ipv6First), subjectMorning);
+  for (const badSecret of [undefined, "", "too-short-secret"]) {
+    assert.throws(() => visitorSubject(badSecret, morning, "SESSION", ipv4), { code: "CONFIGURATION_UNAVAILABLE" });
+  }
+  assert.throws(() => visitorSubject(secret, new Date(Number.NaN), "SESSION", ipv4), { code: "CONFIGURATION_UNAVAILABLE" });
 });

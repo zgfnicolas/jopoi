@@ -15,7 +15,7 @@ class ApiEnvironment extends TestRuntime {
 }
 export const environment = new ApiEnvironment();
 export class Visitor {
-  identity = randomUUID();
+  identity: string = randomUUID();
   cookie = "";
   traceId = "";
   async request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<HttpResult<T>> {

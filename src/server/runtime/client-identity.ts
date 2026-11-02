@@ -1,11 +1,7 @@
 import "server-only";
-import { isIP } from "node:net";
+import { normalizeClientAddress } from "../security/visitor-identity";
 
 export function clientIdentity(request: Request): string {
-  // A deployment flag, not a request header, establishes the trusted ingress.
-  if (process.env.VERCEL !== "1") return "local-shared";
-  const raw = request.headers.get("x-vercel-forwarded-for")?.trim();
-  if (!raw || !isIP(raw)) return "unknown-shared";
-  const normalized = raw.includes(":") ? new URL(`http://[${raw}]/`).hostname : raw;
-  return normalized.toLowerCase();
+  // Un flag de despliegue, nunca un header del visitante, define si el ingreso es confiable.
+  return normalizeClientAddress(request.headers.get("x-vercel-forwarded-for"), process.env.VERCEL === "1");
 }

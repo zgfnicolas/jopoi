@@ -55,7 +55,7 @@ function field(value: unknown, key: string): unknown {
 }
 const errorTypes = new Set(["Error", "TypeError", "RangeError", "SyntaxError", "ApplicationError", "HcsError", "PrismaClientKnownRequestError", "PrismaClientUnknownRequestError", "PrismaClientInitializationError", "DriverAdapterError"]);
 const providerCodes = new Set(["23503", "23505", "23514", "40001", "40P01", "42501", "53300", "57014", "57P01", "P0001", "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT", "ENOTFOUND", "EPIPE", "P1000", "P1001", "P1002", "P1008", "P1010", "P1011", "P1017", "P2002", "P2004", "P2010", "P2024", "P2028", "P2034", "P2037"]);
-const sourceFiles = ["http", "api-errors", "database/index", "database/client", "database/errors", "operations/commands", "operations/storage-core", "events/payload-core", "hedera/sdk", "hedera/mirror", "hedera/coordinator", "traces/queries"];
+const sourceFiles = ["http", "api-errors", "database/index", "database/client", "database/errors", "operations/commands", "operations/storage-core", "events/payload-core", "hedera/sdk", "hedera/mirror", "hedera/coordinator", "traces/queries", "security/rate-limit", "security/visitor-identity", "sessions/service", "contacts/service"];
 
 /** Conservá tipo, código conocido y ubicación propia; nunca mensajes, SQL, meta cruda ni stack completo. */
 export function safeErrorChain(error: unknown) {

@@ -1,13 +1,15 @@
 import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
 
+import { randomUUID } from "node:crypto";
 import { Prisma, type DemoRun, type DemoSession, type SessionIntentKind } from "../../generated/prisma/client";
 import { createScenarioSnapshot } from "../../domain/scenario";
 import { DEMO_POLICY } from "../../shared/demo-policy";
 import type { DemoRunIntentResponse, DemoRunSummary, DemoSessionResponse, DemoSessionSummary } from "../../shared/session-contracts";
 import { ApplicationError } from "../application-error";
-import { withTransaction } from "../database";
+import { withDatabase, withTransaction } from "../database";
 import { toStoredGrams, toStoredHumidity } from "../database/precision";
+import { dailyCreationWindow, RateLimitError } from "../security/rate-limit";
 import { newSessionToken, sessionTokenHash } from "./credentials";
 
 type Transaction = Prisma.TransactionClient;
@@ -15,7 +17,7 @@ type RunSummaryRow = Pick<DemoRun, "traceId" | "state" | "version" | "expiresAt"
 
 const summarySelect = { id: true, traceId: true, state: true, version: true, expiresAt: true } as const;
 
-export function sessionSummary(session: DemoSession): DemoSessionSummary {
+export function sessionSummary(session: Pick<DemoSession, "expiresAt" | "runCount">): DemoSessionSummary {
   return {
     expiresAt: session.expiresAt.toISOString(),
     runCount: session.runCount,
@@ -67,23 +69,36 @@ export async function recoverSession(token: string | undefined): Promise<DemoSes
 /** Solo invocada por el inicio explícito de sesión, nunca como fallback de comandos. */
 export async function beginSession(token: string | undefined) {
   const hash = sessionTokenHash(token);
-  return withTransaction(async (tx) => {
-    const existing = hash === undefined ? null : await tx.demoSession.findUnique({ where: { tokenHash: hash } });
-    if (existing !== null && existing.expiresAt.getTime() > wallNow().getTime()) {
-      return { body: await sessionResponse(tx, existing), token: undefined, created: false };
+  return withDatabase(async (db) => {
+    const now = wallNow();
+    if (hash !== undefined) {
+      const existing = await db.demoSession.findUnique({ where: { tokenHash: hash } });
+      if (existing !== null && existing.expiresAt.getTime() > now.getTime()) {
+        return { body: await sessionResponse(db, existing), token: undefined, created: false };
+      }
     }
     const freshToken = newSessionToken();
     const freshHash = sessionTokenHash(freshToken);
     if (freshHash === undefined) throw new ApplicationError("INTERNAL_ERROR");
-    const now = wallNow();
-    const session = await tx.demoSession.create({
-      data: {
-        tokenHash: freshHash,
-        createdAt: now,
-        expiresAt: new Date(now.getTime() + DEMO_POLICY.sessionLifetimeSeconds * 1000),
-      },
-    });
-    return { body: await sessionResponse(tx, session), token: freshToken, created: true };
+    const sessionExpiresAt = new Date(now.getTime() + DEMO_POLICY.sessionLifetimeSeconds * 1000);
+    const { limit, start, expires, retryAfter } = dailyCreationWindow("SESSION_CREATE", now);
+    const id = randomUUID();
+    const rows = await db.$queryRaw<Pick<DemoSession, "expiresAt" | "runCount">[]>(Prisma.sql`
+      WITH quota AS (
+        INSERT INTO "RequestRateBucket" ("scope", "subject", "windowStart", "used", "expiresAt")
+        VALUES ('SESSION_CREATE', 'GLOBAL', ${start.toISOString()}::timestamptz, 1, ${expires.toISOString()}::timestamptz)
+        ON CONFLICT ("scope", "subject", "windowStart") DO UPDATE
+        SET "used" = "RequestRateBucket"."used" + 1
+        WHERE "RequestRateBucket"."used" < ${limit}
+        RETURNING "used"
+      )
+      INSERT INTO "DemoSession" ("id", "tokenHash", "runCount", "createdAt", "expiresAt")
+      SELECT ${id}::uuid, ${freshHash}, 0, ${now.toISOString()}::timestamptz, ${sessionExpiresAt.toISOString()}::timestamptz
+      FROM quota
+      RETURNING "expiresAt", "runCount"`);
+    const created = rows[0];
+    if (created === undefined) throw new RateLimitError(retryAfter);
+    return { body: { session: sessionSummary(created), activeRun: null }, token: freshToken, created: true };
   });
 }
 

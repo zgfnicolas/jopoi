@@ -44,7 +44,7 @@ export function buildOpenApi() {
     servers: [{ url: "/" }],
     paths: {
       "/api/demo/session": { get: operation("readSession", "Recuperar sesión y recorrido activo", "SessionResponse", [200], "session"),
-        post: { ...operation("createSession", "Recuperar o crear sesión", "SessionResponse", [200, 201], "public", "EmptyBody", 4096), "x-rate-limit": "20 por visitante / 200 global cada 600 segundos" } },
+        post: { ...operation("createSession", "Recuperar o crear sesión", "SessionResponse", [200, 201], "public", "EmptyBody", 4096), "x-rate-limit": "20 por visitante / 200 global cada 600 segundos; hasta 100 sesiones nuevas por día UTC global (recuperar una sesión vigente no consume cupo de creación)" } },
       "/api/demo/runs": { post: operation("startRun", "Crear o resolver intención de inicio", "RunIntent", [200, 201], "session", "RunIntentInput", 4096) },
       "/api/demo/runs/reset": { post: operation("resetRun", "Crear recorrido de reinicio", "RunIntent", [200, 201], "session", "RunIntentInput", 4096) },
       "/api/demo/runs/current": { get: operation("readCurrentRun", "Consultar recorrido actual", "RunResponse", [200], "session") },
@@ -53,7 +53,7 @@ export function buildOpenApi() {
       "/api/demo/runs/{traceId}/events/{eventId}/retry": { parameters: pathParameters("traceId", "eventId"), post: operation("retryPublication", "Reconciliar o autorizar reintento de publicación", "RetryResponse", [200, 202], "session", "RunIntentInput", 4096) },
       "/api/traces/{traceId}": { parameters: pathParameters("traceId"), get: { ...operation("readTrace", "Consultar trazabilidad pública vigente", "PublicTrace", [200], "public"), "x-rate-limit": "120 por visitante / 1000 global cada 60 segundos" } },
       "/api/traces/{traceId}/events/{eventId}/verification": { parameters: pathParameters("traceId", "eventId"), get: { ...operation("verifyTraceEvent", "Contrastar evidencia pública en mirror", "PublicVerification", [200], "public"), "x-rate-limit": "30 por visitante / 300 global cada 60 segundos" } },
-      "/api/demo-requests": { post: { ...operation("createContact", "Guardar solicitud de demo sin exponer PII", "ContactConfirmation", [200, 201], "public", "ContactInput", 16384), "x-rate-limit": "5 por visitante / 100 global cada 3600 segundos" } },
+      "/api/demo-requests": { post: { ...operation("createContact", "Guardar solicitud de demo sin exponer PII", "ContactConfirmation", [200, 201], "public", "ContactInput", 16384), "x-rate-limit": "5 por visitante / 100 global cada 3600 segundos; hasta 100 solicitudes nuevas por día UTC global (un replay confirmado no consume otro cupo de creación)" } },
       "/api/cron": { get: { ...operation("maintenance", "Comando administrativo de mantenimiento", "Maintenance", [200], "cron"), description: "Excepción heredada: GET administrativo con efectos, autenticado por Bearer de cron; nunca cachear ni ejecutar desde navegadores. Lease compartido y limpieza acotada; complete=false no acredita limpieza total." } },
     },
     components: { securitySchemes: { demoSession: { type: "apiKey", in: "cookie", name: "jopoi_session", description: "Credencial opaca; ownership y vigencia verificados en servidor. Roles del escenario son simulados. Máximo tres recorridos por sesión; sesión siete días, escritura 24 horas y lectura pública siete días por recorrido." }, cronBearer: { type: "http", scheme: "bearer", description: "Secreto de mantenimiento, solo servidor/cron." } },
