@@ -2,7 +2,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { databaseConnection, migrationConnection } from "../../src/server/database/connection-policy";
-import { normalizeClientAddress, visitorSubject } from "../../src/server/security/visitor-identity";
+import { normalizeClientAddress, runIntentSubject, visitorSubject } from "../../src/server/security/visitor-identity";
+import { DEMO_POLICY } from "../../src/shared/demo-policy";
 import { localhostCertificate } from "../support/tls-certificate";
 import { X509Certificate } from "node:crypto";
 import { randomUUID, randomBytes } from "node:crypto";
@@ -107,4 +108,9 @@ test("S22-04: normalización de visitante para NAT/IPv6 y rotación diaria UTC d
     assert.throws(() => visitorSubject(badSecret, morning, "SESSION", ipv4), { code: "CONFIGURATION_UNAVAILABLE" });
   }
   assert.throws(() => visitorSubject(secret, new Date(Number.NaN), "SESSION", ipv4), { code: "CONFIGURATION_UNAVAILABLE" });
+  const runSubject = runIntentSubject("00000000-0000-4000-8000-000000000001");
+  assert.match(runSubject, /^[a-f0-9]{64}$/);
+  assert.notEqual(runSubject, runIntentSubject("00000000-0000-4000-8000-000000000002"));
+  assert.equal(DEMO_POLICY.maxReceiptsPerRun, 100);
+  assert.equal(DEMO_POLICY.intentDailyLimit, 5000);
 });

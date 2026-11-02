@@ -48,6 +48,7 @@ function requireReadValidity(session: DemoSession, run: DemoRun | null): void {
 /** Lecturas coherentes y sin efectos: no inicia sesión, recorrido ni publicación. */
 export async function getCurrentRun(token: string | undefined): Promise<DemoRunResponse> {
   const hash = sessionTokenHash(token);
+  if (hash === undefined) throw new ApplicationError("SESSION_REQUIRED");
   return withTransaction(async (tx) => {
     const session = await requireSession(tx, hash);
     const run = await tx.demoRun.findFirst({
@@ -61,6 +62,7 @@ export async function getCurrentRun(token: string | undefined): Promise<DemoRunR
 
 export async function getOwnedRun(token: string | undefined, traceId: string): Promise<DemoRunResponse> {
   const hash = sessionTokenHash(token);
+  if (hash === undefined) throw new ApplicationError("SESSION_REQUIRED");
   return withTransaction(async (tx) => {
     const { session, run } = await requireOwnedRun(tx, hash, traceId);
     const detail = await runDetail(tx, run);

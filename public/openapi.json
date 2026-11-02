@@ -425,7 +425,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "30 por sesión / 1000 global cada 60 segundos"
       },
       "post": {
         "operationId": "createSession",
@@ -1390,7 +1391,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos; hasta 100 intenciones nuevas por sesión y 5000 por día UTC global (repetir una intención confirmada no consume otro cupo de intención ni de recorrido)"
       }
     },
     "/api/demo/runs/reset": {
@@ -1869,7 +1871,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos; hasta 100 intenciones nuevas por sesión y 5000 por día UTC global (repetir una intención confirmada no consume otro cupo de intención ni de recorrido)"
       }
     },
     "/api/demo/runs/current": {
@@ -2286,7 +2289,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "30 por sesión / 1000 global cada 60 segundos"
       }
     },
     "/api/demo/runs/{traceId}": {
@@ -2714,7 +2718,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "30 por sesión / 1000 global cada 60 segundos"
       }
     },
     "/api/demo/runs/{traceId}/commands": {
@@ -3173,7 +3178,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos; 6 activaciones de publicación por sesión / 60 global cada 60 segundos cuando la acción emite hito; hasta 100 recibos por recorrido y 5000 intenciones nuevas por día UTC global (repetir una intención confirmada no consume otro recibo)"
       }
     },
     "/api/demo/runs/{traceId}/events/{eventId}/retry": {
@@ -3672,7 +3678,8 @@
               }
             }
           }
-        }
+        },
+        "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos y 6 activaciones de publicación por sesión / 60 global cada 60 segundos; comparte el techo de 100 recibos por recorrido y 5000 intenciones nuevas por día UTC global (repetir una intención confirmada no consume otro recibo)"
       }
     },
     "/api/traces/{traceId}": {

@@ -76,3 +76,30 @@ test("S22-UI-01 · techo diario de creación de contactos devuelve 429 Problem D
   expect(requests).toHaveLength(2);
   expect(requests[0]).toBe(requests[1]);
 });
+
+test("S22-UI-02 · límite de mutación en el panel conserva requestId de la intención y confirma tras espera manual",async({page,journey,runtime})=>{
+  await runtime.clock(new Date(Math.ceil(Date.now()/60000)*60000).toISOString());
+  await journey.start();
+  await page.getByLabel("Humedad (%)").fill("28,00");
+  await createFixtures(runtime.resources).execute(
+    `UPDATE "RequestRateBucket" SET used=100 WHERE scope='MUTATION' AND subject='GLOBAL'`,
+  );
+  const requests:string[]=[];
+  page.on("request",request=>{
+    if(request.method()==="POST"&&new URL(request.url()).pathname.endsWith("/commands"))requests.push(request.postData()!);
+  });
+  const firstResponse=page.waitForResponse(response=>response.request().method()==="POST"&&new URL(response.url()).pathname.endsWith("/commands"));
+  await page.getByRole("button",{name:"Publicar lote",exact:true}).click();
+  const denied=await firstResponse;
+  expect(denied.status()).toBe(429);
+  expect(await denied.headerValue("retry-after")).toBe("60");
+  expect(await denied.headerValue("content-type")).toContain("application/problem+json");
+  await expect(page.getByText(/Podés volver a intentar en 60 segundos/)).toBeVisible();
+  await expect(page.getByRole("button",{name:"Reintentar la misma acción",exact:true})).toBeEnabled();
+  expect(requests).toHaveLength(1);
+  await runtime.advance(60001);
+  await page.getByRole("button",{name:"Reintentar la misma acción",exact:true}).click();
+  await expect(page.getByRole("button",{name:/Representar a Coordinador/})).toBeVisible();
+  expect(requests).toHaveLength(2);
+  expect(requests[0]).toBe(requests[1]);
+});

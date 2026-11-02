@@ -2,7 +2,9 @@
 export const DEMO_POLICY = Object.freeze({
   sessionLifetimeSeconds: 24 * 60 * 60,
   maxRunsPerSession: 3,
+  maxReceiptsPerRun: 100,
   sessionDailyLimit: 100,
+  intentDailyLimit: 5000,
   contactDailyLimit: 100,
   hcsDailyLimitDefault: 100,
   hcsDailyLimitMaximum: 100,

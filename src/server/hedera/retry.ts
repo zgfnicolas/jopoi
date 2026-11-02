@@ -9,7 +9,8 @@ import { PUBLICATION_RETRY_OUTCOMES, type PublicationRetryResponse } from "../..
 import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMutation } from "../http";
-import { SESSION_COOKIE, sessionTokenHash } from "../sessions/credentials";
+import { requireSessionRateLimit, reserveRunIntent } from "../security/rate-limit";
+import { SESSION_COOKIE } from "../sessions/credentials";
 import { requireOwnedRun } from "../sessions/service";
 import { publicationSummary } from "./summary";
 import { quotaSummary } from "./coordinator";
@@ -30,11 +31,13 @@ export async function retryPublicationHttp(request: NextRequest, context: { para
     const { traceId, eventId } = params.data;
     bindBusinessTraceId(traceId);
     const { requestId } = body.data;
-    const hash = sessionTokenHash(request.cookies.get(SESSION_COOKIE)?.value);
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    const hash = await requireSessionRateLimit(token, "MUTATION");
+    await requireSessionRateLimit(token, "PUBLICATION");
     const intentHash = createHash("sha256").update(canonicalJson({ version: 1, action: "retryPublication", eventId })).digest("hex");
     async function resolve(allowWrite: boolean): Promise<PublicationRetryResponse> {
       return withTransaction(async tx => {
-        const { run } = await requireOwnedRun(tx, hash, traceId);
+        const { run, session } = await requireOwnedRun(tx, hash, traceId);
         const snapshot = readRunSnapshot(run);
         readRunOperation(run, snapshot);
         let row = await tx.hcsPublication.findFirst({ where: { eventId, event: { runId: run.id } }, include: { event: true, attempts: { orderBy: { slot: "desc" }, take: 1 } } });
@@ -51,14 +54,16 @@ export async function retryPublicationHttp(request: NextRequest, context: { para
           result = parsed.data;
         } else {
           if (!allowWrite) throw new ApplicationError("VERSION_CONFLICT");
+          const appliedAt = wallNow();
           const last = row.attempts[0];
           const uncertain = last && ["STARTED", "UNCERTAIN"].includes(last.state);
           const grant = row.state !== "CONFIRMED" && !blockedBy && !uncertain && last?.state === "REJECTED" && row.automaticAttempts >= 3 && row.manualAttempts === 0;
           const outcome = row.state === "CONFIRMED" ? "ALREADY_CONFIRMED" : blockedBy ? "BLOCKED" : uncertain ? "RECONCILE_ONLY"
             : grant || row.manualAuthorizedAt !== null && last?.state === "RESERVED" ? "MANUAL_AUTHORIZED" : row.manualAttempts > 0 ? "EXHAUSTED" : "AUTOMATIC_PENDING";
           result = { version: 1, eventId, outcome };
-          if (grant && row.manualAuthorizedAt === null) row = { ...row, ...await tx.hcsPublication.update({ where: { eventId }, data: { manualAuthorizedAt: wallNow(), nextAttemptAt: wallNow() } }) };
+          if (grant && row.manualAuthorizedAt === null) row = { ...row, ...await tx.hcsPublication.update({ where: { eventId }, data: { manualAuthorizedAt: appliedAt, nextAttemptAt: appliedAt } }) };
           await tx.commandReceipt.create({ data: { ...key, intentHash, action: "RETRY_PUBLICATION", resultingVersion: run.version, result } });
+          await reserveRunIntent(tx, run, session.expiresAt, appliedAt);
         }
         const quota = await quotaSummary(tx, process.env, wallNow());
         return { saved: true, replayed: previous !== null, traceId, eventId, outcome: result.outcome,

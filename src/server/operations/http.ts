@@ -7,13 +7,13 @@ import { z } from "zod";
 import type { DemoCommandResponse } from "../../shared/run-contracts";
 import { ApplicationError } from "../application-error";
 import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMutation } from "../http";
+import { requireSessionRateLimit } from "../security/rate-limit";
 import { SESSION_COOKIE } from "../sessions/credentials";
 import { executeOperationCommand } from "./commands";
 import { schedulePublications } from "../hedera/service";
 import { getCurrentRun, getOwnedRun } from "./queries";
 
 const uuid = z.uuid().transform((value) => value.toLowerCase());
-
 
 interface TraceContext {
   readonly params: Promise<{ traceId: string }>;
@@ -27,16 +27,20 @@ async function traceFrom(context: TraceContext): Promise<string> {
 }
 
 export async function getCurrentRunHttp(request: NextRequest): Promise<NextResponse> {
-  return apiBoundary("runs.current", request, async () => NextResponse.json(
-    await getCurrentRun(request.cookies.get(SESSION_COOKIE)?.value), { headers: PRIVATE_RESPONSE_HEADERS },
-  ));
+  return apiBoundary("runs.current", request, async () => {
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    await requireSessionRateLimit(token, "PRIVATE_READ");
+    return NextResponse.json(await getCurrentRun(token), { headers: PRIVATE_RESPONSE_HEADERS });
+  });
 }
 
 export async function getOwnedRunHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
-  return apiBoundary("runs.read", request, async () => NextResponse.json(
-    await getOwnedRun(request.cookies.get(SESSION_COOKIE)?.value, await traceFrom(context)),
-    { headers: PRIVATE_RESPONSE_HEADERS },
-  ));
+  return apiBoundary("runs.read", request, async () => {
+    const traceId = await traceFrom(context);
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    await requireSessionRateLimit(token, "PRIVATE_READ");
+    return NextResponse.json(await getOwnedRun(token, traceId), { headers: PRIVATE_RESPONSE_HEADERS });
+  });
 }
 
 export async function postCommandHttp(request: NextRequest, context: TraceContext): Promise<NextResponse> {
@@ -47,10 +51,10 @@ export async function postCommandHttp(request: NextRequest, context: TraceContex
     if (!parsed.success) throw new ApplicationError("INVALID_INPUT", {
       form: ["Ingresá una acción, rol, UUID, versión y únicamente los campos permitidos con sus tipos correctos."],
     });
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    await requireSessionRateLimit(token, "MUTATION");
     const { requestId, expectedVersion, ...command } = parsed.data;
-    const result = await executeOperationCommand({
-      token: request.cookies.get(SESSION_COOKIE)?.value, traceId, requestId, expectedVersion, command,
-    });
+    const result = await executeOperationCommand({ token, traceId, requestId, expectedVersion, command });
     const body: DemoCommandResponse = {
       saved: true, traceId, replayed: result.replayed,
       applied: { operation: result.applied.operation, version: result.applied.version, eventId: result.applied.eventId },

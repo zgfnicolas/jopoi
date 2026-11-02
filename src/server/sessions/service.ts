@@ -9,7 +9,7 @@ import type { DemoRunIntentResponse, DemoRunSummary, DemoSessionResponse, DemoSe
 import { ApplicationError } from "../application-error";
 import { withDatabase, withTransaction } from "../database";
 import { toStoredGrams, toStoredHumidity } from "../database/precision";
-import { dailyCreationWindow, RateLimitError } from "../security/rate-limit";
+import { dailyCreationWindow, RateLimitError, reserveSessionIntent } from "../security/rate-limit";
 import { newSessionToken, sessionTokenHash } from "./credentials";
 
 type Transaction = Prisma.TransactionClient;
@@ -63,6 +63,7 @@ export async function requireOwnedRun(tx: Transaction, tokenHash: string | undef
 
 export async function recoverSession(token: string | undefined): Promise<DemoSessionResponse> {
   const hash = sessionTokenHash(token);
+  if (hash === undefined) throw new ApplicationError("SESSION_REQUIRED");
   return withTransaction(async (tx) => sessionResponse(tx, await requireSession(tx, hash)));
 }
 
@@ -82,7 +83,6 @@ export async function beginSession(token: string | undefined) {
     if (freshHash === undefined) throw new ApplicationError("INTERNAL_ERROR");
     const sessionExpiresAt = new Date(now.getTime() + DEMO_POLICY.sessionLifetimeSeconds * 1000);
     const { limit, start, expires, retryAfter } = dailyCreationWindow("SESSION_CREATE", now);
-    const id = randomUUID();
     const rows = await db.$queryRaw<Pick<DemoSession, "expiresAt" | "runCount">[]>(Prisma.sql`
       WITH quota AS (
         INSERT INTO "RequestRateBucket" ("scope", "subject", "windowStart", "used", "expiresAt")
@@ -93,7 +93,7 @@ export async function beginSession(token: string | undefined) {
         RETURNING "used"
       )
       INSERT INTO "DemoSession" ("id", "tokenHash", "runCount", "createdAt", "expiresAt")
-      SELECT ${id}::uuid, ${freshHash}, 0, ${now.toISOString()}::timestamptz, ${sessionExpiresAt.toISOString()}::timestamptz
+      SELECT ${randomUUID()}::uuid, ${freshHash}, 0, ${now.toISOString()}::timestamptz, ${sessionExpiresAt.toISOString()}::timestamptz
       FROM quota
       RETURNING "expiresAt", "runCount"`);
     const created = rows[0];
@@ -115,57 +115,38 @@ async function replayIntent(tx: Transaction, session: DemoSession, requestId: st
 
 export async function resolveRunIntent(token: string | undefined, requestId: string, kind: SessionIntentKind): Promise<DemoRunIntentResponse> {
   const hash = sessionTokenHash(token);
-  try {
-    return await withTransaction(async (tx) => {
-      let session = await requireSession(tx, hash);
-      const previous = await replayIntent(tx, session, requestId, kind);
-      if (previous !== null) return previous;
-      let run = kind === "START" ? await activeRun(tx, session.id) : null;
-      const created = run === null;
-      if (created) {
-        if (session.runCount >= DEMO_POLICY.maxRunsPerSession) throw new ApplicationError("RUN_LIMIT_REACHED");
-        const reserved = await tx.demoSession.updateMany({
-          where: { id: session.id, runCount: session.runCount, expiresAt: { gt: wallNow() } },
-          data: { runCount: { increment: 1 } },
-        });
-        if (reserved.count !== 1) throw new ApplicationError("VERSION_CONFLICT");
-        const snapshot = createScenarioSnapshot();
-        const grams = toStoredGrams(snapshot.initialLot.quantityKg);
-        const humidity = toStoredHumidity(snapshot.initialLot.humidityPercent);
-        if (!grams.ok || !humidity.ok) throw new ApplicationError("INTERNAL_ERROR");
-        const now = wallNow();
-        run = await tx.demoRun.create({
-          data: {
-            sessionId: session.id,
-            creationRequestId: requestId,
-            ordinal: session.runCount + 1,
-            scenarioVersion: snapshot.version,
-            scenarioSnapshot: JSON.parse(JSON.stringify(snapshot)) as Prisma.InputJsonObject,
-            declaredGrams: grams.value,
-            humidityHundredths: humidity.value,
-            createdAt: now,
-            expiresAt: new Date(now.getTime() + DEMO_POLICY.operationalRetentionDays * 86400 * 1000),
-          },
-        });
-        session = { ...session, runCount: session.runCount + 1 };
-      }
-      // run existe tanto al crear como al retomar; la FK compuesta verifica el propietario.
-      if (run === null) throw new ApplicationError("INTERNAL_ERROR");
-      await tx.sessionRunIntent.create({ data: { sessionId: session.id, requestId, kind, runId: run.id } });
-      return { session: sessionSummary(session), run: runSummary(run), created, replayed: false };
-    });
-  } catch (error) {
-    const conflict = error instanceof ApplicationError && error.code === "VERSION_CONFLICT"
-      || error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
-    if (!conflict) throw error;
-    // Una lectura nueva tras rollback puede resolver un duplicado ya confirmado.
-    // No se reejecuta automáticamente ninguna creación ni incremento.
-    return withTransaction(async (tx) => {
-      const session = await requireSession(tx, hash);
-      const previous = await replayIntent(tx, session, requestId, kind);
-      if (previous !== null) return previous;
-      if (kind === "RESET" && session.runCount >= DEMO_POLICY.maxRunsPerSession) throw new ApplicationError("RUN_LIMIT_REACHED");
-      throw new ApplicationError("VERSION_CONFLICT");
-    });
-  }
+  if (hash === undefined) throw new ApplicationError("SESSION_REQUIRED");
+  return withDatabase(db => db.$transaction(async (tx) => {
+    const now = wallNow();
+    const rows = await tx.$queryRaw<DemoSession[]>(Prisma.sql`
+      SELECT "id", "tokenHash", "runCount", "createdAt", "expiresAt"
+      FROM "DemoSession" WHERE "tokenHash" = ${hash} FOR UPDATE`);
+    let session = rows[0];
+    if (session === undefined) throw new ApplicationError("SESSION_REQUIRED");
+    if (session.expiresAt.getTime() <= now.getTime()) throw new ApplicationError("SESSION_EXPIRED");
+    const previous = await replayIntent(tx, session, requestId, kind);
+    if (previous !== null) return previous;
+    await reserveSessionIntent(tx, session, now);
+    let run = kind === "START" ? await activeRun(tx, session.id) : null;
+    const created = run === null;
+    if (created) {
+      if (session.runCount >= DEMO_POLICY.maxRunsPerSession) throw new ApplicationError("RUN_LIMIT_REACHED");
+      await tx.demoSession.update({ where: { id: session.id }, data: { runCount: { increment: 1 } } });
+      const snapshot = createScenarioSnapshot();
+      const grams = toStoredGrams(snapshot.initialLot.quantityKg), humidity = toStoredHumidity(snapshot.initialLot.humidityPercent);
+      if (!grams.ok || !humidity.ok) throw new ApplicationError("INTERNAL_ERROR");
+      run = await tx.demoRun.create({
+        data: {
+          sessionId: session.id, creationRequestId: requestId, ordinal: session.runCount + 1,
+          scenarioVersion: snapshot.version, scenarioSnapshot: JSON.parse(JSON.stringify(snapshot)) as Prisma.InputJsonObject,
+          declaredGrams: grams.value, humidityHundredths: humidity.value,
+          createdAt: now, expiresAt: new Date(now.getTime() + DEMO_POLICY.operationalRetentionDays * 86400 * 1000),
+        },
+      });
+      session = { ...session, runCount: session.runCount + 1 };
+    }
+    if (run === null) throw new ApplicationError("INTERNAL_ERROR");
+    await tx.sessionRunIntent.create({ data: { sessionId: session.id, requestId, kind, runId: run.id } });
+    return { session: sessionSummary(session), run: runSummary(run), created, replayed: false };
+  }, { isolationLevel: "ReadCommitted", maxWait: 5000, timeout: 5000 }));
 }

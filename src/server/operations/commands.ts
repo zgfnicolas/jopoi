@@ -13,6 +13,7 @@ import { advanceRunVersion, withTransaction } from "../database";
 import { createPublicEvent, eventTypeForAction, readPublicEvent } from "../events/payload";
 import { configuredTarget } from "../hedera/target";
 import { privatePublicationSummary } from "../hedera/summary";
+import { reserveRunIntent, reserveSessionRateLimit } from "../security/rate-limit";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, readReceiptResult, runChanges } from "./storage";
@@ -44,6 +45,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
   if (!metadata.success) throw new ApplicationError("INVALID_INPUT", { form: ["Ingresá identificadores UUID y una versión positiva válida."] });
   const { traceId, requestId, expectedVersion } = metadata.data;
   const tokenHash = sessionTokenHash(input.token);
+  if (tokenHash === undefined) throw new ApplicationError("SESSION_REQUIRED");
 
   async function resolve(tx: Prisma.TransactionClient, allowWrite: boolean): Promise<PersistedCommandResult> {
     const { run, session } = await requireOwnedRun(tx, tokenHash, traceId);
@@ -77,6 +79,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         || (event.payload.detail.reason?.code ?? null) !== (original.operation.rejectionReasonCode ?? original.operation.incidentReasonCode))) {
         throw new ApplicationError("INTERNAL_ERROR");
       }
+      if (event !== null && tokenHash !== undefined) await reserveSessionRateLimit(tx, tokenHash, "PUBLICATION", wallNow());
       return {
         replayed: true,
         applied: { operation: original.operation, version: previous.resultingVersion, eventId: original.eventId },
@@ -108,6 +111,8 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         result: jsonObject({ version: 1, operation, eventId }),
       }, select: { id: true },
     });
+    await reserveRunIntent(tx, run, session.expiresAt, appliedAt);
+    if (event !== null && tokenHash !== undefined) await reserveSessionRateLimit(tx, tokenHash, "PUBLICATION", appliedAt);
     await advanceRunVersion(tx, run.id, expectedVersion);
     const target = command.action === "publish" ? configuredTarget(process.env) : null;
     await tx.demoRun.update({ where: { id: run.id }, data: {

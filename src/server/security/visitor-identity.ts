@@ -1,4 +1,4 @@
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { isIP } from "node:net";
 import { ApplicationError } from "../application-error";
 
@@ -49,4 +49,9 @@ export function visitorSubject(secret: string | undefined, at: Date, scope: stri
   const day = at.toISOString().slice(0, 10);
   const dailyKey = createHmac("sha256", secret).update(`s22-visitor-key-v1\0${day}`).digest();
   return createHmac("sha256", dailyKey).update(`s21-rate-v1\0${scope}\0${identity}`).digest("hex");
+}
+
+/** Deriva un sujeto SHA-256 de 64 caracteres hexadecimales para el techo de intenciones por recorrido. */
+export function runIntentSubject(runId: string): string {
+  return createHash("sha256").update(`s22-run-intent-v1\0${runId}`).digest("hex");
 }

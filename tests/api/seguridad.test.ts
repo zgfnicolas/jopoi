@@ -282,6 +282,123 @@ test("S22-01 · techo diario de 100 sesiones y 100 contactos compartido entre in
   }finally{await second.close();}
 },180000);
 
+test("S22-02 · límites privados por minuto, 100 recibos por recorrido y 5000 intenciones diarias aislados por sesión",async()=>{
+  const owner=await new Visitor().setup();
+  const noisy=await new Visitor().setup();
+
+  for(let index=0;index<30;index++)expect((await noisy.get("/api/demo/session")).status).toBe(200);
+  const deniedRead=await noisy.get("/api/demo/session",{Accept:"application/problem+json"});
+  expect(deniedRead.status).toBe(429);
+  expect(deniedRead.headers.get("retry-after")).toBe("60");
+  expect(deniedRead.headers.get("content-type")).toContain("application/problem+json");
+  expect((await owner.get("/api/demo/session")).status).toBe(200);
+  expect((await owner.get(`/api/demo/runs/${owner.traceId}`)).status).toBe(200);
+
+  for(let index=0;index<9;index++){
+    expect((await noisy.post(`/api/demo/runs/${noisy.traceId}/commands`,{
+      action:"save",role:"generator",quantityKg:"12000",humidityPercent:String(20+(index%10)),expectedVersion:index+1,requestId:randomUUID(),
+    })).status).toBe(200);
+  }
+  const deniedMutation=await noisy.post(
+    `/api/demo/runs/${noisy.traceId}/commands`,
+    {action:"save",role:"generator",quantityKg:"12000",humidityPercent:"25",expectedVersion:10,requestId:randomUUID()},
+    {Accept:"application/problem+json"},
+  );
+  expect(deniedMutation.status).toBe(429);
+  expect(deniedMutation.headers.get("retry-after")).toBe("60");
+  expect((await owner.command({action:"save",role:"generator",quantityKg:"12000",humidityPercent:"28"})).status).toBe(200);
+
+  await environment.advance(60000);
+  const publishRequestId=randomUUID();
+  const published=await owner.post(`/api/demo/runs/${owner.traceId}/commands`,{
+    action:"publish",role:"generator",quantityKg:"12000",humidityPercent:"28",expectedVersion:2,requestId:publishRequestId,
+  });
+  expect(published.status).toBe(200);
+  const eventId=published.body.applied.eventId as string;
+
+  const retryRequestId=randomUUID();
+  for(let index=0;index<5;index++){
+    const retry=await owner.post(`/api/demo/runs/${owner.traceId}/events/${eventId}/retry`,{requestId:index===0?retryRequestId:randomUUID()});
+    expect([200,202]).toContain(retry.status);
+  }
+  const deniedPublication=await owner.post(
+    `/api/demo/runs/${owner.traceId}/events/${eventId}/retry`,
+    {requestId:randomUUID()},
+    {Accept:"application/problem+json"},
+  );
+  expect(deniedPublication.status).toBe(429);
+  expect(deniedPublication.headers.get("retry-after")).toBe("60");
+  expect((await noisy.command({action:"publish",role:"generator",quantityKg:"12000",humidityPercent:"25"})).status).toBe(200);
+
+  await environment.advance(60000);
+  await fixture(`UPDATE "RequestRateBucket" SET used=100 WHERE scope='RUN_INTENT'`);
+  const deniedRunIntent=await owner.post(
+    `/api/demo/runs/${owner.traceId}/commands`,
+    {action:"approve",role:"coordinator",expectedVersion:3,requestId:randomUUID()},
+    {Accept:"application/problem+json"},
+  );
+  expect(deniedRunIntent.status).toBe(429);
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/events/${eventId}/retry`,{requestId:randomUUID()})).status).toBe(429);
+
+  const replayedPublish=await owner.post(`/api/demo/runs/${owner.traceId}/commands`,{
+    action:"publish",role:"generator",quantityKg:"12000",humidityPercent:"28",expectedVersion:2,requestId:publishRequestId,
+  });
+  expect(replayedPublish.status).toBe(200);
+  expect(replayedPublish.body.replayed).toBe(true);
+  const replayedRetry=await owner.post(`/api/demo/runs/${owner.traceId}/events/${eventId}/retry`,{requestId:retryRequestId});
+  expect(replayedRetry.status).toBe(200);
+  expect(replayedRetry.body.replayed).toBe(true);
+  expect((await owner.run()).version).toBe(3);
+
+  await fixture(`UPDATE "RequestRateBucket" SET used=5000 WHERE scope='INTENT_CREATE' AND subject='GLOBAL'`);
+  expect((await owner.post("/api/demo/runs/reset",{requestId:randomUUID()},{Accept:"application/problem+json"})).status).toBe(429);
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/commands`,{
+    action:"publish",role:"generator",quantityKg:"12000",humidityPercent:"28",expectedVersion:2,requestId:publishRequestId,
+  })).status).toBe(200);
+
+  await environment.clock("2026-01-02T00:00:05.000Z");
+  expect((await owner.post("/api/demo/runs/reset",{requestId:randomUUID()})).status).toBe(201);
+});
+
+test("S22-03 · propiedad y vigencia preceden al replay, conflicto de idempotencia no consume cupo y rechazo temprano sin cookie",async()=>{
+  const unauthenticated=new Visitor();
+  expect((await unauthenticated.get("/api/demo/session")).status).toBe(401);
+  expect((await unauthenticated.get("/api/demo/runs/current")).status).toBe(401);
+  expect((await unauthenticated.get(`/api/demo/runs/${randomUUID()}`)).status).toBe(401);
+  expect((await unauthenticated.post("/api/demo/runs",{requestId:randomUUID()})).status).toBe(401);
+  expect((await unauthenticated.post("/api/demo/runs/reset",{requestId:randomUUID()})).status).toBe(401);
+  expect((await unauthenticated.post(`/api/demo/runs/${randomUUID()}/commands`,{
+    action:"save",role:"generator",quantityKg:"12000",humidityPercent:"30",expectedVersion:1,requestId:randomUUID(),
+  })).status).toBe(401);
+
+  const resources=inject("resources");
+  const db=new Client({connectionString:resources.databaseUrl});await db.connect();
+  try{
+    expect((await db.query('SELECT count(*)::int AS count FROM "RequestRateBucket"')).rows[0].count).toBe(0);
+  }finally{await db.end();}
+
+  const owner=await new Visitor().setup();
+  const intruder=await new Visitor().setup();
+  const saveId=randomUUID();
+  const payload={action:"save" as const,role:"generator" as const,quantityKg:"12000",humidityPercent:"28",expectedVersion:1,requestId:saveId};
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/commands`,payload)).status).toBe(200);
+
+  expect((await intruder.post(`/api/demo/runs/${owner.traceId}/commands`,payload)).status).toBe(404);
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/commands`,{...payload,humidityPercent:"29"})).body).toMatchObject({
+    error:{code:"IDEMPOTENCY_CONFLICT"},
+  });
+
+  await fixture(`UPDATE "RequestRateBucket" SET used=100 WHERE scope='RUN_INTENT'`);
+  await fixture(`UPDATE "RequestRateBucket" SET used=5000 WHERE scope='INTENT_CREATE' AND subject='GLOBAL'`);
+  const replayAtCeiling=await owner.post(`/api/demo/runs/${owner.traceId}/commands`,payload);
+  expect(replayAtCeiling.status).toBe(200);
+  expect(replayAtCeiling.body.replayed).toBe(true);
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/commands`,{...payload,humidityPercent:"29"})).status).toBe(409);
+
+  await environment.advance(8 * 86400 * 1000);
+  expect((await owner.post(`/api/demo/runs/${owner.traceId}/commands`,payload)).status).toBe(401);
+});
+
 test("S22-04 · identidad de visitante agrupa prefijo IPv6 /64 y NAT sin persistir IP cruda",async()=>{
   const ipv6A=new Visitor();ipv6A.identity="2001:0db8:000a:000b:0001:0002:0003:0004";
   const ipv6B=new Visitor();ipv6B.identity="2001:db8:a:b:ffff:eeee:dddd:cccc";

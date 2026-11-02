@@ -30,7 +30,7 @@ export class Visitor {
     assertApiContract(method, path, response.status, response.headers, responseBody);
     return { status: response.status, body: responseBody as T, headers: response.headers };
   }
-  get<T = DemoRunResponse>(path: string) { return this.request<T>("GET", path); }
+  get<T = DemoRunResponse>(path: string, headers?: Record<string, string>) { return this.request<T>("GET", path, undefined, headers); }
   post<T = DemoCommandResponse>(path: string, body: unknown, headers?: Record<string, string>) { return this.request<T>("POST", path, body, headers); }
   async begin() {
     const result = await this.post<DemoSessionResponse>("/api/demo/session", {});

@@ -4,13 +4,14 @@ import { fileURLToPath } from "node:url";
 import { ENVIRONMENT_VARIABLES } from "../src/server/config/environment";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const npmCli = process.env.npm_execpath;
+const npmCli = process.env.npm_execpath ?? resolve(dirname(process.execPath), "node_modules/npm/bin/npm-cli.js");
 if (!npmCli) throw new Error("QUALITY_GATE_REQUIRES_NPM_RUN");
 
 // Sellá las capacidades de la aplicación: un gate local tampoco debe heredar conexiones habituales.
 const environment = {
   ...process.env,
   ...Object.fromEntries(ENVIRONMENT_VARIABLES.map((name) => [name, ""])),
+  PATH: `${dirname(process.execPath)}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}`,
   APP_URL: "http://127.0.0.1:3000",
   NEXT_TELEMETRY_DISABLED: "1",
   VERCEL: "",

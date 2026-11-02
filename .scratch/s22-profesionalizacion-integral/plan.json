@@ -418,7 +418,13 @@
         "S22-03",
         "S22-04"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-02",
+        "evidence": "docs/s22-11-limites-recorridos-intenciones.md",
+        "validation": "Techos por minuto por sesión y globales (PRIVATE_READ 30/1000, MUTATION 10/100, PUBLICATION 6/60), 100 recibos por recorrido compartido entre todas las acciones (RUN_INTENT), 100 intenciones por sesión (SESSION_INTENT) y 5000 intenciones nuevas por día UTC global (INTENT_CREATE); propiedad y vigencia preceden al replay y rechazo temprano sin cookie. Ocho escenarios Chromium/WebKit móvil, 24 CLI, 60 HTTP, puerta completa y build aprobados; cero diagnósticos estrictos. El ticket 12 espera confirmación."
+      }
     },
     {
       "id": "12",
