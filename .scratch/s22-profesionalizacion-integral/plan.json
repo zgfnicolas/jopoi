@@ -493,7 +493,13 @@
         "S22-04",
         "S22-24"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-02",
+        "evidence": "docs/s22-13-deadlines-cancelacion-http.md",
+        "validation": "readJsonBody acotado por bytes y tiempo con cancelación y liberación del lector sin depender de Content-Length; sqlStepBudget (maxWait + timeout <= remainingRequestMs) y mirrorVerificationBudgetMs (<= 6 s con paso de 3 s y reserva de cierre de 1,5 s dentro de 10 s) subordinados al deadline total del request. Contraste remoto preserva estado histórico (CONFIRMED/MATCHED) ante timeout de Mirror Node (UNAVAILABLE / HCS_MIRROR_UNAVAILABLE); desconexión en lectura aborta trabajo pendiente y desconexión en mutación exige reintentar con el mismo requestId sin fingir rollback. 12 pruebas de contrato, 24 CLI, 62 HTTP, puerta completa y build aprobados; cero diagnósticos estrictos. El ticket 14 espera confirmación."
+      }
     },
     {
       "id": "14",
@@ -529,6 +535,12 @@
         "S22-24",
         "S22-25"
       ],
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-04",
+        "evidence": "docs/s22-14-capacidad-global-hcs-reintentos.md",
+        "validation": "Capacidad externa global de dos llamadas en vuelo con expiración/fencing (MaintenanceLease EXTERNAL_CAPACITY_0/1, migración aditiva 202611040001 registrada en preflight), cableada en processEvent con rechazo temprano HCS_CAPACITY_BUSY y jitter acotado. 64 HTTP (incluye API-21/22), 24 CLI, 54 dominio, 12 contratos, 7 seguridad, 4 observabilidad, 2 tokens, puerta completa y build aprobados; cero diagnósticos estrictos."
+      },
       "externalConditions": null
     },
     {

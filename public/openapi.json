@@ -20,7 +20,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "responses": {
           "200": {
             "description": "Lectura, resultado o replay confirmado.",
@@ -432,7 +432,7 @@
         "operationId": "createSession",
         "summary": "Recuperar o crear sesión",
         "security": [],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -924,7 +924,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1404,7 +1404,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1884,7 +1884,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "responses": {
           "200": {
             "description": "Lectura, resultado o replay confirmado.",
@@ -2313,7 +2313,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "responses": {
           "200": {
             "description": "Lectura, resultado o replay confirmado.",
@@ -2742,7 +2742,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3211,7 +3211,7 @@
             "demoSession": []
           }
         ],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {
@@ -3698,7 +3698,7 @@
         "operationId": "readTrace",
         "summary": "Consultar trazabilidad pública vigente",
         "security": [],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "responses": {
           "200": {
             "description": "Lectura, resultado o replay confirmado.",
@@ -4132,7 +4132,7 @@
         "operationId": "verifyTraceEvent",
         "summary": "Contrastar evidencia pública en mirror",
         "security": [],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "responses": {
           "200": {
             "description": "Lectura, resultado o replay confirmado.",
@@ -4546,7 +4546,7 @@
         "operationId": "createContact",
         "summary": "Guardar solicitud de demo sin exponer PII",
         "security": [],
-        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+        "description": "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
         "requestBody": {
           "required": true,
           "content": {

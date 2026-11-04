@@ -2,6 +2,7 @@ import { requiredEntry } from "../support/required-entry";
 import { afterAll, beforeEach, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { environment, eventually, Visitor } from "../support/client";
+import { fixture } from "../support/fixtures";
 
 beforeEach(() => environment.reset());
 afterAll(() => environment.close());
@@ -26,25 +27,20 @@ test.each(["unknown", "timeout"] as const)("API-15 · %s conserva transactionId 
   expect((await environment.ledger()).submissions).toEqual([transactionId]);
 });
 
-test("API-17 · reservas concurrentes respetan la cuota global y conservan las acciones SQL", async () => {
+test("API-17 · la cuota global limita un envío y conserva las acciones SQL", async () => {
   await environment.restart({ HCS_DAILY_LIMIT: "1" });
-  await environment.network("prepare-hold");
   const visitors: Visitor[] = [];
-  for (let index = 0; index < 3; index++) visitors.push(await new Visitor().setup());
-  for (const [index, visitor] of visitors.entries()) {
+  for (let index = 0; index < 3; index++) {
+    const visitor = await new Visitor().setup();
+    visitors.push(visitor);
     expect((await visitor.command({ action: "publish", role: "generator", quantityKg: "12000", humidityPercent: "28" })).status).toBe(200);
-    await eventually(() => environment.ledger(), ledger => ledger.messages.length === index + 1);
   }
-  // Release three independently prepared transactions together at quota admission.
-  await environment.network("hold", true);
-  await eventually(() => environment.ledger(), ledger => ledger.submissions.length === 1);
-  const cron = await environment.cron();
-  expect([200, 409]).toContain(cron.status);
-  if (cron.status === 409) expect((await environment.cron()).status).toBe(200);
-  const runs = await eventually(() => Promise.all(visitors.map(visitor => visitor.run())), runs => runs.some(run => run.events[0]?.publication.state === "PAUSED_QUOTA"));
+  // La capacidad externa (2 en vuelo) puede diferir un evento; el cron secuencial lo drena hasta PAUSED_QUOTA.
+  await environment.advance(16000);
+  expect((await environment.cron()).status).toBe(200);
+  const runs = await eventually(() => Promise.all(visitors.map(visitor => visitor.run())), runs => runs.filter(run => run.events[0]?.publication.state === "PAUSED_QUOTA").length === 2);
   expect(runs.every(run => run.operation.state === "PUBLISHED" && run.events.length === 1 && run.quota.used === 1 && run.quota.remaining === 0)).toBe(true);
   expect((await environment.ledger()).submissions).toHaveLength(1);
-  await environment.network("confirmed", true);
 });
 
 test("API-19 · trabajadores solapados no duplican ni adelantan hitos", async () => {
@@ -132,4 +128,41 @@ test("API-18 · tres intentos automáticos y una reactivación manual sin reenv�
   expect((await visitor.retry(eventId)).body.outcome).toBe("EXHAUSTED");
   expect((await environment.ledger()).submissions).toHaveLength(4);
   expect(requiredEntry((await visitor.run()).events, 0).publication).toMatchObject({ automaticAttempts: 3, manualAttempts: 1, manualAvailable: false });
+});
+
+test("API-21 · capacidad externa global: saturación rechaza temprano sin tocar la red y recupera al liberar", async () => {
+  // Dos permisos globales ocupados simulan dos llamadas costosas en vuelo de otras instancias.
+  await fixture(`INSERT INTO "MaintenanceLease" (name, owner, "expiresAt") VALUES
+    ('EXTERNAL_CAPACITY_0', '${randomUUID()}', '2026-01-01T12:01:00.000Z'),
+    ('EXTERNAL_CAPACITY_1', '${randomUUID()}', '2026-01-01T12:01:00.000Z')`);
+  const visitor = await new Visitor().setup();
+  const command = await visitor.command({ action: "publish", role: "generator", quantityKg: "12000", humidityPercent: "28" });
+  expect(command.status).toBe(200);
+  // Rechazo temprano: la red no recibe preparación ni envío; el estado se conserva honesto y se difiere con cooldown.
+  const busy = await eventually(() => visitor.run(), run => run.events[0]?.publication.lastErrorCode === "HCS_CAPACITY_BUSY");
+  expect(requiredEntry(busy.events, 0).publication).toMatchObject({ state: "QUEUED", lastErrorCode: "HCS_CAPACITY_BUSY" });
+  expect(requiredEntry(busy.events, 0).publication.nextAttemptAt).toBeTruthy();
+  expect((await environment.ledger()).messages).toHaveLength(0);
+  expect((await environment.ledger()).submissions).toHaveLength(0);
+  // Recuperación: al liberar los permisos y superar el cooldown, cron completa el mismo evento sin duplicar.
+  await fixture(`DELETE FROM "MaintenanceLease" WHERE name LIKE 'EXTERNAL_CAPACITY_%'`);
+  await environment.advance(16000);
+  expect((await environment.cron()).status).toBe(200);
+  const confirmed = await eventually(() => visitor.run(), run => run.events[0]?.publication.verificationState === "MATCHED");
+  const publication = requiredEntry(confirmed.events, 0).publication;
+  expect(publication).toMatchObject({ state: "CONFIRMED", automaticAttempts: 1 });
+  expect(publication.transactionId).toBeTruthy();
+  expect((await environment.ledger()).submissions).toHaveLength(1);
+});
+
+test("API-22 · permisos de capacidad vencidos se reclaman y el evento completa sin duplicar", async () => {
+  // Permisos vencidos simulan trabajadores caídos: el sucesor debe reclamarlos sin reenviar a ciegas.
+  await fixture(`INSERT INTO "MaintenanceLease" (name, owner, "expiresAt") VALUES
+    ('EXTERNAL_CAPACITY_0', '${randomUUID()}', '2025-12-31T23:59:00.000Z'),
+    ('EXTERNAL_CAPACITY_1', '${randomUUID()}', '2025-12-31T23:59:00.000Z')`);
+  const visitor = await new Visitor().setup();
+  await visitor.publish();
+  const confirmed = await eventually(() => visitor.run(), run => run.events[0]?.publication.verificationState === "MATCHED");
+  expect(requiredEntry(confirmed.events, 0).publication).toMatchObject({ state: "CONFIRMED", automaticAttempts: 1 });
+  expect((await environment.ledger()).submissions).toHaveLength(1);
 });

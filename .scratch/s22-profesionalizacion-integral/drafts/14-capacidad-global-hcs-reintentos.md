@@ -4,7 +4,7 @@
 
 **Blocked by:** 11 · Limitar intenciones y proteger las lecturas y comandos privados; 13 · Rechazar cuerpos lentos y lecturas que exceden su presupuesto
 
-**Status:** approved — desglose y dependencias aprobados; pendiente de configurar el tracker y publicar como ready-for-agent.
+**Status:** completed — implementado y validado localmente (2026-11-04); evidencia en [`docs/s22-14-capacidad-global-hcs-reintentos.md`](../../../docs/s22-14-capacidad-global-hcs-reintentos.md). Pendiente de configurar el tracker para publicar.
 
 **Trazabilidad:** Spec S22; decisiones D02, D03, D13, D15; hallazgos AUD-01, AUD-17; historias 12, 19, 61, 62, 64, 65, 66, 67, 75; escenarios S22-09, S22-24, S22-25.
 
@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Antes de preparaciones y verificaciones costosas se reserva capacidad compartida, inicialmente dos llamadas en vuelo globales, con expiración/fencing y sin red dentro de SQL.
-- [ ] El límite de capacidad externa es distinto del lease de publicación, cuota diaria de 100 envíos y máximo de intentos 3+1; no existe bypass por otra entrada.
-- [ ] La elegibilidad usa jitter acotado respetando cooldown mínimo y vencimiento; el ensayo de caída demuestra rechazo temprano y recuperación.
-- [ ] Una transacción incierta conserva su identidad y sólo se reconcilia; trabajador vencido no confirma ni libera al sucesor y los predecesores mantienen orden.
-- [ ] Cron, API y ledger controlado muestran continuidad SQL y estados honestos bajo saturación; un breaker sólo se añade si el ensayo documenta que los controles presentes no alcanzan.
+- [x] Antes de preparaciones y verificaciones costosas se reserva capacidad compartida, inicialmente dos llamadas en vuelo globales, con expiración/fencing y sin red dentro de SQL.
+- [x] El límite de capacidad externa es distinto del lease de publicación, cuota diaria de 100 envíos y máximo de intentos 3+1; no existe bypass por otra entrada.
+- [x] La elegibilidad usa jitter acotado respetando cooldown mínimo y vencimiento; el ensayo de caída demuestra rechazo temprano y recuperación.
+- [x] Una transacción incierta conserva su identidad y sólo se reconcilia; trabajador vencido no confirma ni libera al sucesor y los predecesores mantienen orden.
+- [x] Cron, API y ledger controlado muestran continuidad SQL y estados honestos bajo saturación; un breaker sólo se añade si el ensayo documenta que los controles presentes no alcanzan.
 

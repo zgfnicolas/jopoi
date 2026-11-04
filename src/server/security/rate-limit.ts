@@ -1,11 +1,15 @@
 import "server-only";
+import { performance } from "node:perf_hooks";
 import { Prisma } from "../../generated/prisma/client";
 import { DEMO_POLICY } from "../../shared/demo-policy";
 import { now } from "@/server/runtime/clock";
 import { clientIdentity } from "@/server/runtime/client-identity";
+import { getDeadlinePolicy } from "@/server/runtime/deadlines";
 import { ApplicationError } from "../application-error";
 import { withDatabase } from "../database";
 import { getServerConfig, requireConfiguration } from "../config";
+import { sqlStepBudget } from "../deadlines";
+import { currentRequestContext } from "../diagnostics";
 import { sessionTokenHash } from "../sessions/credentials";
 import { runIntentSubject, visitorSubject } from "./visitor-identity";
 export { runIntentSubject } from "./visitor-identity";
@@ -85,11 +89,13 @@ export async function requireRateLimit(request: Request, scope: keyof typeof RAT
   const { secret } = requireConfiguration(getServerConfig().session());
   const subject = visitorSubject(secret, at, scope, clientIdentity(request));
   const retryAfter = retryAfterUntil(end, at);
+  const context = currentRequestContext();
+  const { maxWait, timeout } = sqlStepBudget(getDeadlinePolicy(), context ? context.deadlineAt - performance.now() : undefined);
   await withDatabase(db => db.$transaction(async tx => {
     for (const [key, limit] of [["GLOBAL", policy.global], [subject, policy.visitor]] as const) {
       await consumeBucket(tx, scope, key, start, expires, limit, retryAfter);
     }
-  }, { isolationLevel: "ReadCommitted", maxWait: 5000, timeout: 5000 }));
+  }, { isolationLevel: "ReadCommitted", maxWait, timeout }));
 }
 
 /** Reserva por minuto por sesión y global dentro de una transacción abierta o de admisión privada. */
@@ -120,10 +126,12 @@ export async function requireSessionRateLimit(
   const tokenHash = sessionTokenHash(token);
   if (!tokenHash) throw new ApplicationError("SESSION_REQUIRED");
   const at = now();
+  const context = currentRequestContext();
+  const { maxWait, timeout } = sqlStepBudget(getDeadlinePolicy(), context ? context.deadlineAt - performance.now() : undefined);
   await withDatabase(db => db.$transaction(tx => reserveSessionRateLimit(tx, tokenHash, scope, at), {
     isolationLevel: "ReadCommitted",
-    maxWait: 5000,
-    timeout: 5000,
+    maxWait,
+    timeout,
   }));
   return tokenHash;
 }

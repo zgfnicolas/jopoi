@@ -1,12 +1,17 @@
-import { now as wallNow } from "@/server/runtime/clock";
 import "server-only";
+import { performance } from "node:perf_hooks";
+import { now as wallNow } from "@/server/runtime/clock";
+import { getDeadlinePolicy } from "@/server/runtime/deadlines";
+import { verifyMessage } from "@/server/runtime/network";
 import type { Prisma } from "../../generated/prisma/client";
 import type { PublicTraceResponse, PublicTraceVerificationResponse } from "../../shared/trace-contracts";
 import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
+import { mirrorVerificationBudgetMs } from "../deadlines";
+import { currentRequestContext, logDiagnostic } from "../diagnostics";
 import { createHcsEnvelope } from "../events/payload";
-import { verifyMessage } from "@/server/runtime/network";
-import { readRunSnapshot, readRunOperation } from "../operations/storage";
+import type { VerificationResult } from "../hedera/contracts";
+import { readRunOperation, readRunSnapshot } from "../operations/storage";
 import { hasSubmittedAttempt, projectTraceEvent, publicEventSelect, traceLinks } from "./projection";
 
 const runSelect = { id: true, traceId: true, state: true, expiresAt: true, scenarioVersion: true, scenarioSnapshot: true,
@@ -47,7 +52,6 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
         const reception = events.find(event => ["RECEIPT_ACCEPTED", "RECEIPT_ISSUE_REPORTED"].includes(event.type) && event.event !== null);
         const trip = run.state === "DRAFT" || run.assignedTripId === null ? null : snapshot.trips.find(item => item.id === run.assignedTripId);
         if (trip === undefined) throw new ApplicationError("INTERNAL_ERROR");
-        // Construct nested objects field by field: snapshots also contain prices and requirements.
         const company = (value: { id: string; name: string }) => ({ id: value.id, name: value.name, isFictitious: true as const });
         const response: PublicTraceResponse = {
           version: 1, demo: true, network: "testnet", traceId: run.traceId, expiresAt: run.expiresAt.toISOString(), state: run.state,
@@ -77,9 +81,44 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
       let observation: PublicTraceVerificationResponse["observation"] = null;
       if (before.event.event !== null && publication.topicId !== null && publication.transactionId !== null && hasSubmittedAttempt(before.row)) {
         requireValidity(before.run.expiresAt);
+        const context = currentRequestContext();
+        if (context?.clientSignal?.aborted) throw new ApplicationError("DATABASE_UNAVAILABLE");
+        const policy = getDeadlinePolicy();
+        const remainingMs = context ? context.deadlineAt - performance.now() : policy.verificationDeadlineMs;
+        const mirrorBudgetMs = mirrorVerificationBudgetMs(policy, remainingMs);
         const { envelope } = createHcsEnvelope(before.event.event);
-        const result = await verify({ transactionId: publication.transactionId, topicId: publication.topicId, envelope,
-          sequenceNumber: publication.sequenceNumber, confirmedAt: before.row.publication?.confirmedAt ?? null });
+        const topicId = publication.topicId;
+        const transactionId = publication.transactionId;
+        const unavailableResult = (): VerificationResult => ({
+          state: "UNAVAILABLE", code: "HCS_MIRROR_UNAVAILABLE",
+          evidence: { version: 1, observedAt: now().toISOString(), topicId, transactionId, sequenceNumber: null,
+            consensusTimestamp: null, localDigest: envelope.digest, remoteDigest: null, identifiersMatch: false, digestMatch: false },
+        });
+        const result = await new Promise<VerificationResult>((resolve, reject) => {
+          if (mirrorBudgetMs <= 0) {
+            logDiagnostic({ event: "publication.recovered", code: "HCS_MIRROR_UNAVAILABLE", outcome: "partial", severity: "WARN", durationMs: 0 });
+            resolve(unavailableResult());
+            return;
+          }
+          const controller = new AbortController();
+          const onClientAbort = () => {
+            clearTimeout(timer);
+            controller.abort();
+            reject(new ApplicationError("DATABASE_UNAVAILABLE"));
+          };
+          const timer = setTimeout(() => {
+            context?.clientSignal?.removeEventListener("abort", onClientAbort);
+            controller.abort();
+            logDiagnostic({ event: "publication.recovered", code: "HCS_MIRROR_UNAVAILABLE", outcome: "partial", severity: "WARN", durationMs: mirrorBudgetMs });
+            resolve(unavailableResult());
+          }, mirrorBudgetMs);
+          context?.clientSignal?.addEventListener("abort", onClientAbort, { once: true });
+          verify({ transactionId, topicId, envelope, sequenceNumber: publication.sequenceNumber,
+            confirmedAt: before.row.publication?.confirmedAt ?? null, signal: controller.signal }).then(
+            (value) => { clearTimeout(timer); context?.clientSignal?.removeEventListener("abort", onClientAbort); resolve(value); },
+            (error) => { clearTimeout(timer); context?.clientSignal?.removeEventListener("abort", onClientAbort); reject(error); },
+          );
+        });
         // Explicit copy: remote evidence may never add fields to the public response.
         const e = result.evidence;
         observation = { state: result.state, code: result.code, evidence: {

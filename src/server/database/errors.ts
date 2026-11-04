@@ -1,7 +1,7 @@
 import { ApplicationError } from "../application-error";
 
 const UNAVAILABLE_CODES = new Set([
-  "P1000", "P1001", "P1002", "P1003", "P1008", "P1010", "P1011", "P1017", "P2024", "P2037",
+  "P1000", "P1001", "P1002", "P1003", "P1008", "P1010", "P1011", "P1017", "P2024", "P2028", "P2037",
   "ECONNREFUSED", "ECONNRESET", "ENOTFOUND", "ETIMEDOUT", "EPIPE", "ENETUNREACH",
   "28P01", "28000", "3D000", "53300", "57P01", "57P02", "57P03", "57014",
 ]);

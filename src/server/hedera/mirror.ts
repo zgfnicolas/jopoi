@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { getDeadlinePolicy } from "@/server/runtime/deadlines";
 import { canonicalJson } from "../../domain/canonical-json";
 import { eventDigest, hcsEnvelopeSchema } from "../../domain/event-schemas";
 import type { HcsEventEnvelope } from "../../shared/event-contracts";
-import { HcsError, preserveHcsCause, type NetworkOutcome, type VerificationResult } from "./contracts";
 import { currentRequestContext, logDiagnostic } from "../diagnostics";
+import { HcsError, preserveHcsCause, type NetworkOutcome, type VerificationResult } from "./contracts";
 
 const MIRROR = "https://testnet.mirrornode.hedera.com";
 const topic = z.string().max(64).regex(/^0\.0\.[1-9]\d*$/);
@@ -28,10 +29,12 @@ export function mirrorTransactionId(id: string): string {
 }
 
 /** Bounded public endpoint, no redirects, pagination, SDK credentials or automatic retries. */
-async function mirrorJson(path: string, maxBytes: number): Promise<unknown | null> {
+async function mirrorJson(path: string, maxBytes: number, signal?: AbortSignal): Promise<unknown | null> {
   try {
+    const stepSignal = AbortSignal.timeout(getDeadlinePolicy().mirrorStepTimeoutMs);
+    const combinedSignal = signal ? AbortSignal.any([signal, stepSignal]) : stepSignal;
     const response = await fetch(`${MIRROR}/api/v1/${path}`, {
-      cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3000), headers: { Accept: "application/json" },
+      cache: "no-store", redirect: "error", signal: combinedSignal, headers: { Accept: "application/json" },
     });
     if (!response.ok) {
       await response.body?.cancel();
@@ -48,6 +51,7 @@ async function mirrorJson(path: string, maxBytes: number): Promise<unknown | nul
     try {
       while (true) {
         const part = await reader.read();
+        if (combinedSignal.aborted) { await reader.cancel(); throw new HcsError("HCS_MIRROR_UNAVAILABLE"); }
         if (part.done) break;
         size += part.value.length;
         if (size > maxBytes) { await reader.cancel(); throw new HcsError("HCS_MIRROR_UNAVAILABLE"); }
@@ -64,9 +68,9 @@ async function mirrorJson(path: string, maxBytes: number): Promise<unknown | nul
   } catch (error) { throw new HcsError("HCS_MIRROR_UNAVAILABLE", { cause: error }); }
 }
 
-export async function lookupTransaction(id: string, expectedTopic: string | null, kind: "message" | "topic" = "message"): Promise<NetworkOutcome> {
+export async function lookupTransaction(id: string, expectedTopic: string | null, kind: "message" | "topic" = "message", signal?: AbortSignal): Promise<NetworkOutcome> {
   const mirrorId = mirrorTransactionId(id);
-  const raw = await mirrorJson(`transactions/${mirrorId}?nonce=0&scheduled=false`, 262144);
+  const raw = await mirrorJson(`transactions/${mirrorId}?nonce=0&scheduled=false`, 262144, signal);
   if (raw === null) return { kind: "unknown", code: "HCS_MIRROR_PENDING" };
   const result = transactionResponse.safeParse(raw);
   if (!result.success) throw new HcsError("HCS_MIRROR_UNAVAILABLE");
@@ -88,7 +92,7 @@ export async function lookupTransaction(id: string, expectedTopic: string | null
 
 export async function verifyMessage(input: {
   transactionId: string; topicId: string; envelope: HcsEventEnvelope;
-  sequenceNumber: string | null; confirmedAt: Date | null;
+  sequenceNumber: string | null; confirmedAt: Date | null; signal?: AbortSignal;
 }): Promise<VerificationResult> {
   const evidence = {
     version: 1 as const, observedAt: new Date().toISOString(), topicId: input.topicId,
@@ -98,14 +102,16 @@ export async function verifyMessage(input: {
   };
   const unavailable = (pending: boolean): VerificationResult => ({ state: pending ? "PENDING" : "UNAVAILABLE",
     code: pending ? "HCS_MIRROR_PENDING" : "HCS_MIRROR_UNAVAILABLE", evidence });
+  const totalSignal = input.signal
+    ? AbortSignal.any([input.signal, AbortSignal.timeout(getDeadlinePolicy().mirrorTotalTimeoutMs)])
+    : AbortSignal.timeout(getDeadlinePolicy().mirrorTotalTimeoutMs);
   try {
     topic.parse(input.topicId);
-    const lookup = await lookupTransaction(input.transactionId, input.topicId);
+    const lookup = await lookupTransaction(input.transactionId, input.topicId, "message", totalSignal);
     if (lookup.kind !== "confirmed" || lookup.consensusTimestamp === null) {
-      // A missing old receipt/message does not erase historical confirmation or prove a reset.
       return unavailable(input.confirmedAt === null || Date.now() - input.confirmedAt.getTime() < 180000);
     }
-    const raw = await mirrorJson(`topics/messages/${lookup.consensusTimestamp}`, 65536);
+    const raw = await mirrorJson(`topics/messages/${lookup.consensusTimestamp}`, 65536, totalSignal);
     if (raw === null) return unavailable(input.confirmedAt === null || Date.now() - input.confirmedAt.getTime() < 180000);
     const message = messageSchema.safeParse(raw);
     if (!message.success) throw new HcsError("HCS_MIRROR_UNAVAILABLE");

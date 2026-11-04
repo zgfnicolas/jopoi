@@ -49,6 +49,22 @@ export class TestRuntime {
     const iso = JSON.parse(await readFile(resolve(this.resources.directory, "clock.json"), "utf8"));
     await this.clock(new Date(new Date(iso).getTime() + milliseconds).toISOString());
   }
+  async deadlines(overrides: Record<string, number> | null) {
+    const file = resolve(this.resources.directory, "deadlines.json");
+    if (!overrides) {
+      try { await unlink(file); } catch { /* ignore */ }
+      return;
+    }
+    const next = `${file}.${randomUUID()}.next`;
+    await writeFile(next, JSON.stringify(overrides));
+    for (let attempt = 0; ; attempt++) {
+      try { await rename(next, file); return; }
+      catch (error) {
+        if (attempt >= 20) throw error;
+        await new Promise(resolve => setTimeout(resolve, 10));
+      }
+    }
+  }
   async network(mode: NetworkMode, release = false) { this.mode = mode; await rpc(this.resources.socket, "control", { mode, release }); }
   async ledger() { return rpc<{ submissions: string[]; messages: Array<{ transactionId: string; envelope: { eventId: string; ordinal: number }; submitted: boolean }> }>(this.resources.socket, "inspect"); }
   async start() {
@@ -112,6 +128,7 @@ export class TestRuntime {
     await createFixtures(this.resources).clear();
     this.overrides = {};
     this.mode = "confirmed";
+    await this.deadlines(null);
     await this.clock(time);
     await this.start();
   }

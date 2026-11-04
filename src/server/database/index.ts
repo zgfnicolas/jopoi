@@ -1,9 +1,11 @@
 import "server-only";
-import { measureDependency } from "../diagnostics";
-
+import { performance } from "node:perf_hooks";
+import { getDeadlinePolicy } from "@/server/runtime/deadlines";
 import { Prisma, type PrismaClient } from "../../generated/prisma/client";
 import { ApplicationError } from "../application-error";
 import { getServerConfig, requireConfiguration } from "../config";
+import { raceWithReadAbort, sqlStepBudget } from "../deadlines";
+import { currentRequestContext, measureDependency } from "../diagnostics";
 import { createDatabaseClient } from "./client";
 import { mapDatabaseError } from "./errors";
 
@@ -22,25 +24,41 @@ export function getDatabase(): PrismaClient {
   return database;
 }
 
-/** Lecturas u operaciones SQL independientes con traducción de errores de dependencia. */
+/** Lecturas u operaciones SQL independientes con presupuesto de deadline y cancelación de lecturas. */
 export async function withDatabase<T>(work: (db: PrismaClient) => Promise<T>): Promise<T> {
   return measureDependency("database.query", async () => {
-    try { return await work(getDatabase()); } catch (error) { throw mapDatabaseError(error); }
+    const context = currentRequestContext();
+    const policy = getDeadlinePolicy();
+    try {
+      if (context?.clientSignal?.aborted) throw new ApplicationError("DATABASE_UNAVAILABLE");
+      sqlStepBudget(policy, context ? context.deadlineAt - performance.now() : undefined);
+      return await raceWithReadAbort(() => work(getDatabase()), context?.clientSignal);
+    } catch (error) {
+      throw mapDatabaseError(error);
+    }
   });
 }
 
 /** Solo SQL: no llamar Hedera ni otras fronteras externas dentro del callback. */
 export async function withTransaction<T>(work: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
   return measureDependency("database.transaction", async () => {
-  try {
-    return await getDatabase().$transaction(work, {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      maxWait: 2000,
-      timeout: 5000,
-    });
-  } catch (error) {
-    throw mapDatabaseError(error);
-  }
+    const context = currentRequestContext();
+    const policy = getDeadlinePolicy();
+    try {
+      if (context?.clientSignal?.aborted) throw new ApplicationError("DATABASE_UNAVAILABLE");
+      const { maxWait, timeout } = sqlStepBudget(policy, context ? context.deadlineAt - performance.now() : undefined);
+      return await raceWithReadAbort(
+        () =>
+          getDatabase().$transaction(work, {
+            isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+            maxWait,
+            timeout,
+          }),
+        context?.clientSignal,
+      );
+    } catch (error) {
+      throw mapDatabaseError(error);
+    }
   });
 }
 

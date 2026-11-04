@@ -3,9 +3,9 @@ import type { HcsProvider, PreparedMessage, VerificationResult } from "../../src
 import type { verifyMessage as RealVerify } from "../../src/server/hedera/mirror";
 import { rpc } from "./ipc";
 
-function request<T>(operation: string, data: unknown): Promise<T> {
+function request<T>(operation: string, data: unknown, signal?: AbortSignal): Promise<T> {
   if (!process.env.JOPOI_API_TEST_SOCKET || process.env.VERCEL) throw new Error("API_TEST_NETWORK_FORBIDDEN");
-  return rpc<T>(process.env.JOPOI_API_TEST_SOCKET, operation, data);
+  return rpc<T>(process.env.JOPOI_API_TEST_SOCKET, operation, data, signal);
 }
 export function createHcsProvider(_environment: Environment): HcsProvider {
   return {
@@ -19,4 +19,4 @@ export function createHcsProvider(_environment: Environment): HcsProvider {
       topicId: prepared.target.topicId, envelope: prepared.envelope, sequenceNumber, confirmedAt }),
   };
 }
-export const verifyMessage: typeof RealVerify = input => request<VerificationResult>("verify", input);
+export const verifyMessage: typeof RealVerify = ({ signal, ...input }) => request<VerificationResult>("verify", input, signal);

@@ -1,4 +1,5 @@
 import { now as wallNow } from "@/server/runtime/clock";
+import { jitterSample } from "@/server/runtime/jitter";
 import "server-only";
 import { after } from "next/server";
 import { withTransaction } from "../database";
@@ -8,7 +9,7 @@ import { childContext, currentRequestContext, withRequestContext, logDiagnostic 
 import { performance } from "node:perf_hooks";
 
 export function serverCoordinationContext(): CoordinationContext {
-  return { transaction: withTransaction, provider: createHcsProvider(process.env), environment: process.env, now: () => wallNow() };
+  return { transaction: withTransaction, provider: createHcsProvider(process.env), environment: process.env, now: () => wallNow(), jitter: jitterSample };
 }
 
 /** A committed command remains saved even if background registration/work fails. */

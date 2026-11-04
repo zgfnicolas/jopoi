@@ -627,3 +627,125 @@ test("S22-06 · limpieza justa y recuperable con hijos máximos y lease activo s
   expect(requiredEntry(activeAfter.events,0).publication.transactionId).toBe(activeTxId);
   expect((await activeVisitor.trace()).body).toMatchObject({events:[{event:{digest:activeDigest}}]});
 });
+
+test("S22-24 · cuerpo lento, timeout de contraste remoto, cancelación de lectura, caída SQL e incertidumbre de mutación conservan historia y capacidad",async()=>{
+  const activeVisitor=await new Visitor().setup();
+  await activeVisitor.publish();
+  const published=await activeVisitor.run();
+  const event=requiredEntry(published.events,0);
+  const eventId=event.event.payload.eventId;
+  const transactionId=event.publication.transactionId;
+  expect(event.publication.state).toBe("CONFIRMED");
+  expect(event.publication.verificationState).toBe("MATCHED");
+  expect((await activeVisitor.verification(eventId)).body).toMatchObject({state:"MATCHED"});
+  await environment.deadlines({
+    bodyReadTimeoutMs:180,
+    verificationDeadlineMs:650,
+    mirrorTotalTimeoutMs:220,
+    verificationClosingReserveMs:150,
+    readDeadlineMs:800,
+  });
+
+  let slowTimer:ReturnType<typeof setTimeout>|undefined;
+  let slowController:ReadableStreamDefaultController<Uint8Array>|undefined;
+  const slowStream=new ReadableStream<Uint8Array>({
+    start(controller){
+      slowController=controller;
+      controller.enqueue(new TextEncoder().encode('{"requestId":'));
+      slowTimer=setTimeout(()=>{
+        try{controller.enqueue(new TextEncoder().encode(`"${randomUUID()}","role":"coordinator","action":"approve","expectedVersion":2}`));controller.close();}catch{/* stream cerrado */}
+      },600);
+    },
+    cancel(){if(slowTimer)clearTimeout(slowTimer);},
+  });
+  const slowResponse=await fetch(`${environment.origin}/api/demo/runs/${activeVisitor.traceId}/commands`,{
+    method:"POST",
+    headers:{
+      Origin:environment.origin,
+      "X-Jopoi-Request":"demo",
+      "Content-Type":"application/json",
+      Accept:"application/problem+json, application/json;q=0.9",
+      Cookie:activeVisitor.cookie,
+      "X-S21-Visitor":activeVisitor.identity,
+    },
+    body:slowStream,
+    duplex:"half",
+  } as RequestInit);
+  expect(slowResponse.status).toBe(400);
+  expect(slowResponse.headers.get("content-type")).toContain("application/problem+json");
+  expect(await slowResponse.json()).toMatchObject({code:"INVALID_INPUT",status:400});
+  if(slowTimer)clearTimeout(slowTimer);
+  try{slowController?.close();}catch{/* stream cerrado */}
+
+  const chunkedOversizedStream=new ReadableStream<Uint8Array>({
+    start(controller){
+      controller.enqueue(new TextEncoder().encode(`{"requestId":"${randomUUID()}","role":"coordinator","action":"approve","expectedVersion":2,"pad":"${"x".repeat(5000)}"}`));
+      controller.close();
+    },
+  });
+  const chunkedOversizedResponse=await fetch(`${environment.origin}/api/demo/runs/${activeVisitor.traceId}/commands`,{
+    method:"POST",
+    headers:{
+      Origin:environment.origin,
+      "X-Jopoi-Request":"demo",
+      "Content-Type":"application/json",
+      Accept:"application/problem+json",
+      Cookie:activeVisitor.cookie,
+      "X-S21-Visitor":activeVisitor.identity,
+    },
+    body:chunkedOversizedStream,
+    duplex:"half",
+  } as RequestInit);
+  expect(chunkedOversizedResponse.status).toBe(400);
+  expect(await chunkedOversizedResponse.json()).toMatchObject({code:"INVALID_INPUT",status:400});
+  expect((await activeVisitor.run()).version).toBe(2);
+
+  await environment.network("verify-hold");
+  const verifyStarted=Date.now();
+  const timedOutVerify=await activeVisitor.verification(eventId);
+  expect(Date.now()-verifyStarted).toBeLessThan(1500);
+  expect(timedOutVerify.status).toBe(200);
+  expect(timedOutVerify.body).toMatchObject({
+    state:"UNAVAILABLE",
+    publication:{state:"CONFIRMED",transactionId},
+    storedVerification:{state:"MATCHED"},
+    observation:{state:"UNAVAILABLE",code:"HCS_MIRROR_UNAVAILABLE"},
+  });
+
+  const abortController=new AbortController();
+  const abortTimer=setTimeout(()=>abortController.abort(),40);
+  await expect(fetch(`${environment.origin}/api/traces/${activeVisitor.traceId}/events/${eventId}/verification`,{
+    headers:{"X-S21-Visitor":activeVisitor.identity},
+    signal:abortController.signal,
+  })).rejects.toThrow();
+  clearTimeout(abortTimer);
+
+  await environment.network("confirmed",true);
+  const recoveredVerify=await activeVisitor.verification(eventId);
+  expect(recoveredVerify.status).toBe(200);
+  expect(recoveredVerify.body).toMatchObject({
+    state:"MATCHED",
+    publication:{state:"CONFIRMED",transactionId},
+    storedVerification:{state:"MATCHED"},
+    observation:{state:"MATCHED",code:null},
+  });
+
+  const approveRequestId=randomUUID();
+  await environment.database("stop");
+  try{
+    const downResult=await activeVisitor.post(`/api/demo/runs/${activeVisitor.traceId}/commands`,{requestId:approveRequestId,role:"coordinator",action:"approve",expectedVersion:2},{Accept:"application/problem+json"});
+    expect(downResult.status).toBe(503);
+    expect(downResult.headers.get("retry-after")).toBeNull();
+    expect(downResult.body).toMatchObject({code:"DATABASE_UNAVAILABLE",status:503});
+  }finally{
+    await environment.database("start");
+  }
+
+  const firstApprove=await activeVisitor.post(`/api/demo/runs/${activeVisitor.traceId}/commands`,{requestId:approveRequestId,role:"coordinator",action:"approve",expectedVersion:2});
+  expect(firstApprove.status).toBe(200);
+  expect(firstApprove.body).toMatchObject({replayed:false,current:{version:3,operation:{state:"APPROVED"}}});
+
+  const replayedApprove=await activeVisitor.post(`/api/demo/runs/${activeVisitor.traceId}/commands`,{requestId:approveRequestId,role:"coordinator",action:"approve",expectedVersion:2});
+  expect(replayedApprove.status).toBe(200);
+  expect(replayedApprove.body).toMatchObject({replayed:true,current:{version:3,operation:{state:"APPROVED"}}});
+});

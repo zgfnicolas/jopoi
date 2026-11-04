@@ -66,3 +66,25 @@ test("S22-12: Retry-After admite segundos y fecha HTTP sin inventar plazos", () 
   }
   assert.equal(retryAfterSeconds(new Response()), undefined);
 });
+
+test("S22-13: desconexión o aborto del cliente devuelve NETWORK_UNAVAILABLE sin reintentar", async t => {
+  let requests = 0;
+  t.mock.method(globalThis, "fetch", async (_input: unknown, init?: RequestInit) => {
+    requests++;
+    if (init?.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    throw new TypeError("fetch failed");
+  });
+  const aborted = new AbortController();
+  aborted.abort();
+  const readResult = await readApi("/api/demo/session", success, aborted.signal);
+  assert.equal(readResult.ok, false);
+  if (!readResult.ok) assert.equal(readResult.error.code, "NETWORK_UNAVAILABLE");
+
+  const mutationResult = await postOperation("/api/demo/runs", "{}", success, [200, 201], aborted.signal);
+  assert.equal(mutationResult.ok, false);
+  if (!mutationResult.ok) {
+    assert.equal(mutationResult.error.status, null);
+    assert.equal(mutationResult.error.code, "NETWORK_UNAVAILABLE");
+  }
+  assert.equal(requests, 2);
+});

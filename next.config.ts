@@ -43,6 +43,8 @@ export default function configuration(phase: string): NextConfig {
       "@/server/runtime/clock": "./tests/support/clock.ts",
       "@/server/runtime/network": "./tests/support/network.ts",
       "@/server/runtime/client-identity": "./tests/support/client-identity.ts",
+      "@/server/runtime/deadlines": "./tests/support/deadlines.ts",
+      "@/server/runtime/jitter": "./tests/support/jitter.ts",
     } },
   };
 }

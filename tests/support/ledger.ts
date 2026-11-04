@@ -1,9 +1,9 @@
-import { createServer, type Server } from "node:net";
+import { createServer, type Server, type Socket } from "node:net";
 import { readFileSync } from "node:fs";
 import type { HcsEventEnvelope } from "../../src/shared/event-contracts";
 import type { HcsTarget } from "../../src/server/hedera/target";
 
-export type NetworkMode = "confirmed" | "rejected" | "unknown" | "timeout" | "mirror-lag" | "altered" | "suspended" | "hold" | "prepare-hold" | "malformed-verification";
+export type NetworkMode = "confirmed" | "rejected" | "unknown" | "timeout" | "mirror-lag" | "altered" | "suspended" | "hold" | "prepare-hold" | "verify-hold" | "malformed-verification";
 interface Message { transactionId: string; target: HcsTarget; envelope: HcsEventEnvelope; submitted: boolean; mode: NetworkMode; sequence: number; consensusTimestamp: string | null }
 
 /** Simulated external ledger, independent of SQL and of the application's coordinator. */
@@ -13,7 +13,16 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
   let sequence = 0;
   const messages = new Map<string, Message>();
   const submissions: string[] = [];
-  const held: Array<() => void> = [];
+  const held = new Set<() => void>();
+  const waitHeld = (connection: Socket) => new Promise<void>(resolve => {
+    const done = () => {
+      held.delete(done);
+      connection.removeListener("close", done);
+      resolve();
+    };
+    held.add(done);
+    connection.once("close", done);
+  });
   const time = () => JSON.parse(readFileSync(clockFile, "utf8")) as string;
   const server = createServer(connection => {
     let input = "";
@@ -28,7 +37,7 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
         if (operation === "control") {
           if (data.reset) { messages.clear(); submissions.length = 0; sequence = 0; }
           mode = data.mode ?? mode;
-          if (data.release) held.splice(0).forEach(release => release());
+          if (data.release) [...held].forEach(release => release());
           value = true;
         } else if (operation === "inspect") {
           value = { submissions: [...submissions], messages: [...messages.values()] };
@@ -36,7 +45,7 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
           const transactionId = `0.0.17@${Math.floor(new Date(time()).getTime() / 1000)}.${String(++counter).padStart(9, "0")}`;
           const message: Message = { ...data, transactionId, submitted: false, mode, sequence: 0, consensusTimestamp: null };
           messages.set(transactionId, message);
-          if (mode === "prepare-hold") await new Promise<void>(resolve => held.push(resolve));
+          if (mode === "prepare-hold") await waitHeld(connection);
           value = { target: data.target, envelope: data.envelope, transactionId };
         } else if (operation === "submit") {
           const message = messages.get(data.transactionId)!;
@@ -49,7 +58,7 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
               message.consensusTimestamp = `${Math.floor(new Date(time()).getTime() / 1000)}.000000000`;
             }
           }
-          if (mode === "hold") await new Promise<void>(resolve => held.push(resolve));
+          if (mode === "hold") await waitHeld(connection);
           value = mode === "rejected" ? { kind: "rejected", code: "HCS_TRANSACTION_REJECTED", source: "PRECHECK" }
             : { kind: "unknown", code: mode === "timeout" ? "HCS_UNAVAILABLE" : "HCS_RESULT_UNKNOWN" };
         } else if (operation === "reconcile") {
@@ -59,8 +68,9 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
             : message.mode === "rejected" ? { kind: "rejected", code: "HCS_TRANSACTION_REJECTED", source: "PRECHECK" }
             : { kind: "confirmed", sequenceNumber: String(message.sequence), consensusTimestamp: message.consensusTimestamp, topicId: message.target.topicId };
         } else if (operation === "verify") {
+          if (mode === "verify-hold") await waitHeld(connection);
           const message = messages.get(data.transactionId);
-          const unavailable = ["suspended", "unknown", "timeout", "hold"].includes(mode) || !message?.consensusTimestamp;
+          const unavailable = ["suspended", "unknown", "timeout", "hold", "verify-hold"].includes(mode) || !message?.consensusTimestamp;
           const pending = mode === "mirror-lag";
           const identifiersMatch = !!message && message.target.topicId === data.topicId;
           const digestMatch = !!message && message.envelope.digest === data.envelope.digest;
@@ -76,8 +86,8 @@ export async function ledger(socket: string, clockFile: string): Promise<Server>
           };
           if (mode === "malformed-verification") value = null;
         } else throw new Error("UNKNOWN_TEST_OPERATION");
-        connection.end(JSON.stringify({ value }) + "\n");
-      } catch { connection.end(JSON.stringify({ error: "TEST_LEDGER_ERROR" }) + "\n"); }
+        if (!connection.destroyed && connection.writable) connection.end(JSON.stringify({ value }) + "\n");
+      } catch { if (!connection.destroyed && connection.writable) connection.end(JSON.stringify({ error: "TEST_LEDGER_ERROR" }) + "\n"); }
     });
   });
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(socket, resolve); });

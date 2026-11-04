@@ -32,7 +32,7 @@ const errorResponses = Object.fromEntries([...new Set(Object.values(API_ERROR_CA
 }]));
 function operation(id: string, summary: string, response: string, statuses: readonly number[], security: "session" | "public" | "cron", input?: string, bodyBytes?: number) {
   return { operationId: id, summary, security: security === "public" ? [] : security === "cron" ? [{ cronBearer: [] }] : [{ demoSession: [] }],
-    description: "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Ninguna mutación se reintenta automáticamente. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
+    description: "Errores negociados por Accept: problem+json explícito con calidad no menor a JSON; de otro modo JSON anterior. Presupuesto total acotado (lecturas <= 8 s; mutaciones <= 10 s con lectura de cuerpo <= 3 s; contraste remoto <= 10 s con Mirror Node <= 6 s y paso <= 3 s). Ninguna mutación se reintenta automáticamente ni se trata como revertida si el cliente corta la conexión. Los requestId de intención se conservan al repetir los mismos bytes; otra intención con igual clave devuelve 409. Confirmar SQL no confirma HCS.",
     ...(input === undefined ? {} : { requestBody: { required: true, content: { "application/json": { schema: ref(input) } } },
       parameters: [{ name: "Origin", in: "header", required: true, schema: { type: "string", format: "uri" }, description: "Origen APP_URL configurado, sin aceptar Host del visitante." },
         { name: "X-Jopoi-Request", in: "header", required: true, schema: { const: "demo" } }], "x-max-body-bytes": bodyBytes }),

@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] El cuerpo está acotado por bytes y tiempo aun sin Content-Length fiable; lectores y recursos se cancelan o liberan al terminar/rechazar.
-- [ ] SQL, espera de pool y mirror tienen timeout dentro de un deadline total documentado, no sólo límites independientes que se sumen sin control.
-- [ ] Contraste remoto completo respeta 10 s y preserva estado histórico ante timeout; no se inventa coincidencia ni rechazo definitivo.
-- [ ] La cancelación de una lectura evita trabajo abandonado donde el runtime/driver lo permita; cancelar una mutación no se presenta como rollback ni autoriza otro ID.
-- [ ] Pruebas HTTP de cuerpo lento, dependencia caída y desconexión verifican respuesta/estado/capacidad posterior sin introducir sleeps reales extensos.
+- [x] El cuerpo está acotado por bytes y tiempo aun sin Content-Length fiable; lectores y recursos se cancelan o liberan al terminar/rechazar.
+- [x] SQL, espera de pool y mirror tienen timeout dentro de un deadline total documentado, no sólo límites independientes que se sumen sin control.
+- [x] Contraste remoto completo respeta 10 s y preserva estado histórico ante timeout; no se inventa coincidencia ni rechazo definitivo.
+- [x] La cancelación de una lectura evita trabajo abandonado donde el runtime/driver lo permita; cancelar una mutación no se presenta como rollback ni autoriza otro ID.
+- [x] Pruebas HTTP de cuerpo lento, dependencia caída y desconexión verifican respuesta/estado/capacidad posterior sin introducir sleeps reales extensos.
 

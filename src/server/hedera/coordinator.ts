@@ -8,6 +8,8 @@ import { createHcsEnvelope, readPublicEvent } from "../events/payload-core";
 import { HcsError, type HcsProvider, type NetworkOutcome, type PreparedMessage } from "./contracts";
 import { configuredTarget, type HcsTarget } from "./target";
 import { readRunSnapshot, readRunOperation } from "../operations/storage-core";
+import { createExternalCapacity, EXTERNAL_CAPACITY_POLICY, type CapacityPermit } from "./capacity";
+import { eligibleAt } from "./retry-policy";
 
 export type TransactionRunner = <T>(work: (tx: Prisma.TransactionClient) => Promise<T>) => Promise<T>;
 export interface CoordinationContext {
@@ -15,6 +17,8 @@ export interface CoordinationContext {
   provider: HcsProvider;
   environment: Environment;
   now: () => Date;
+  /** Jitter sample in [0, 1) from the policy seam; tests inject a deterministic value. */
+  jitter: () => number;
 }
 export const utcDay = (now: Date) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 export const nextUtcDay = (now: Date) => new Date(utcDay(now).getTime() + 86400000);
@@ -48,7 +52,10 @@ function sameTarget(a: HcsTarget, b: HcsTarget | null) {
 
 /** Every mutation is fenced by an unexpired owner; external calls never hold a SQL transaction. */
 export function createCoordinator(context: CoordinationContext) {
-  const { transaction, provider, environment, now } = context;
+  const { transaction, provider, environment, now, jitter } = context;
+  const capacity = createExternalCapacity({ transaction, now });
+  /** Cooldown is a floor; bounded jitter only delays and respects run expiry. */
+  const later = (cooldownMs: number, expiresAt: Date) => eligibleAt(now(), cooldownMs, expiresAt, jitter());
   async function load(tx: Prisma.TransactionClient, eventId: string, owner: string) {
     const row = await tx.hcsPublication.findUnique({ where: { eventId }, include });
     if (row === null || row.event.run.expiresAt <= now()) throw new ApplicationError("NOT_FOUND");
@@ -118,7 +125,7 @@ export function createCoordinator(context: CoordinationContext) {
       await tx.hcsPublication.update({ where: { eventId }, data: {
         state: exhausted ? "FAILED" : paused.has(result.code) && (absent || rejected) ? "PAUSED_CONFIG" : rejected ? "FAILED" : absent ? "QUEUED" : "UNCERTAIN",
         lastErrorCode: result.code,
-        nextAttemptAt: exhausted ? null : new Date(now().getTime() + (absent || rejected && paused.has(result.code) ? 900000 : rejected && row.automaticAttempts >= 2 ? 300000 : 60000)),
+        nextAttemptAt: exhausted ? null : later(absent || rejected && paused.has(result.code) ? 900000 : rejected && row.automaticAttempts >= 2 ? 300000 : 60000, row.event.run.expiresAt),
       } });
     });
   }
@@ -186,7 +193,7 @@ export function createCoordinator(context: CoordinationContext) {
       else attempt = await tx.hcsSubmissionAttempt.create({ data: { ...data, eventId, slot: manual ? 4 : row.automaticAttempts + 1, kind: manual ? "MANUAL" : "AUTOMATIC" } });
       const history = Array.isArray(row.attemptHistory) ? row.attemptHistory : [];
       await tx.hcsPublication.update({ where: { eventId }, data: {
-        state: "IN_FLIGHT", nextAttemptAt: new Date(now().getTime() + 60000),
+        state: "IN_FLIGHT", nextAttemptAt: later(60000, row.event.run.expiresAt),
         ...(!reuse ? manual ? { manualAttempts: { increment: 1 } } : { automaticAttempts: { increment: 1 } } : {}),
         attemptHistory: json([...history, { boundary: "SUBMISSION_STARTED", transactionId: signed.transactionId, attemptId: attempt.id, at: now().toISOString() }]),
       } });
@@ -212,7 +219,7 @@ export function createCoordinator(context: CoordinationContext) {
       const terminal = result.state === "MATCHED" || result.state === "MISMATCH";
       await tx.hcsPublication.update({ where: { eventId }, data: {
         verificationState: result.state, verifiedAt: new Date(result.evidence.observedAt), lastErrorCode: result.code,
-        nextAttemptAt: terminal ? null : new Date(now().getTime() + 900000),
+        nextAttemptAt: terminal ? null : later(900000, fresh.event.run.expiresAt),
         ...(terminal || fresh.verificationEvidence === null ? { verificationEvidence: json(result.evidence) } : {}),
         ...(result.state === "MATCHED" ? { sequenceNumber: result.evidence.sequenceNumber === null ? fresh.sequenceNumber : BigInt(result.evidence.sequenceNumber), consensusTimestamp: result.evidence.consensusTimestamp } : {}),
       } });
@@ -222,7 +229,22 @@ export function createCoordinator(context: CoordinationContext) {
     if (deadline - now().getTime() < 20000) return false;
     const owner = await claim(eventId);
     if (!owner) return false;
+    let permit: CapacityPermit | null = null;
     try {
+      // Capacidad externa global: un permiso por recorrido procesado; el SQL local no se abre durante la llamada.
+      permit = await capacity.acquire();
+      if (permit === null) {
+        // Rechazo temprano sin tocar el proveedor: se difiere con cooldown/jitter y se conserva el estado honesto.
+        await transaction(async (tx) => {
+          const row = await tx.hcsPublication.findUnique({ where: { eventId }, include: { event: { include: { run: true } } } });
+          if (row === null || row.event.run.expiresAt <= now()) return;
+          await tx.hcsPublication.update({ where: { eventId }, data: {
+            lastErrorCode: "HCS_CAPACITY_BUSY",
+            nextAttemptAt: later(EXTERNAL_CAPACITY_POLICY.busyCooldownMs, row.event.run.expiresAt),
+          } });
+        });
+        return false;
+      }
       let row = await transaction((tx) => load(tx, eventId, owner));
       if (row.state === "CONFIRMED") { await verify(eventId, owner, deadline); return true; }
       const attempt = row.attempts[0];
@@ -266,6 +288,7 @@ export function createCoordinator(context: CoordinationContext) {
       return true;
     } finally {
       await transaction(async (tx) => { await tx.hcsPublication.updateMany({ where: { eventId, leaseOwner: owner }, data: { leaseOwner: null, leaseExpiresAt: null } }); });
+      if (permit !== null) await capacity.release(permit);
     }
   }
   async function drain(options: { traceId?: string; maxEvents: number; deadline: number }) {

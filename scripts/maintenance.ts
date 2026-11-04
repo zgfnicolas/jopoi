@@ -18,11 +18,12 @@ async function main() {
   const { createDatabaseClient } = await import("../src/server/database/client");
   const { mapDatabaseError } = await import("../src/server/database/errors");
   const { now } = await import("@/server/runtime/clock");
+  const { jitterSample } = await import("@/server/runtime/jitter");
   const { createHcsProvider } = await import("@/server/runtime/network");
   const { runMaintenance } = await import("../src/server/hedera/maintenance-core");
   const client = createDatabaseClient(config.config.url);
   try {
-    const result = await runMaintenance({ environment: process.env, provider: createHcsProvider(process.env), now,
+    const result = await runMaintenance({ environment: process.env, provider: createHcsProvider(process.env), now, jitter: jitterSample,
       transaction: async work => {
         try { return await client.$transaction(work, { isolationLevel: "Serializable", maxWait: 2000, timeout: 5000 }); }
         catch (error) { throw mapDatabaseError(error); }

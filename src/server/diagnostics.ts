@@ -24,26 +24,25 @@ function isHcsCode(value: string): value is HcsCode { return HCS_CODES.some(know
 function isCode(value: string): value is Code { return isApiErrorCode(value) || isHcsCode(value) || customCodes.some(known => known === value); }
 
 export interface RequestContext {
-  readonly requestId: string;
-  readonly telemetryTraceId: string;
-  readonly spanId: string;
-  readonly parentSpanId: string | null;
-  readonly operation: Operation;
-  readonly method: string;
-  readonly route: string;
-  businessTraceId: string | undefined;
+  readonly requestId: string; readonly telemetryTraceId: string; readonly spanId: string; readonly parentSpanId: string | null;
+  readonly operation: Operation; readonly method: string; readonly route: string;
+  readonly startedAt: number; readonly deadlineAt: number; readonly clientSignal?: AbortSignal; businessTraceId: string | undefined;
 }
 const storage = new AsyncLocalStorage<RequestContext>();
-export function createRequestContext(operation: HttpOperation = "session.read"): RequestContext {
-  const [method, route] = HTTP_OPERATIONS[operation];
-  // El visitante no decide la referencia interna ni aporta baggage al contexto privado.
-  return { requestId: randomUUID(), telemetryTraceId: randomBytes(16).toString("hex"), spanId: randomBytes(8).toString("hex"), parentSpanId: null, operation, method, route, businessTraceId: undefined };
+export function createRequestContext(operation: HttpOperation = "session.read", options?: { budgetMs?: number; clientSignal?: AbortSignal }): RequestContext {
+  const [method, route] = HTTP_OPERATIONS[operation], startedAt = performance.now();
+  return { requestId: randomUUID(), telemetryTraceId: randomBytes(16).toString("hex"), spanId: randomBytes(8).toString("hex"), parentSpanId: null,
+    operation, method, route, startedAt, deadlineAt: startedAt + (options?.budgetMs ?? 10_000), ...(options?.clientSignal ? { clientSignal: options.clientSignal } : {}), businessTraceId: undefined };
 }
 export const currentRequestContext = () => storage.getStore();
 export const withRequestContext = <T>(context: RequestContext, work: () => T): T => storage.run(context, work);
 export const withoutRequestContext = <T>(work: () => T): T => storage.exit(work);
 export const shouldLogHttp = (status: number, requestId: string): boolean => status < 400 || status >= 500 || requestId.endsWith("0");
 export function childContext(parent: RequestContext, operation: Operation): RequestContext {
+  if (operation === "publications.drain") {
+    const startedAt = performance.now(), { clientSignal: _ignored, ...rest } = parent;
+    return { ...rest, operation, spanId: randomBytes(8).toString("hex"), parentSpanId: parent.spanId, startedAt, deadlineAt: startedAt + 45_000 };
+  }
   return { ...parent, operation, spanId: randomBytes(8).toString("hex"), parentSpanId: parent.spanId };
 }
 export function bindBusinessTraceId(value: string): void {
