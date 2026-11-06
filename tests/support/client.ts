@@ -17,16 +17,39 @@ export const environment = new ApiEnvironment();
 export class Visitor {
   identity: string = randomUUID();
   cookie = "";
+  csrfToken = "";
   traceId = "";
   async request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<HttpResult<T>> {
     const response = await fetch(environment.origin + path, {
       method, headers: { "X-S21-Visitor": this.identity, ...(this.cookie ? { Cookie: this.cookie } : {}),
-        ...(method === "POST" ? { Origin: environment.origin, "X-Jopoi-Request": "demo", "Content-Type": "application/json" } : {}), ...headers },
+        ...(method === "POST" ? { Origin: environment.origin, "X-Jopoi-Request": "demo", "Content-Type": "application/json",
+          ...(this.csrfToken ? { "X-CSRF-Token": this.csrfToken } : {}) } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(60000),
     });
-    const cookie = response.headers.get("set-cookie");
-    if (cookie) this.cookie = cookie.slice(0, cookie.indexOf(";") < 0 ? cookie.length : cookie.indexOf(";"));
+    const setCookies = typeof (response.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === "function"
+      ? (response.headers as unknown as { getSetCookie: () => string[] }).getSetCookie()
+      : (response.headers.get("set-cookie") ? [response.headers.get("set-cookie")!] : []);
+    for (const c of setCookies) {
+      const match = /^([^=;\s]+)=([^;]*)/.exec(c);
+      if (match) {
+        const [, name, val] = match;
+        if (/max-age=0/i.test(c) || /expires=thu, 01 jan 1970/i.test(c)) {
+          if (this.cookie.startsWith(`${name}=`)) this.cookie = "";
+        } else if (val && val.length > 0) {
+          this.cookie = `${name}=${val}`;
+        }
+      }
+    }
+    if (response.status === 401) {
+      this.cookie = "";
+      this.csrfToken = "";
+    }
     const responseBody: unknown = await response.json();
+    const csrf = response.headers.get("x-csrf-token")
+      ?? (responseBody && typeof responseBody === "object" && "csrfToken" in responseBody && typeof (responseBody as Record<string, unknown>).csrfToken === "string"
+        ? (responseBody as Record<string, unknown>).csrfToken as string
+        : undefined);
+    if (csrf) this.csrfToken = csrf;
     assertApiContract(method, path, response.status, response.headers, responseBody);
     return { status: response.status, body: responseBody as T, headers: response.headers };
   }

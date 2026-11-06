@@ -1,6 +1,7 @@
 import { requiredEntry } from "../support/required-entry";
 import { afterAll, beforeEach, expect, inject, test } from "vitest";
 import { randomUUID } from "node:crypto";
+import { request as httpRequest } from "node:http";
 import { Client } from "pg";
 import { environment, eventually, Visitor } from "../support/client";
 import { fixture } from "../support/fixtures";
@@ -10,6 +11,7 @@ import { child, completed } from "../support/process";
 import { resolve } from "node:path";
 import { writeFile, readFile, readdir } from "node:fs/promises";
 import { localhostCertificate } from "../support/tls-certificate";
+import type { DemoSessionResponse } from "../../src/shared/session-contracts";
 
 beforeEach(()=>environment.reset());
 afterAll(()=>environment.close());
@@ -666,6 +668,7 @@ test("S22-24 · cuerpo lento, timeout de contraste remoto, cancelación de lectu
       "Content-Type":"application/json",
       Accept:"application/problem+json, application/json;q=0.9",
       Cookie:activeVisitor.cookie,
+      "X-CSRF-Token":activeVisitor.csrfToken,
       "X-S21-Visitor":activeVisitor.identity,
     },
     body:slowStream,
@@ -691,6 +694,7 @@ test("S22-24 · cuerpo lento, timeout de contraste remoto, cancelación de lectu
       "Content-Type":"application/json",
       Accept:"application/problem+json",
       Cookie:activeVisitor.cookie,
+      "X-CSRF-Token":activeVisitor.csrfToken,
       "X-S21-Visitor":activeVisitor.identity,
     },
     body:chunkedOversizedStream,
@@ -748,4 +752,216 @@ test("S22-24 · cuerpo lento, timeout de contraste remoto, cancelación de lectu
   const replayedApprove=await activeVisitor.post(`/api/demo/runs/${activeVisitor.traceId}/commands`,{requestId:approveRequestId,role:"coordinator",action:"approve",expectedVersion:2});
   expect(replayedApprove.status).toBe(200);
   expect(replayedApprove.body).toMatchObject({replayed:true,current:{version:3,operation:{state:"APPROVED"}}});
+});
+
+test("S22-16 · HTTPS usa __Host-, migración sin extender vencimiento y rechazo de ambigüedad", async () => {
+  const httpsVisitorId = randomUUID();
+  const httpsBegin = await fetch(environment.origin + "/api/demo/session", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      "X-Forwarded-Proto": "https",
+      "X-S21-Visitor": httpsVisitorId,
+    },
+    body: "{}",
+  });
+  expect(httpsBegin.status).toBe(201);
+  const setCookies = typeof httpsBegin.headers.getSetCookie === "function"
+    ? httpsBegin.headers.getSetCookie()
+    : [httpsBegin.headers.get("set-cookie") ?? ""];
+  const hostCookie = setCookies.find(c => c.startsWith("__Host-jopoi_session="));
+  expect(hostCookie).toBeDefined();
+  expect(hostCookie).toMatch(/secure/i);
+  expect(hostCookie).toMatch(/httponly/i);
+  expect(hostCookie).toMatch(/samesite=lax/i);
+  expect(hostCookie).toMatch(/path=\//i);
+  expect(hostCookie).not.toMatch(/domain=/i);
+
+  const httpVisitor = new Visitor();
+  const httpBegin = await httpVisitor.begin();
+  expect(httpBegin.status).toBe(201);
+  const legacyCookie = httpVisitor.cookie;
+  expect(legacyCookie).toContain("jopoi_session=");
+  const originalExpiresAt = httpBegin.body.session.expiresAt;
+
+  const migrationResponse = await fetch(environment.origin + "/api/demo/session", {
+    method: "GET",
+    headers: {
+      Cookie: legacyCookie,
+      "X-Forwarded-Proto": "https",
+      "X-S21-Visitor": httpVisitor.identity,
+    },
+  });
+  expect(migrationResponse.status).toBe(200);
+  const migrationCookies = typeof migrationResponse.headers.getSetCookie === "function"
+    ? migrationResponse.headers.getSetCookie()
+    : [migrationResponse.headers.get("set-cookie") ?? ""];
+  const newHostCookie = migrationCookies.find(c => c.startsWith("__Host-jopoi_session="));
+  const clearedLegacy = migrationCookies.find(c => c.startsWith("jopoi_session="));
+  expect(newHostCookie).toBeDefined();
+  expect(newHostCookie).toMatch(/secure/i);
+  expect(clearedLegacy).toBeDefined();
+  expect(clearedLegacy).toMatch(/max-age=0/i);
+  const migrationBody = (await migrationResponse.json()) as DemoSessionResponse;
+  expect(migrationBody.session.expiresAt).toBe(originalExpiresAt);
+
+  const tokenA = "a".repeat(43);
+  const tokenB = "b".repeat(43);
+  const ambiguousRead = await fetch(environment.origin + "/api/demo/session", {
+    method: "GET",
+    headers: {
+      Cookie: `__Host-jopoi_session=${tokenA}; jopoi_session=${tokenB}`,
+      "X-Forwarded-Proto": "https",
+      "X-S21-Visitor": randomUUID(),
+    },
+  });
+  expect(ambiguousRead.status).toBe(401);
+  expect(await ambiguousRead.json()).toMatchObject({ error: { code: "SESSION_REQUIRED" } });
+
+  const ambiguousPost = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: `__Host-jopoi_session=${tokenA}; jopoi_session=${tokenB}`,
+      "X-Forwarded-Proto": "https",
+      "X-S21-Visitor": randomUUID(),
+    },
+    body: JSON.stringify({ requestId: randomUUID() }),
+  });
+  expect(ambiguousPost.status).toBe(401);
+  expect(await ambiguousPost.json()).toMatchObject({ error: { code: "SESSION_REQUIRED" } });
+});
+
+test("S22-18 · mutaciones protegidas por CSRF, Origin y Fetch Metadata", async () => {
+  const visitor = new Visitor();
+  const beginRes = await visitor.begin();
+  expect(beginRes.status).toBe(201);
+  const csrf = visitor.csrfToken;
+  expect(csrf).toBeTruthy();
+
+  const readRes = await visitor.get<DemoSessionResponse>("/api/demo/session");
+  expect(readRes.status).toBe(200);
+  expect(readRes.headers.get("cache-control")).toContain("no-store");
+  expect(readRes.headers.get("x-csrf-token")).toBe(csrf);
+  expect(readRes.body.csrfToken).toBe(csrf);
+
+  const startRes = await visitor.post("/api/demo/runs", { requestId: randomUUID() });
+  expect(startRes.status).toBe(201);
+
+  const missingCsrf = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: visitor.cookie,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID() }),
+  });
+  expect(missingCsrf.status).toBe(403);
+  expect(await missingCsrf.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  const invalidCsrf = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: visitor.cookie,
+      "X-CSRF-Token": "csrf-wrong-" + randomUUID(),
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID() }),
+  });
+  expect(invalidCsrf.status).toBe(403);
+  expect(await invalidCsrf.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  const evilOrigin = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: "https://evil.invalid",
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: visitor.cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID() }),
+  });
+  expect(evilOrigin.status).toBe(403);
+  expect(await evilOrigin.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  const crossSite = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      "Sec-Fetch-Site": "cross-site",
+      Cookie: visitor.cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID() }),
+  });
+  expect(crossSite.status).toBe(403);
+  expect(await crossSite.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  const navigateMode = await new Promise<{ status: number; body: unknown }>((resolvePromise, rejectPromise) => {
+    const url = new URL(environment.origin + "/api/demo/runs");
+    const req = httpRequest(url, {
+      method: "POST",
+      headers: {
+        Origin: environment.origin,
+        "X-Jopoi-Request": "demo",
+        "Content-Type": "application/json",
+        "Sec-Fetch-Mode": "navigate",
+        Cookie: visitor.cookie,
+        "X-CSRF-Token": csrf,
+        "X-S21-Visitor": visitor.identity,
+      },
+    }, (res) => {
+      let data = "";
+      res.on("data", chunk => { data += chunk; });
+      res.on("end", () => {
+        try {
+          resolvePromise({ status: res.statusCode ?? 0, body: JSON.parse(data || "{}") });
+        } catch (e) {
+          rejectPromise(e);
+        }
+      });
+    });
+    req.on("error", rejectPromise);
+    req.write(JSON.stringify({ requestId: randomUUID() }));
+    req.end();
+  });
+  expect(navigateMode.status).toBe(403);
+  expect(navigateMode.body).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  const anonVisitor = new Visitor();
+  const anonSession = await anonVisitor.post("/api/demo/session", {});
+  expect(anonSession.status).toBe(201);
+
+  const anonContact = await fetch(environment.origin + "/api/demo-requests", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      "X-S21-Visitor": randomUUID(),
+    },
+    body: JSON.stringify({
+      requestId: randomUUID(),
+      name: "Persona Sintética",
+      email: "anon@example.invalid",
+      company: "Empresa",
+      message: "Consulta anónima",
+    }),
+  });
+  expect(anonContact.status).toBe(201);
 });

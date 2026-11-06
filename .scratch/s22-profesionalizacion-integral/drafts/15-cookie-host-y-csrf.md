@@ -4,7 +4,7 @@
 
 **Blocked by:** 09 · Entregar errores RFC 9457 comprendidos por toda la interfaz
 
-**Status:** approved — desglose y dependencias aprobados; pendiente de configurar el tracker y publicar como ready-for-agent.
+**Status:** completado y validado localmente (2026-11-06). Ver evidencia en [docs/s22-15-cookie-host-y-csrf.md](../../docs/s22-15-cookie-host-y-csrf.md).
 
 **Trazabilidad:** Spec S22; decisiones D07, D10; hallazgos AUD-13; historias 3, 42, 45, 48, 49, 50, 86; escenarios S22-12, S22-16, S22-18.
 
@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] HTTPS usa __Host-, Secure, HttpOnly, Lax, Path=/ y sin Domain; HTTP local tiene política explícita y la migración de cookie no amplía propiedad/vencimiento.
-- [ ] Coexistencia de credenciales ambigua exige sesión inequívoca; cookie antigua se retira según ventana documentada.
-- [ ] Una lectura same-origin entrega token CSRF con no-store sin crear sesión ni escribir por GET; el token no es la credencial de sesión y no va a storage/logs.
-- [ ] Todos los transportes de mutación envían X-CSRF-Token; origen, metadata y fallback estricto se validan y bootstrap anónimo sigue protegido.
-- [ ] Navegador HTTPS y API rechazan token ausente/ajeno, Origin o metadata cross-site sin efectos; formulario y operación conservan su experiencia válida y OpenAPI refleja el cambio.
+- [x] HTTPS usa __Host-, Secure, HttpOnly, Lax, Path=/ y sin Domain; HTTP local tiene política explícita y la migración de cookie no amplía propiedad/vencimiento.
+- [x] Coexistencia de credenciales ambigua exige sesión inequívoca; cookie antigua se retira según ventana documentada.
+- [x] Una lectura same-origin entrega token CSRF con no-store sin crear sesión ni escribir por GET; el token no es la credencial de sesión y no va a storage/logs.
+- [x] Todos los transportes de mutación envían X-CSRF-Token; origen, metadata y fallback estricto se validan y bootstrap anónimo sigue protegido.
+- [x] Navegador HTTPS y API rechazan token ausente/ajeno, Origin o metadata cross-site sin efectos; formulario y operación conservan su experiencia válida y OpenAPI refleja el cambio.
 

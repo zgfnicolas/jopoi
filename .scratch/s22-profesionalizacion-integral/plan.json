@@ -571,7 +571,13 @@
         "S22-16",
         "S22-18"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-15-cookie-host-y-csrf.md",
+        "validation": "Cookie __Host-jopoi_session en HTTPS (Secure, HttpOnly, SameSite=Lax, Path=/, sin Domain) y jopoi_session en local; migración sin extender expiresAt y rechazo estricto de ambigüedad (SESSION_REQUIRED / 401). CSRF derivado por HMAC-SHA256 entregado en GET /api/demo/session (private, no-store, sin escrituras en GET), transportes de mutación con X-CSRF-Token, requireBrowserMutation validando Origin, X-Jopoi-Request, Content-Type y Fetch Metadata (Sec-Fetch-Site, Sec-Fetch-Mode), y fallback de bootstrap anónimo. 16 contratos, 24 seguridad (incluye S22-16 y S22-18), 66 HTTP en total, 24 CLI, puerta completa de 16 pasos y build aprobados; cero diagnósticos estrictos."
+      }
     },
     {
       "id": "16",

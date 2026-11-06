@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { apiBoundary, readJsonBody } from "../../src/server/http";
+import { apiBoundary, readJsonBody, requireBrowserMutation } from "../../src/server/http";
 import { ApplicationError } from "../../src/server/application-error";
 import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort, sqlStepBudget } from "../../src/server/deadlines";
+import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
@@ -89,5 +90,114 @@ test("S22-13: presupuestos por paso SQL y Mirror Node respetan el deadline total
   await assert.rejects(
     () => raceWithReadAbort(() => new Promise(resolve => setTimeout(resolve, 300)), controller.signal),
     (error: unknown) => error instanceof ApplicationError && error.code === "DATABASE_UNAVAILABLE",
+  );
+});
+
+test("S22-16: sessionCookiePolicy distingue HTTPS (__Host-, Secure, sin Domain) y HTTP local", () => {
+  const httpsPolicy = sessionCookiePolicy(true);
+  assert.equal(httpsPolicy.name, HOST_SESSION_COOKIE);
+  assert.equal(httpsPolicy.secure, true);
+  assert.equal(httpsPolicy.httpOnly, true);
+  assert.equal(httpsPolicy.sameSite, "lax");
+  assert.equal(httpsPolicy.path, "/");
+  assert.equal("domain" in httpsPolicy, false);
+
+  const httpPolicy = sessionCookiePolicy(false);
+  assert.equal(httpPolicy.name, SESSION_COOKIE);
+  assert.equal(httpPolicy.secure, false);
+  assert.equal(httpPolicy.httpOnly, true);
+  assert.equal(httpPolicy.sameSite, "lax");
+  assert.equal(httpPolicy.path, "/");
+});
+
+test("S22-16 / S22-18: csrfToken vincula la sesión, no expone la credencial y compara en tiempo constante", () => {
+  process.env.SESSION_SECRET = "b".repeat(64);
+  const token = newSessionToken();
+  const csrf = csrfToken(token);
+  assert.ok(csrf);
+  assert.notEqual(csrf, token);
+  assert.equal(csrfTokenMatches(csrf, csrf), true);
+  assert.equal(csrfTokenMatches(csrf, "wrong-token"), false);
+  assert.equal(csrfTokenMatches(undefined, csrf), false);
+  assert.equal(csrfTokenMatches(csrf, undefined), false);
+  assert.equal(csrfTokenMatches("", csrf), false);
+  assert.equal(csrfToken(undefined), undefined);
+  assert.equal(csrfToken("short"), undefined);
+});
+
+test("S22-16 / S22-18: requireBrowserMutation valida Origin, custom header, metadata, ambigüedad y CSRF", () => {
+  process.env.APP_URL = "https://example.invalid";
+  process.env.SESSION_SECRET = "b".repeat(64);
+
+  const validToken = newSessionToken();
+  const validCsrf = csrfToken(validToken)!;
+  const url = "https://example.invalid/api/demo/runs";
+  const validHeaders = {
+    Origin: "https://example.invalid",
+    "X-Jopoi-Request": "demo",
+    "Content-Type": "application/json",
+    Cookie: `${HOST_SESSION_COOKIE}=${validToken}`,
+    "X-CSRF-Token": validCsrf,
+  };
+
+  // Petición válida con sesión y CSRF
+  assert.doesNotThrow(() => requireBrowserMutation(new Request(url, { method: "POST", headers: validHeaders })));
+
+  // Bootstrap anónimo (sin cookie) no requiere CSRF
+  assert.doesNotThrow(() => requireBrowserMutation(new Request(url, {
+    method: "POST",
+    headers: { Origin: "https://example.invalid", "X-Jopoi-Request": "demo", "Content-Type": "application/json" },
+  })));
+
+  // Origin incorrecto
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, Origin: "https://evil.invalid" } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+
+  // X-Jopoi-Request ausente o inválido
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "X-Jopoi-Request": "other" } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+
+  // Content-Type no JSON
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "Content-Type": "text/plain" } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "INVALID_INPUT",
+  );
+
+  // Sec-Fetch-Site cross-site
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "Sec-Fetch-Site": "cross-site" } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+
+  // Sec-Fetch-Mode navigate
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "Sec-Fetch-Mode": "navigate" } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+
+  // Coexistencia de cookies ambigua (dos valores distintos)
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, {
+      method: "POST",
+      headers: { ...validHeaders, Cookie: `${HOST_SESSION_COOKIE}=${validToken}; ${SESSION_COOKIE}=${newSessionToken()}` },
+    })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "SESSION_REQUIRED",
+  );
+
+  // Cookie presente pero X-CSRF-Token ausente
+  const { "X-CSRF-Token": _, ...missingCsrf } = validHeaders;
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: missingCsrf })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+
+  // Cookie presente pero X-CSRF-Token de otra sesión
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "X-CSRF-Token": csrfToken(newSessionToken())! } })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
   );
 });

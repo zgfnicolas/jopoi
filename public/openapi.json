@@ -43,6 +43,12 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "X-CSRF-Token": {
+                "description": "Token CSRF vinculado a la sesión, entregado sin crear sesión ni escribir por GET; no-store.",
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "content": {
@@ -461,6 +467,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF opcional en bootstrap anónimo; requerido una vez establecida la cookie de sesión."
           }
         ],
         "x-max-body-bytes": 4096,
@@ -487,8 +502,14 @@
                   "type": "string"
                 }
               },
+              "X-CSRF-Token": {
+                "description": "Token CSRF vinculado a la sesión, entregado sin crear sesión ni escribir por GET; no-store.",
+                "schema": {
+                  "type": "string"
+                }
+              },
               "Set-Cookie": {
-                "description": "jopoi_session; HttpOnly; SameSite=Lax; Path=/; Secure en producción; vencimiento absoluto de siete días.",
+                "description": "__Host-jopoi_session en HTTPS (Secure; HttpOnly; SameSite=Lax; Path=/; sin Domain) o jopoi_session en HTTP local; vencimiento absoluto de siete días.",
                 "schema": {
                   "type": "string"
                 }
@@ -524,8 +545,14 @@
                   "type": "string"
                 }
               },
+              "X-CSRF-Token": {
+                "description": "Token CSRF vinculado a la sesión, entregado sin crear sesión ni escribir por GET; no-store.",
+                "schema": {
+                  "type": "string"
+                }
+              },
               "Set-Cookie": {
-                "description": "jopoi_session; HttpOnly; SameSite=Lax; Path=/; Secure en producción; vencimiento absoluto de siete días.",
+                "description": "__Host-jopoi_session en HTTPS (Secure; HttpOnly; SameSite=Lax; Path=/; sin Domain) o jopoi_session en HTTP local; vencimiento absoluto de siete días.",
                 "schema": {
                   "type": "string"
                 }
@@ -953,6 +980,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF vinculado a la sesión, no persistido y entregado por GET o POST /api/demo/session."
           }
         ],
         "x-max-body-bytes": 4096,
@@ -1433,6 +1469,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF vinculado a la sesión, no persistido y entregado por GET o POST /api/demo/session."
           }
         ],
         "x-max-body-bytes": 4096,
@@ -2771,6 +2816,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF vinculado a la sesión, no persistido y entregado por GET o POST /api/demo/session."
           }
         ],
         "x-max-body-bytes": 4096,
@@ -3240,6 +3294,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF vinculado a la sesión, no persistido y entregado por GET o POST /api/demo/session."
           }
         ],
         "x-max-body-bytes": 4096,
@@ -4575,6 +4638,15 @@
             "schema": {
               "const": "demo"
             }
+          },
+          {
+            "name": "X-CSRF-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Token CSRF opcional en bootstrap anónimo; requerido una vez establecida la cookie de sesión."
           }
         ],
         "x-max-body-bytes": 16384,
@@ -5440,8 +5512,8 @@
       "demoSession": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "jopoi_session",
-        "description": "Credencial opaca; ownership y vigencia verificados en servidor. Roles del escenario son simulados. Máximo tres recorridos por sesión; sesión siete días, escritura 24 horas y lectura pública siete días por recorrido."
+        "name": "__Host-jopoi_session",
+        "description": "Credencial opaca restringida al host en HTTPS (__Host-jopoi_session; Secure; HttpOnly; SameSite=Lax; Path=/; sin Domain) o jopoi_session en HTTP local; ownership y vigencia verificados en servidor. Roles del escenario son simulados. Máximo tres recorridos por sesión; sesión siete días, escritura 24 horas y lectura pública siete días por recorrido."
       },
       "cronBearer": {
         "type": "http",
@@ -5905,6 +5977,9 @@
                 "type": "null"
               }
             ]
+          },
+          "csrfToken": {
+            "type": "string"
           }
         },
         "required": [

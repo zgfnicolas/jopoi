@@ -10,6 +10,7 @@ import { getServerConfig, requireConfiguration } from "./config";
 import { isReadOperation, operationBudgetMs } from "./deadlines";
 import { currentRequestContext, logDiagnostic, shouldLogHttp, withRequestContext, type HttpOperation } from "./diagnostics";
 import { RateLimitError } from "./security/rate-limit";
+import { csrfToken, csrfTokenMatches, extractSessionCredentials } from "./sessions/credentials";
 
 export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie, Accept" });
 
@@ -21,6 +22,23 @@ export function requireBrowserMutation(request: Request): void {
   }
   if (request.headers.get("content-type")?.split(";", 1)[0]?.trim().toLowerCase() !== "application/json") {
     throw new ApplicationError("INVALID_INPUT");
+  }
+  if (request.headers.get("sec-fetch-site") === "cross-site") {
+    throw new ApplicationError("REQUEST_FORBIDDEN");
+  }
+  if (request.headers.get("sec-fetch-mode") === "navigate") {
+    throw new ApplicationError("REQUEST_FORBIDDEN");
+  }
+  const creds = extractSessionCredentials(request);
+  if (creds.ambiguous) {
+    throw new ApplicationError("SESSION_REQUIRED");
+  }
+  if (creds.token !== undefined) {
+    const provided = request.headers.get("x-csrf-token") ?? undefined;
+    const expected = csrfToken(creds.token);
+    if (!csrfTokenMatches(provided, expected)) {
+      throw new ApplicationError("REQUEST_FORBIDDEN");
+    }
   }
 }
 

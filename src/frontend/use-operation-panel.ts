@@ -8,6 +8,7 @@ import { retryAfterMessage } from "./retry-after";
 import { readApi, type ReadError } from "./api";
 import { postOperation, type MutationError } from "./operation-api";
 import { commandResponseSchema, operationViewSchema, retryResponseSchema, runIntentSchema, sessionResponseSchema } from "./operation-models";
+import { clearCsrfToken } from "./csrf";
 
 type IntentResolution =
   | { readonly kind: "ready" }
@@ -47,6 +48,7 @@ export function useOperationPanel() {
     setLinks(previous => [...previous.filter(item => item.traceId !== link.traceId && Date.parse(item.expiresAt) > Date.now()), link]);
   }, []);
   const expire = useCallback(() => {
+    clearCsrfToken();
     generation.current++; controller.current?.abort(); transition({ kind: "ready" }); snapshot.current = null;
     lock.current = false; setActivity("idle"); setData(null); setStale(false);
     setMessage(""); setError({ code: "SESSION_EXPIRED" }); setDraftRevision(value => value + 1);
@@ -64,6 +66,7 @@ export function useOperationPanel() {
     if (!active.current || signal.aborted) return false;
     if (result.ok) { if (!accept(result.data)) return false; setError(null); return true; }
     if (["SESSION_REQUIRED", "SESSION_EXPIRED", "NOT_FOUND"].includes(result.error.code)) {
+      clearCsrfToken();
       transition({ kind: "ready" }); snapshot.current = null; setData(null);
       setDraftRevision(value => value + 1);
     }
@@ -108,6 +111,7 @@ export function useOperationPanel() {
       }
       transition({ kind: "ready" });
       if (["SESSION_REQUIRED", "SESSION_EXPIRED", "NOT_FOUND"].includes(problem.code)) {
+        clearCsrfToken();
         snapshot.current = null; setData(null); setStale(true); setDraftRevision(value => value + 1);
       } else if (conflictCodes(problem.code)) transition({ kind: "conflict" });
     }

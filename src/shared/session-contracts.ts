@@ -21,6 +21,7 @@ export interface DemoRunSummary {
 export interface DemoSessionResponse {
   readonly session: DemoSessionSummary;
   readonly activeRun: DemoRunSummary | null;
+  readonly csrfToken?: string | undefined;
 }
 
 export interface DemoRunIntentResponse {

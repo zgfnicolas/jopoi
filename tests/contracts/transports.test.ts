@@ -8,8 +8,10 @@ import { readApi } from "../../src/frontend/api";
 import { postOperation } from "../../src/frontend/operation-api";
 import { postDemoRequest } from "../../src/frontend/demo-request";
 import { retryAfterSeconds } from "../../src/frontend/retry-after";
+import { clearCsrfToken, getCsrfToken } from "../../src/frontend/csrf";
 
 const success = z.strictObject({ saved: z.literal(true) });
+const sessionSuccess = z.object({ session: z.object({ expiresAt: z.string(), runCount: z.number(), remainingRuns: z.number() }), activeRun: z.null(), csrfToken: z.string().optional() });
 const calls = (signal: AbortSignal) => [() => readApi("/api/demo/session", success, signal),
   () => postOperation("/api/demo/session", "{}", success, [200, 201], signal), () => postDemoRequest("{}", signal)];
 
@@ -87,4 +89,47 @@ test("S22-13: desconexión o aborto del cliente devuelve NETWORK_UNAVAILABLE sin
     assert.equal(mutationResult.error.code, "NETWORK_UNAVAILABLE");
   }
   assert.equal(requests, 2);
+});
+
+test("S22-18: transportes de mutación envían X-CSRF-Token y readApi captura el token de la respuesta", async t => {
+  clearCsrfToken();
+  const sentHeaders: Headers[] = [];
+  t.mock.method(globalThis, "fetch", async (input: unknown, init?: RequestInit) => {
+    const headers = new Headers(init?.headers);
+    sentHeaders.push(headers);
+    if (String(input) === "/api/demo/session") {
+      return new Response(JSON.stringify({ session: { expiresAt: "2026-01-01T00:00:00.000Z", runCount: 0, remainingRuns: 3 }, activeRun: null, csrfToken: "csrf-token-xyz" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", "X-CSRF-Token": "csrf-token-xyz" },
+      });
+    }
+    return new Response(JSON.stringify({ saved: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+
+  const signal = new AbortController().signal;
+
+  // Antes de obtener token, mutaciones envían cadena vacía
+  await postDemoRequest("{}", signal);
+  assert.equal(sentHeaders[0]?.get("x-csrf-token"), "");
+
+  // readApi recupera la sesión y captura el CSRF token de la respuesta
+  const readResult = await readApi("/api/demo/session", sessionSuccess, signal);
+  assert.equal(readResult.ok, true);
+  assert.equal(getCsrfToken(), "csrf-token-xyz");
+
+  // Mutaciones posteriores envían automáticamente el token capturado
+  await postOperation("/api/demo/session", "{}", success, [200, 201], signal);
+  assert.equal(sentHeaders[2]?.get("x-csrf-token"), "csrf-token-xyz");
+
+  await postDemoRequest("{}", signal);
+  assert.equal(sentHeaders[3]?.get("x-csrf-token"), "csrf-token-xyz");
+
+  // Override explícito respeta el valor aportado
+  await postOperation("/api/demo/session", "{}", success, [200, 201], signal, "csrf-override");
+  assert.equal(sentHeaders[4]?.get("x-csrf-token"), "csrf-override");
+
+  clearCsrfToken();
 });
