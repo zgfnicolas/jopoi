@@ -4,7 +4,7 @@
 
 **Blocked by:** 15 · Proteger la sesión HTTPS y sus mutaciones con CSRF
 
-**Status:** approved — desglose y dependencias aprobados; pendiente de configurar el tracker y publicar como ready-for-agent.
+**Status:** completado y validado localmente (2026-11-06). Ver evidencia en [docs/s22-16-revocacion-expiracion-sesion.md](../../docs/s22-16-revocacion-expiracion-sesion.md).
 
 **Trazabilidad:** Spec S22; decisiones D01, D10, D18; hallazgos AUD-13; historias 45, 46, 47, 49, 50, 76; escenarios S22-16, S22-17, S22-18, S22-29.
 
@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] DELETE de sesión devuelve 204 idempotente, exige la defensa aplicable, revoca en servidor y elimina cookie; repetirlo no crea sesión.
-- [ ] Se conservan padres necesarios para relaciones históricas y enlaces públicos siguen su propia retención; revocación bloquea comandos, lecturas privadas y CSRF.
-- [ ] Se aplican 60 min de inactividad y 24 h absolutas con reloj del servidor; actividad se persiste como máximo cada cinco minutos y no estira el máximo absoluto.
-- [ ] La interfaz informa política y cierre/vencimiento y retira la vista privada; refresh/replay no reviven la credencial.
-- [ ] Migración aditiva/backfill y dos versiones coexistentes tienen pruebas de compatibilidad; condiciones de carrera y límite temporal exacto se verifican por HTTP/navegador.
+- [x] DELETE de sesión devuelve 204 idempotente, exige la defensa aplicable, revoca en servidor y elimina cookie; repetirlo no crea sesión.
+- [x] Se conservan padres necesarios para relaciones históricas y enlaces públicos siguen su propia retención; revocación bloquea comandos, lecturas privadas y CSRF.
+- [x] Se aplican 60 min de inactividad y 24 h absolutas con reloj del servidor; actividad se persiste como máximo cada cinco minutos y no estira el máximo absoluto.
+- [x] La interfaz informa política y cierre/vencimiento y retira la vista privada; refresh/replay no reviven la credencial.
+- [x] Migración aditiva/backfill y dos versiones coexistentes tienen pruebas de compatibilidad; condiciones de carrera y límite temporal exacto se verifican por HTTP/navegador.
 

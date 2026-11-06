@@ -5,7 +5,7 @@ import type { ReadError } from "@/frontend/api";
 import { ActionButton, ActionLink, Notice } from "./ui/primitives";
 const explanations: Partial<Record<ReadError["code"], { title: string; text: string }>> = {
   SESSION_REQUIRED: { title: "No hay una sesión activa", text: "Esta base permite consultar recorridos existentes. El inicio del recorrido interactivo se habilitará en una etapa posterior." },
-  SESSION_EXPIRED: { title: "Tu sesión venció", text: "La vista privada dejó de estar disponible. Un enlace público puede seguir vigente hasta el vencimiento de su recorrido." },
+  SESSION_EXPIRED: { title: "Tu sesión venció", text: "La vista privada dejó de estar disponible por cierre, inactividad o vencimiento absoluto. Un enlace público puede seguir vigente hasta el vencimiento de su recorrido." },
   TRACE_EXPIRED: { title: "La consulta venció", text: "Los datos operativos ya no están disponibles. La retención de la demo es de siete días." },
   NOT_FOUND: { title: "Recorrido no disponible", text: "Revisá el identificador compartido. El recorrido puede no existir o haber sido eliminado tras su vencimiento." },
   VERSION_CONFLICT: { title: "La información cambió", text: "Actualizá la consulta para recuperar el estado vigente." },

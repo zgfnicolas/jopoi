@@ -5,7 +5,7 @@ import { z } from "zod";
 import { API_ERROR_CATALOG, isApiErrorCode } from "../../src/shared/api-errors";
 import { API_ACCEPT, PROBLEM_MEDIA_TYPE, acceptsProblemDetails, problemType } from "../../src/shared/problem-details";
 import { readApi } from "../../src/frontend/api";
-import { postOperation } from "../../src/frontend/operation-api";
+import { deleteOperation, postOperation } from "../../src/frontend/operation-api";
 import { postDemoRequest } from "../../src/frontend/demo-request";
 import { retryAfterSeconds } from "../../src/frontend/retry-after";
 import { clearCsrfToken, getCsrfToken } from "../../src/frontend/csrf";
@@ -132,4 +132,28 @@ test("S22-18: transportes de mutación envían X-CSRF-Token y readApi captura el
   assert.equal(sentHeaders[4]?.get("x-csrf-token"), "csrf-override");
 
   clearCsrfToken();
+});
+
+test("S22-16: deleteOperation envía DELETE a /api/demo/session con CSRF, devuelve ok en 204 y limpia token", async t => {
+  const signal = new AbortController().signal;
+  let sentMethod = "";
+  let sentHeaders: Headers | undefined;
+
+  t.mock.method(globalThis, "fetch", async (_input: unknown, init?: RequestInit) => {
+    sentMethod = init?.method ?? "";
+    sentHeaders = new Headers(init?.headers);
+    return new Response(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  });
+
+  const { setCsrfToken } = await import("../../src/frontend/csrf");
+  setCsrfToken("csrf-to-delete");
+  assert.equal(getCsrfToken(), "csrf-to-delete");
+
+  const result = await deleteOperation("/api/demo/session", signal);
+  assert.equal(result.ok, true);
+  assert.equal(sentMethod, "DELETE");
+  assert.equal(sentHeaders?.get("x-csrf-token"), "csrf-to-delete");
+  assert.equal(sentHeaders?.get("x-jopoi-request"), "demo");
+  // En 204 se limpia el token de memoria
+  assert.equal(getCsrfToken(), undefined);
 });

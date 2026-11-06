@@ -2,7 +2,7 @@ import { z } from "zod";
 import { type ApiErrorCode } from "@/shared/api-errors";
 import { API_ACCEPT, apiMediaType, parseApiFailure } from "@/shared/problem-details";
 import { retryAfterSeconds } from "./retry-after";
-import { getCsrfToken, setCsrfToken } from "./csrf";
+import { clearCsrfToken, getCsrfToken, setCsrfToken } from "./csrf";
 
 export interface MutationError { code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; status: number | null; fields: Record<string, readonly string[]>; requestId?: string; retryAfter?: number }
 export type MutationResult<T> = { ok: true; data: T } | { ok: false; error: MutationError };
@@ -32,4 +32,40 @@ export async function postOperation<T>(path: string, body: string, schema: z.Zod
     const retryAfter = retryAfterSeconds(response);
     return { ok: false, error: { code, status: response.status, fields, ...(parsed.requestId === undefined ? {} : { requestId: parsed.requestId }), ...(retryAfter === undefined ? {} : { retryAfter }) } };
   } catch { return fail("NETWORK_UNAVAILABLE"); }
+}
+
+export async function deleteOperation(
+  path: string,
+  signal: AbortSignal,
+  csrfTokenOverride?: string,
+): Promise<{ ok: true } | { ok: false; error: MutationError }> {
+  const fail = (code: MutationError["code"], status: number | null = null): { ok: false; error: MutationError } => ({ ok: false, error: { code, status, fields: {} } });
+  if (path !== "/api/demo/session") return fail("INVALID_INPUT", 400);
+  try {
+    const csrf = csrfTokenOverride ?? getCsrfToken() ?? "";
+    const response = await fetch(path, {
+      method: "DELETE",
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]),
+      headers: { "X-Jopoi-Request": "demo", Accept: API_ACCEPT, "X-CSRF-Token": csrf },
+    });
+    if (response.status === 204) {
+      clearCsrfToken();
+      return { ok: true };
+    }
+    const media = apiMediaType(response.headers);
+    if (!["application/json", "application/problem+json"].includes(media)) return fail("INVALID_RESPONSE", response.status);
+    const value: unknown = await response.json();
+    const parsed = parseApiFailure(value, response.status, media);
+    if (!parsed) return fail("INVALID_RESPONSE", response.status);
+    if (response.status === 401 && ["SESSION_REQUIRED", "SESSION_EXPIRED"].includes(parsed.code)) {
+      clearCsrfToken();
+    }
+    const retryAfter = retryAfterSeconds(response);
+    return { ok: false, error: { code: parsed.code, status: response.status, fields: parsed.fields, ...(parsed.requestId === undefined ? {} : { requestId: parsed.requestId }), ...(retryAfter === undefined ? {} : { retryAfter }) } };
+  } catch {
+    return fail("NETWORK_UNAVAILABLE");
+  }
 }

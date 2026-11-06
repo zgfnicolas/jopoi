@@ -14,7 +14,7 @@ export function contractValidator() {
   return ajv;
 }
 const document = z.object({ paths: z.record(z.string(), z.record(z.string(), z.unknown())), components: z.object({ schemas: z.record(z.string(), z.record(z.string(), z.unknown())) }) });
-const operation = z.object({ responses: z.record(z.string(), z.object({ content: z.record(z.string(), z.object({ schema: z.object({ $ref: z.string() }) })) })) });
+const operation = z.object({ responses: z.record(z.string(), z.object({ content: z.record(z.string(), z.object({ schema: z.object({ $ref: z.string() }) })).optional() })) });
 const doc = document.parse(JSON.parse(readFileSync("public/openapi.json", "utf8")));
 const validators = new Map<string, ValidateFunction>();
 const ajv = contractValidator();
@@ -28,7 +28,12 @@ export function assertApiContract(method: string, path: string, status: number, 
   const contract = operation.parse(raw);
   const response = contract.responses[String(status)];
   assert.ok(response, `OPENAPI_UNDECLARED_STATUS:${method}:${route}:${status}`);
-  const content = response.content[apiMediaType(headers)];
+  if (status === 204) {
+    assert.ok(headers.get("cache-control")?.includes("no-store"), `OPENAPI_CACHE_POLICY:${route}`);
+    assert.ok(z.uuid().safeParse(headers.get("x-request-id")).success, `OPENAPI_REFERENCE:${route}`);
+    return;
+  }
+  const content = response.content?.[apiMediaType(headers)];
   assert.ok(content, `OPENAPI_UNDECLARED_MEDIA_TYPE:${method}:${route}`);
   const name = content.schema.$ref.replace(/^#\/components\/schemas\//, "");
   let validate = validators.get(name);

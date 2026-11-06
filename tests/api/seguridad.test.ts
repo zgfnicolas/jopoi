@@ -359,6 +359,7 @@ test("S22-02 · límites privados por minuto, 100 recibos por recorrido y 5000 i
   })).status).toBe(200);
 
   await environment.clock("2026-01-02T00:00:05.000Z");
+  await fixture(`UPDATE "DemoSession" SET "lastActivityAt"='2026-01-01T23:55:00.000Z'`);
   expect((await owner.post("/api/demo/runs/reset",{requestId:randomUUID()})).status).toBe(201);
 });
 
@@ -964,4 +965,264 @@ test("S22-18 · mutaciones protegidas por CSRF, Origin y Fetch Metadata", async 
     }),
   });
   expect(anonContact.status).toBe(201);
+});
+
+test("S22-16 · cierre idempotente con DELETE, eliminación de cookie, conservación de enlaces y rechazo de revocadas", async () => {
+  const visitor = await new Visitor().setup();
+  const traceId = visitor.traceId;
+  const cookie = visitor.cookie;
+  const csrf = visitor.csrfToken;
+  expect(cookie).toBeTruthy();
+  expect(csrf).toBeTruthy();
+
+  await visitor.publish();
+  expect((await visitor.trace()).status).toBe(200);
+
+  // DELETE sin CSRF teniendo cookie es rechazado
+  const missingCsrf = await fetch(environment.origin + "/api/demo/session", {
+    method: "DELETE",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      Cookie: cookie,
+      "X-S21-Visitor": visitor.identity,
+    },
+  });
+  expect(missingCsrf.status).toBe(403);
+  expect(await missingCsrf.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  // DELETE con origen cruzado es rechazado
+  const evilOrigin = await fetch(environment.origin + "/api/demo/session", {
+    method: "DELETE",
+    headers: {
+      Origin: "https://evil.invalid",
+      "X-Jopoi-Request": "demo",
+      Cookie: cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+  });
+  expect(evilOrigin.status).toBe(403);
+  expect(await evilOrigin.json()).toMatchObject({ error: { code: "REQUEST_FORBIDDEN" } });
+
+  // Cierre legítimo con DELETE devuelve 204 y limpia cookie
+  const deleteRes = await visitor.end();
+  expect(deleteRes.status).toBe(204);
+  expect(visitor.cookie).toBe("");
+  expect(visitor.csrfToken).toBe("");
+
+  const setCookies = typeof deleteRes.headers.getSetCookie === "function"
+    ? deleteRes.headers.getSetCookie()
+    : [deleteRes.headers.get("set-cookie") ?? ""];
+  expect(setCookies.some(c => /max-age=0/i.test(c))).toBe(true);
+
+  // Repetir DELETE es idempotente y no crea sesión
+  const repeatDelete = await visitor.end();
+  expect(repeatDelete.status).toBe(204);
+
+  const db = new Client({ connectionString: inject("resources").databaseUrl });
+  await db.connect();
+  try {
+    const row = requiredEntry((await db.query<{ count: number; revokedAt: Date | null }>('SELECT count(*)::int AS count, max("revokedAt") AS "revokedAt" FROM "DemoSession"')).rows);
+    expect(row.count).toBe(1);
+    expect(row.revokedAt).not.toBeNull();
+  } finally {
+    await db.end();
+  }
+
+  // Comandos y lecturas privadas con la credencial revocada son rechazados con 401 SESSION_EXPIRED
+  const revokedRead = await fetch(environment.origin + "/api/demo/runs/current", {
+    headers: {
+      Cookie: cookie,
+      "X-S21-Visitor": visitor.identity,
+    },
+  });
+  expect(revokedRead.status).toBe(401);
+  expect(await revokedRead.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  const revokedSessionRead = await fetch(environment.origin + "/api/demo/session", {
+    headers: {
+      Cookie: cookie,
+      "X-S21-Visitor": visitor.identity,
+    },
+  });
+  expect(revokedSessionRead.status).toBe(401);
+  expect(await revokedSessionRead.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  const revokedCmd = await fetch(environment.origin + `/api/demo/runs/${traceId}/commands`, {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID(), expectedVersion: 2, role: "coordinator", action: "approve" }),
+  });
+  expect(revokedCmd.status).toBe(401);
+  expect(await revokedCmd.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  // Enlaces públicos de trazabilidad conservan su retención independiente y siguen disponibles
+  const publicTrace = await fetch(environment.origin + `/api/traces/${traceId}`, {
+    headers: { "X-S21-Visitor": randomUUID() },
+  });
+  expect(publicTrace.status).toBe(200);
+});
+
+test("S22-17 · vencimientos absoluto e inactividad exactos, throttle de actividad y refresh/replay no reviven sesión", async () => {
+  await environment.clock("2026-01-01T12:00:00.000Z");
+  const visitor = await new Visitor().setup();
+  const traceId = visitor.traceId;
+  const startRequestId = randomUUID();
+
+  const db = new Client({ connectionString: inject("resources").databaseUrl });
+  await db.connect();
+  try {
+    const row1 = requiredEntry((await db.query<{ lastActivityAt: Date; expiresAt: Date }>('SELECT "lastActivityAt", "expiresAt" FROM "DemoSession" LIMIT 1')).rows);
+    const initialActivity = row1.lastActivityAt.toISOString();
+    expect(initialActivity).toBe("2026-01-01T12:00:00.000Z");
+    expect(row1.expiresAt.toISOString()).toBe("2026-01-02T12:00:00.000Z");
+
+    // Actividad a los 2 minutos (< 5 min): se procesa pero no escribe en SQL
+    await environment.clock("2026-01-01T12:02:00.000Z");
+    expect((await visitor.publish("12000", "28")).traceId).toBe(traceId);
+
+    const row2 = requiredEntry((await db.query<{ lastActivityAt: Date }>('SELECT "lastActivityAt" FROM "DemoSession" LIMIT 1')).rows);
+    expect(row2.lastActivityAt.toISOString()).toBe(initialActivity); // No se modificó
+
+    // Actividad a los 6 minutos (>= 5 min): actualiza lastActivityAt en SQL sin alterar expiresAt
+    await environment.clock("2026-01-01T12:06:00.000Z");
+    await visitor.apply({ role: "coordinator", action: "approve" });
+
+    const row3 = requiredEntry((await db.query<{ lastActivityAt: Date; expiresAt: Date }>('SELECT "lastActivityAt", "expiresAt" FROM "DemoSession" LIMIT 1')).rows);
+    expect(row3.lastActivityAt.toISOString()).toBe("2026-01-01T12:06:00.000Z");
+    expect(row3.expiresAt.toISOString()).toBe("2026-01-02T12:00:00.000Z"); // Máximo absoluto inalterado
+  } finally {
+    await db.end();
+  }
+
+  const cookie = visitor.cookie;
+  const csrf = visitor.csrfToken;
+
+  // Inactividad de 60 minutos: a las 13:06:05 (60 min y 5 s después de la última actividad), la sesión venció
+  await environment.clock("2026-01-01T13:06:05.000Z");
+  const idleExpiredRead = await fetch(environment.origin + "/api/demo/runs/current", {
+    headers: {
+      Cookie: cookie,
+      "X-S21-Visitor": visitor.identity,
+    },
+  });
+  expect(idleExpiredRead.status).toBe(401);
+  expect(await idleExpiredRead.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  // Refresh y replay no reviven la sesión vencida
+  const idleExpiredCmd = await fetch(environment.origin + `/api/demo/runs/${traceId}/commands`, {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: randomUUID(), expectedVersion: 3, role: "coordinator", action: "assign", tripId: "return-a" }),
+  });
+  expect(idleExpiredCmd.status).toBe(401);
+  expect(await idleExpiredCmd.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  const replayIntent = await fetch(environment.origin + "/api/demo/runs", {
+    method: "POST",
+    headers: {
+      Origin: environment.origin,
+      "X-Jopoi-Request": "demo",
+      "Content-Type": "application/json",
+      Cookie: cookie,
+      "X-CSRF-Token": csrf,
+      "X-S21-Visitor": visitor.identity,
+    },
+    body: JSON.stringify({ requestId: startRequestId }),
+  });
+  expect(replayIntent.status).toBe(401);
+  expect(await replayIntent.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+
+  // Máximo absoluto de 24 horas vence aun con actividad reciente
+  await environment.clock("2026-02-01T10:00:00.000Z");
+  const visitor2 = await new Visitor().setup();
+  await visitor2.publish("12000", "28");
+  const cookie2 = visitor2.cookie;
+
+  // Simular actividad continuada durante el día: última actividad a las 23h 50m
+  const db2 = new Client({ connectionString: inject("resources").databaseUrl });
+  await db2.connect();
+  try {
+    await db2.query(`UPDATE "DemoSession" SET "lastActivityAt" = '2026-02-02T09:50:00.000Z' WHERE "lastActivityAt" = '2026-02-01T10:00:00.000Z'`);
+  } finally {
+    await db2.end();
+  }
+
+  // A las 24h y 5 segundos (actividad ocurrida hace solo 10 minutos): vence por máximo absoluto
+  await environment.clock("2026-02-02T10:00:05.000Z");
+  const absoluteExpiredRead = await fetch(environment.origin + "/api/demo/runs/current", {
+    headers: {
+      Cookie: cookie2,
+      "X-S21-Visitor": visitor2.identity,
+    },
+  });
+  expect(absoluteExpiredRead.status).toBe(401);
+  expect(await absoluteExpiredRead.json()).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+});
+
+test("S22-29 · migración aditiva y backfill de lastActivityAt conservan sesiones y admiten coexistencia", async () => {
+  const resources = inject("resources");
+  const admin = new Client({ connectionString: resources.databaseUrl });
+  await admin.connect();
+  try {
+    await admin.query("CREATE DATABASE s22_session_migration");
+  } finally {
+    await admin.end();
+  }
+  const target = new URL(resources.databaseUrl);
+  target.pathname = "/s22_session_migration";
+  const db = new Client({ connectionString: target.href });
+  await db.connect();
+  try {
+    const migrations = (await readdir("prisma/migrations", { withFileTypes: true }))
+      .filter(f => f.isDirectory())
+      .map(f => f.name)
+      .sort();
+    for (const name of migrations.filter(n => n < "202611060001_session_revocation_and_inactivity")) {
+      await db.query(await readFile(resolve("prisma/migrations", name, "migration.sql"), "utf8"));
+    }
+    const legacySessionId = randomUUID();
+    await db.query(
+      `INSERT INTO "DemoSession" (id, "tokenHash", "createdAt", "expiresAt") VALUES ($1, repeat('c', 64), '2026-01-01T10:00:00Z', '2026-01-02T10:00:00Z')`,
+      [legacySessionId],
+    );
+    await db.query(await readFile("prisma/migrations/202611060001_session_revocation_and_inactivity/migration.sql", "utf8"));
+
+    const row = requiredEntry((await db.query<{ lastActivityAt: Date; revokedAt: Date | null }>(
+      'SELECT "lastActivityAt", "revokedAt" FROM "DemoSession" WHERE id = $1',
+      [legacySessionId],
+    )).rows);
+    expect(row.lastActivityAt.toISOString()).toBe("2026-01-01T10:00:00.000Z");
+    expect(row.revokedAt).toBeNull();
+
+    // Inserción con esquema previo (sin aportar lastActivityAt ni revokedAt) funciona por DEFAULT y NULL
+    const newLegacyId = randomUUID();
+    await db.query(
+      `INSERT INTO "DemoSession" (id, "tokenHash", "createdAt", "expiresAt") VALUES ($1, repeat('d', 64), '2026-01-03T10:00:00Z', '2026-01-04T10:00:00Z')`,
+      [newLegacyId],
+    );
+    const newRow = requiredEntry((await db.query<{ lastActivityAt: Date; revokedAt: Date | null }>(
+      'SELECT "lastActivityAt", "revokedAt" FROM "DemoSession" WHERE id = $1',
+      [newLegacyId],
+    )).rows);
+    expect(newRow.lastActivityAt).toBeInstanceOf(Date);
+    expect(newRow.revokedAt).toBeNull();
+  } finally {
+    await db.end();
+  }
 });

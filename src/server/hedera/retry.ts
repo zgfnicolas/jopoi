@@ -11,7 +11,7 @@ import { withTransaction } from "../database";
 import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMutation } from "../http";
 import { requireSessionRateLimit, reserveRunIntent } from "../security/rate-limit";
 import { extractSessionCredentials } from "../sessions/credentials";
-import { requireOwnedRun } from "../sessions/service";
+import { requireOwnedRun, touchSessionActivity } from "../sessions/service";
 import { publicationSummary } from "./summary";
 import { quotaSummary } from "./coordinator";
 import { schedulePublications } from "./service";
@@ -57,6 +57,7 @@ export async function retryPublicationHttp(request: NextRequest, context: { para
         } else {
           if (!allowWrite) throw new ApplicationError("VERSION_CONFLICT");
           const appliedAt = wallNow();
+          await touchSessionActivity(tx, session, appliedAt);
           const last = row.attempts[0];
           const uncertain = last && ["STARTED", "UNCERTAIN"].includes(last.state);
           const grant = row.state !== "CONFIRMED" && !blockedBy && !uncertain && last?.state === "REJECTED" && row.automaticAttempts >= 3 && row.manualAttempts === 0;

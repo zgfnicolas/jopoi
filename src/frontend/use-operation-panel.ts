@@ -6,7 +6,7 @@ import type { OperationIntent } from "@/shared/operation-intents";
 import { API_ERROR_CATALOG, isApiErrorCode } from "@/shared/api-errors";
 import { retryAfterMessage } from "./retry-after";
 import { readApi, type ReadError } from "./api";
-import { postOperation, type MutationError } from "./operation-api";
+import { deleteOperation, postOperation, type MutationError } from "./operation-api";
 import { commandResponseSchema, operationViewSchema, retryResponseSchema, runIntentSchema, sessionResponseSchema } from "./operation-models";
 import { clearCsrfToken } from "./csrf";
 
@@ -187,9 +187,27 @@ export function useOperationPanel() {
     try { void execute({ kind: "retry", traceId: run.traceId, eventId, path: `/api/demo/runs/${run.traceId}/events/${eventId}/retry`, body: JSON.stringify({ requestId: crypto.randomUUID() }) }); }
     catch { setError({ code: "INVALID_RESPONSE" }); }
   }
+  async function endSession() {
+    if (lock.current) return;
+    lock.current = true;
+    setActivity("submitting");
+    const request = new AbortController();
+    controller.current = request;
+    try {
+      await deleteOperation("/api/demo/session", request.signal);
+      expire();
+    } catch {
+      expire();
+    } finally {
+      if (active.current && !request.signal.aborted) {
+        lock.current = false;
+        setActivity("idle");
+      }
+    }
+  }
   return { data: deadline !== null && deadline <= Date.now() ? null : data, busy, uncertain, conflict, stale, error,
     errorText: error ? errorMessage(error) : "", message, links: links.filter(link => Date.parse(link.expiresAt) > Date.now()), draftRevision,
-    blocked: busy || uncertain || conflict || stale, refresh,
+    blocked: busy || uncertain || conflict || stale, refresh, endSession,
     recoverCurrent: () => { if (!lock.current) { path.current = currentPath; void refresh(); } },
     start: () => makeIntent("start"), reset: () => makeIntent("reset"), command, retryPublication,
     retryIntent: () => { const current = intentState.current; if (current.kind === "uncertain") void execute(current.intent); },

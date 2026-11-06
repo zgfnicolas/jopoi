@@ -11,7 +11,7 @@ import { readPublicEvent } from "../events/payload";
 import { publicationSummary, publicationSummarySelect } from "../hedera/summary";
 import { quotaSummary } from "../hedera/coordinator";
 import { sessionTokenHash } from "../sessions/credentials";
-import { requireOwnedRun, requireSession, sessionSummary } from "../sessions/service";
+import { isSessionActive, requireOwnedRun, requireSession, sessionSummary } from "../sessions/service";
 import { readRunOperation, readRunSnapshot } from "./storage";
 
 async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<DemoRunDetail> {
@@ -40,9 +40,9 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
 }
 
 function requireReadValidity(session: DemoSession, run: DemoRun | null): void {
-  const now = wallNow().getTime();
-  if (session.expiresAt.getTime() <= now) throw new ApplicationError("SESSION_EXPIRED");
-  if (run !== null && run.expiresAt.getTime() <= now) throw new ApplicationError("NOT_FOUND");
+  const now = wallNow();
+  if (!isSessionActive(session, now)) throw new ApplicationError("SESSION_EXPIRED");
+  if (run !== null && run.expiresAt.getTime() <= now.getTime()) throw new ApplicationError("NOT_FOUND");
 }
 
 /** Lecturas coherentes y sin efectos: no inicia sesión, recorrido ni publicación. */

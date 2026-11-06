@@ -54,7 +54,16 @@ export function buildOpenApi() {
     servers: [{ url: "/" }],
     paths: {
       "/api/demo/session": { get: { ...operation("readSession", "Recuperar sesión y recorrido activo", "SessionResponse", [200], "session"), "x-rate-limit": "30 por sesión / 1000 global cada 60 segundos" },
-        post: { ...operation("createSession", "Recuperar o crear sesión", "SessionResponse", [200, 201], "public", "EmptyBody", 4096), "x-rate-limit": "20 por visitante / 200 global cada 600 segundos; hasta 100 sesiones nuevas por día UTC global (recuperar una sesión vigente no consume cupo de creación)" } },
+        post: { ...operation("createSession", "Recuperar o crear sesión", "SessionResponse", [200, 201], "public", "EmptyBody", 4096), "x-rate-limit": "20 por visitante / 200 global cada 600 segundos; hasta 100 sesiones nuevas por día UTC global (recuperar una sesión vigente no consume cupo de creación)" },
+        delete: { operationId: "deleteSession", summary: "Cerrar sesión y revocar credenciales de forma idempotente", security: [{ demoSession: [] }],
+          description: "Revoca en el servidor la sesión asociada a la cookie, elimina las cookies del cliente y devuelve 204 sin contenido. Repetirlo no recrea la sesión ni modifica la retención de los recorridos creados.",
+          parameters: [
+            { name: "Origin", in: "header", required: true, schema: { type: "string", format: "uri" }, description: "Origen APP_URL configurado, sin aceptar Host del visitante." },
+            { name: "X-Jopoi-Request", in: "header", required: true, schema: { const: "demo" } },
+            { name: "X-CSRF-Token", in: "header", required: false, schema: { type: "string" }, description: "Token CSRF vinculado a la sesión, requerido si la solicitud incluye la cookie de sesión." },
+          ],
+          responses: { ...errorResponses, "204": { description: "Sesión revocada o ya terminada; cookies eliminadas.",
+            headers: { ...responseHeaders, "Set-Cookie": header("Eliminación de __Host-jopoi_session o jopoi_session con Max-Age=0.") } } } } },
       "/api/demo/runs": { post: { ...operation("startRun", "Crear o resolver intención de inicio", "RunIntent", [200, 201], "session", "RunIntentInput", 4096), "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos; hasta 100 intenciones nuevas por sesión y 5000 por día UTC global (repetir una intención confirmada no consume otro cupo de intención ni de recorrido)" } },
       "/api/demo/runs/reset": { post: { ...operation("resetRun", "Crear recorrido de reinicio", "RunIntent", [200, 201], "session", "RunIntentInput", 4096), "x-rate-limit": "10 intentos de mutación por sesión / 100 global cada 60 segundos; hasta 100 intenciones nuevas por sesión y 5000 por día UTC global (repetir una intención confirmada no consume otro cupo de intención ni de recorrido)" } },
       "/api/demo/runs/current": { get: { ...operation("readCurrentRun", "Consultar recorrido actual", "RunResponse", [200], "session"), "x-rate-limit": "30 por sesión / 1000 global cada 60 segundos" } },

@@ -7,6 +7,7 @@ import { HCS_CODES, type HcsCode } from "./hedera/contracts";
 
 export const HTTP_OPERATIONS = {
   "session.read": ["GET", "/api/demo/session"], "session.create": ["POST", "/api/demo/session"],
+  "session.delete": ["DELETE", "/api/demo/session"],
   "runs.start": ["POST", "/api/demo/runs"], "runs.reset": ["POST", "/api/demo/runs/reset"],
   "runs.current": ["GET", "/api/demo/runs/current"], "runs.read": ["GET", "/api/demo/runs/:traceId"],
   "runs.command": ["POST", "/api/demo/runs/:traceId/commands"],

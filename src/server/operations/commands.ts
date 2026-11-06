@@ -15,7 +15,7 @@ import { configuredTarget } from "../hedera/target";
 import { privatePublicationSummary } from "../hedera/summary";
 import { reserveRunIntent, reserveSessionRateLimit } from "../security/rate-limit";
 import { sessionTokenHash } from "../sessions/credentials";
-import { requireOwnedRun } from "../sessions/service";
+import { requireOwnedRun, touchSessionActivity } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, readReceiptResult, runChanges } from "./storage";
 
 export interface OperationCommandInput {
@@ -96,6 +96,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     if (decision.value.createsMilestone !== (type !== null)) throw new ApplicationError("INTERNAL_ERROR");
     const appliedAt = wallNow();
     if (session.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("SESSION_EXPIRED");
+    await touchSessionActivity(tx, session, appliedAt);
     if (run.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("NOT_FOUND");
     const eventId = type === null ? null : randomUUID();
     const latest = type === null ? null : await tx.operationEvent.aggregate({ where: { runId: run.id }, _max: { ordinal: true } });

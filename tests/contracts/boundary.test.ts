@@ -4,6 +4,7 @@ import { apiBoundary, readJsonBody, requireBrowserMutation } from "../../src/ser
 import { ApplicationError } from "../../src/server/application-error";
 import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort, sqlStepBudget } from "../../src/server/deadlines";
 import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
+import { isSessionActive } from "../../src/server/sessions/service";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
@@ -200,4 +201,67 @@ test("S22-16 / S22-18: requireBrowserMutation valida Origin, custom header, meta
     () => requireBrowserMutation(new Request(url, { method: "POST", headers: { ...validHeaders, "X-CSRF-Token": csrfToken(newSessionToken())! } })),
     (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
   );
+
+  // DELETE con sesión y CSRF (sin Content-Type ni body) es válido
+  const deleteHeaders = {
+    Origin: "https://example.invalid",
+    "X-Jopoi-Request": "demo",
+    Cookie: `${HOST_SESSION_COOKIE}=${validToken}`,
+    "X-CSRF-Token": validCsrf,
+  };
+  assert.doesNotThrow(() => requireBrowserMutation(new Request(url, { method: "DELETE", headers: deleteHeaders })));
+
+  // DELETE sin cookie (repetido o anónimo) es válido
+  assert.doesNotThrow(() => requireBrowserMutation(new Request(url, {
+    method: "DELETE",
+    headers: { Origin: "https://example.invalid", "X-Jopoi-Request": "demo" },
+  })));
+
+  // DELETE con cookie pero sin CSRF rechaza
+  assert.throws(
+    () => requireBrowserMutation(new Request(url, {
+      method: "DELETE",
+      headers: { Origin: "https://example.invalid", "X-Jopoi-Request": "demo", Cookie: `${HOST_SESSION_COOKIE}=${validToken}` },
+    })),
+    (e: unknown) => e instanceof ApplicationError && e.code === "REQUEST_FORBIDDEN",
+  );
+});
+
+test("S22-16 / S22-17: isSessionActive valida inactividad (60 min), máximo absoluto (24 h) y revocación", () => {
+  const base = new Date("2026-01-01T12:00:00.000Z");
+  const expiresAt = new Date(base.getTime() + 24 * 3600 * 1000);
+  const session = {
+    expiresAt,
+    lastActivityAt: base,
+    revokedAt: null as Date | null,
+  };
+
+  // Activa inmediatamente
+  assert.equal(isSessionActive(session, base), true);
+
+  // Activa a los 30 minutos (inactividad < 60 min, dentro de 24 h)
+  assert.equal(isSessionActive(session, new Date(base.getTime() + 30 * 60 * 1000)), true);
+
+  // Inactiva a los 60 minutos exactos
+  assert.equal(isSessionActive(session, new Date(base.getTime() + 60 * 60 * 1000)), false);
+
+  // Inactiva a los 65 minutos
+  assert.equal(isSessionActive(session, new Date(base.getTime() + 65 * 60 * 1000)), false);
+
+  // Revocada
+  assert.equal(isSessionActive({ ...session, revokedAt: new Date(base.getTime() + 10 * 1000) }, base), false);
+
+  // Actividad reciente pero superó el máximo absoluto de 24 h
+  const lateActivity = new Date(expiresAt.getTime() - 5 * 60 * 1000); // 5 min antes del final
+  const expiredSession = {
+    expiresAt,
+    lastActivityAt: lateActivity,
+    revokedAt: null,
+  };
+  // Válida 1 min antes de las 24 h
+  assert.equal(isSessionActive(expiredSession, new Date(expiresAt.getTime() - 60 * 1000)), true);
+  // Inválida en el segundo exacto de las 24 h
+  assert.equal(isSessionActive(expiredSession, expiresAt), false);
+  // Inválida después de las 24 h aun con actividad reciente
+  assert.equal(isSessionActive(expiredSession, new Date(expiresAt.getTime() + 1000)), false);
 });

@@ -85,12 +85,14 @@ enum HcsAttemptState {
 }
 
 model DemoSession {
-  id          String    @id @default(uuid()) @db.Uuid
-  tokenHash   String    @unique @db.VarChar(64)
-  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
-  expiresAt   DateTime  @db.Timestamptz(3)
-  runCount    Int       @default(0) @db.SmallInt
-  runs        DemoRun[]
+  id             String    @id @default(uuid()) @db.Uuid
+  tokenHash      String    @unique @db.VarChar(64)
+  createdAt      DateTime  @default(now()) @db.Timestamptz(3)
+  expiresAt      DateTime  @db.Timestamptz(3)
+  runCount       Int       @default(0) @db.SmallInt
+  lastActivityAt DateTime  @default(now()) @db.Timestamptz(3)
+  revokedAt      DateTime? @db.Timestamptz(3)
+  runs           DemoRun[]
 
   @@index([expiresAt])
 }

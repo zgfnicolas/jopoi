@@ -22,8 +22,9 @@ export class Visitor {
   async request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<HttpResult<T>> {
     const response = await fetch(environment.origin + path, {
       method, headers: { "X-S21-Visitor": this.identity, ...(this.cookie ? { Cookie: this.cookie } : {}),
-        ...(method === "POST" ? { Origin: environment.origin, "X-Jopoi-Request": "demo", "Content-Type": "application/json",
-          ...(this.csrfToken ? { "X-CSRF-Token": this.csrfToken } : {}) } : {}), ...headers },
+        ...(method === "POST" || method === "DELETE" ? { Origin: environment.origin, "X-Jopoi-Request": "demo",
+          ...(this.csrfToken ? { "X-CSRF-Token": this.csrfToken } : {}) } : {}),
+        ...(method === "POST" ? { "Content-Type": "application/json" } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(60000),
     });
     const setCookies = typeof (response.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === "function"
@@ -40,11 +41,11 @@ export class Visitor {
         }
       }
     }
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 204) {
       this.cookie = "";
       this.csrfToken = "";
     }
-    const responseBody: unknown = await response.json();
+    const responseBody: unknown = response.status === 204 ? null : await response.json().catch(() => null);
     const csrf = response.headers.get("x-csrf-token")
       ?? (responseBody && typeof responseBody === "object" && "csrfToken" in responseBody && typeof (responseBody as Record<string, unknown>).csrfToken === "string"
         ? (responseBody as Record<string, unknown>).csrfToken as string
@@ -55,6 +56,8 @@ export class Visitor {
   }
   get<T = DemoRunResponse>(path: string, headers?: Record<string, string>) { return this.request<T>("GET", path, undefined, headers); }
   post<T = DemoCommandResponse>(path: string, body: unknown, headers?: Record<string, string>) { return this.request<T>("POST", path, body, headers); }
+  delete<T = void>(path: string, headers?: Record<string, string>) { return this.request<T>("DELETE", path, undefined, headers); }
+  async end() { return this.delete("/api/demo/session"); }
   async begin() {
     const result = await this.post<DemoSessionResponse>("/api/demo/session", {});
     if (![200, 201].includes(result.status)) throw new Error(`BEGIN_FAILED_${result.status}`);

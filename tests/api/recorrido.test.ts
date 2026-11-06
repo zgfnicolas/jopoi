@@ -3,7 +3,7 @@ import { afterAll, beforeEach, expect, test } from "vitest";
 import { randomUUID } from "node:crypto";
 import { environment, eventually, Visitor } from "../support/client";
 import type { DemoSessionResponse } from "../../src/shared/session-contracts";
-import { exceptional } from "../support/fixtures";
+import { exceptional, fixture } from "../support/fixtures";
 
 // Each case receives a clean SQL state and a fresh HTTP server.
 beforeEach(() => environment.reset());
@@ -54,6 +54,7 @@ test("API-04 · a las 24 horas vence la escritura pero continúa la trazabilidad
   await visitor.publish();
   await eventually(() => visitor.run(), run => run.events[0]?.publication.verificationState === "MATCHED");
   await environment.advance(86400000 - 1);
+  await fixture('UPDATE "DemoSession" SET "lastActivityAt" = \'2026-01-02T11:55:00.000Z\'');
   expect((await visitor.get(`/api/demo/runs/${visitor.traceId}`)).status).toBe(200);
   await environment.advance(1);
   const expired = await visitor.post(`/api/demo/runs/${visitor.traceId}/commands`, { action: "approve", role: "coordinator", requestId: randomUUID(), expectedVersion: 2 });

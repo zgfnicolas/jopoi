@@ -17,6 +17,32 @@ type RunSummaryRow = Pick<DemoRun, "traceId" | "state" | "version" | "expiresAt"
 
 const summarySelect = { id: true, traceId: true, state: true, version: true, expiresAt: true } as const;
 
+export function isSessionActive(
+  session: Pick<DemoSession, "expiresAt" | "lastActivityAt" | "revokedAt">,
+  at: Date = wallNow(),
+): boolean {
+  if (session.revokedAt !== null) return false;
+  if (session.expiresAt.getTime() <= at.getTime()) return false;
+  if (at.getTime() - session.lastActivityAt.getTime() >= DEMO_POLICY.sessionIdleSeconds * 1000) return false;
+  return true;
+}
+
+export async function touchSessionActivity(
+  tx: Transaction,
+  session: DemoSession,
+  at: Date = wallNow(),
+): Promise<DemoSession> {
+  const elapsed = at.getTime() - session.lastActivityAt.getTime();
+  if (elapsed >= DEMO_POLICY.sessionActivityThrottleSeconds * 1000 && elapsed < DEMO_POLICY.sessionIdleSeconds * 1000) {
+    await tx.demoSession.update({
+      where: { id: session.id },
+      data: { lastActivityAt: at },
+    });
+    return { ...session, lastActivityAt: at };
+  }
+  return session;
+}
+
 export function sessionSummary(session: Pick<DemoSession, "expiresAt" | "runCount">): DemoSessionSummary {
   return {
     expiresAt: session.expiresAt.toISOString(),
@@ -47,7 +73,7 @@ export async function requireSession(tx: Transaction, tokenHash: string | undefi
   if (tokenHash === undefined) throw new ApplicationError("SESSION_REQUIRED");
   const session = await tx.demoSession.findUnique({ where: { tokenHash } });
   if (session === null) throw new ApplicationError("SESSION_REQUIRED");
-  if (session.expiresAt.getTime() <= wallNow().getTime()) throw new ApplicationError("SESSION_EXPIRED");
+  if (!isSessionActive(session, wallNow())) throw new ApplicationError("SESSION_EXPIRED");
   return session;
 }
 
@@ -67,6 +93,18 @@ export async function recoverSession(token: string | undefined): Promise<DemoSes
   return withTransaction(async (tx) => sessionResponse(tx, await requireSession(tx, hash)));
 }
 
+export async function revokeSession(token: string | undefined): Promise<void> {
+  const hash = sessionTokenHash(token);
+  if (hash === undefined) return;
+  await withDatabase(async (db) => {
+    const now = wallNow();
+    await db.demoSession.updateMany({
+      where: { tokenHash: hash, revokedAt: null },
+      data: { revokedAt: now },
+    });
+  });
+}
+
 /** Solo invocada por el inicio explícito de sesión, nunca como fallback de comandos. */
 export async function beginSession(token: string | undefined) {
   const hash = sessionTokenHash(token);
@@ -74,8 +112,9 @@ export async function beginSession(token: string | undefined) {
     const now = wallNow();
     if (hash !== undefined) {
       const existing = await db.demoSession.findUnique({ where: { tokenHash: hash } });
-      if (existing !== null && existing.expiresAt.getTime() > now.getTime()) {
-        return { body: await sessionResponse(db, existing), token: undefined, created: false };
+      if (existing !== null && isSessionActive(existing, now)) {
+        const touched = await touchSessionActivity(db as unknown as Transaction, existing, now);
+        return { body: await sessionResponse(db, touched), token: undefined, created: false };
       }
     }
     const freshToken = newSessionToken();
@@ -92,8 +131,8 @@ export async function beginSession(token: string | undefined) {
         WHERE "RequestRateBucket"."used" < ${limit}
         RETURNING "used"
       )
-      INSERT INTO "DemoSession" ("id", "tokenHash", "runCount", "createdAt", "expiresAt")
-      SELECT ${randomUUID()}::uuid, ${freshHash}, 0, ${now.toISOString()}::timestamptz, ${sessionExpiresAt.toISOString()}::timestamptz
+      INSERT INTO "DemoSession" ("id", "tokenHash", "runCount", "createdAt", "expiresAt", "lastActivityAt")
+      SELECT ${randomUUID()}::uuid, ${freshHash}, 0, ${now.toISOString()}::timestamptz, ${sessionExpiresAt.toISOString()}::timestamptz, ${now.toISOString()}::timestamptz
       FROM quota
       RETURNING "expiresAt", "runCount"`);
     const created = rows[0];
@@ -119,11 +158,12 @@ export async function resolveRunIntent(token: string | undefined, requestId: str
   return withDatabase(db => db.$transaction(async (tx) => {
     const now = wallNow();
     const rows = await tx.$queryRaw<DemoSession[]>(Prisma.sql`
-      SELECT "id", "tokenHash", "runCount", "createdAt", "expiresAt"
+      SELECT "id", "tokenHash", "runCount", "createdAt", "expiresAt", "lastActivityAt", "revokedAt"
       FROM "DemoSession" WHERE "tokenHash" = ${hash} FOR UPDATE`);
     let session = rows[0];
     if (session === undefined) throw new ApplicationError("SESSION_REQUIRED");
-    if (session.expiresAt.getTime() <= now.getTime()) throw new ApplicationError("SESSION_EXPIRED");
+    if (!isSessionActive(session, now)) throw new ApplicationError("SESSION_EXPIRED");
+    session = await touchSessionActivity(tx, session, now);
     const previous = await replayIntent(tx, session, requestId, kind);
     if (previous !== null) return previous;
     await reserveSessionIntent(tx, session, now);

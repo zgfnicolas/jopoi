@@ -1,6 +1,8 @@
 /** Parámetros acordados; su aplicación durable corresponde a S04 y S10. */
 export const DEMO_POLICY = Object.freeze({
   sessionLifetimeSeconds: 24 * 60 * 60,
+  sessionIdleSeconds: 60 * 60,
+  sessionActivityThrottleSeconds: 5 * 60,
   maxRunsPerSession: 3,
   maxReceiptsPerRun: 100,
   maxRunIntentsPerSession: 100,

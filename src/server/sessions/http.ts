@@ -7,7 +7,7 @@ import type { DemoSessionResponse } from "../../shared/session-contracts";
 import { ApplicationError } from "../application-error";
 import { apiBoundary as boundary, PRIVATE_RESPONSE_HEADERS as privateHeaders, readJsonBody, requireBrowserMutation } from "../http";
 import { csrfToken, extractSessionCredentials, HOST_SESSION_COOKIE, SESSION_COOKIE, sessionCookiePolicy } from "./credentials";
-import { beginSession, recoverSession, resolveRunIntent } from "./service";
+import { beginSession, recoverSession, resolveRunIntent, revokeSession } from "./service";
 import { requireRateLimit, requireSessionRateLimit } from "../security/rate-limit";
 
 const MAX_BODY_BYTES = 4096;
@@ -101,5 +101,33 @@ export function postRunIntent(kind: "START" | "RESET") {
     await requireSessionRateLimit(token, "MUTATION");
     const result = await resolveRunIntent(token, parsed.data.requestId, kind);
     return NextResponse.json(result, { status: result.created ? 201 : 200, headers: privateHeaders });
+  });
+}
+
+export async function deleteSession(request: NextRequest): Promise<NextResponse> {
+  return boundary("session.delete", request, async () => {
+    requireBrowserMutation(request);
+    const creds = extractSessionCredentials(request);
+    if (creds.ambiguous) throw new ApplicationError("SESSION_REQUIRED");
+    if (creds.token !== undefined) {
+      await revokeSession(creds.token);
+    }
+    const response = new NextResponse(null, { status: 204, headers: privateHeaders });
+    response.cookies.set(HOST_SESSION_COOKIE, "", {
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+    });
+    response.cookies.set(SESSION_COOKIE, "", {
+      path: "/",
+      maxAge: 0,
+      expires: new Date(0),
+      httpOnly: true,
+      sameSite: "lax",
+    });
+    return response;
   });
 }

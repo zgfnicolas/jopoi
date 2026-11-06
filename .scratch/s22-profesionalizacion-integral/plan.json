@@ -608,7 +608,13 @@
         "S22-18",
         "S22-29"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-16-revocacion-expiracion-sesion.md",
+        "validation": "DELETE /api/demo/session idempotente con 204 No Content, protección requireBrowserMutation (Origin, X-Jopoi-Request, Sec-Fetch-Site, Sec-Fetch-Mode y CSRF opcional en mutación vacía), revocación en servidor (revokedAt) y eliminación de cookies (Max-Age=0) sin crear sesiones en reintentos. Registros padre DemoSession preservados para auditoría; trazas públicas (/api/traces/[traceId]) retienen vigencia independiente de 7 días. Inactividad de 60 min y límite absoluto de 24 h evaluados con reloj del servidor (wallNow()); persistencia de actividad throttled a 5 min sin estirar límite absoluto. Interfaz con botón 'Cerrar sesión', aviso de política de 24h / 60min idle, y bloqueo de comandos/lecturas privadas/CSRF con 401 ante revocación/inactividad. Migración aditiva 202611060001_session_revocation_and_inactivity con backfill y coexistencia. 18 contratos, 27 seguridad, 67 HTTP, 24 CLI, puerta completa y build aprobados; cero diagnósticos estrictos."
+      }
     },
     {
       "id": "17",
