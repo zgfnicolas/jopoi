@@ -13,6 +13,8 @@ export type OperationIntent =
       readonly traceId: string;
       readonly action: OperationAction;
       readonly expectedVersion: number;
+      readonly ifMatch?: string | undefined;
+      readonly idempotencyKey?: string | undefined;
     })
   | (CapturedRequest & {
       readonly kind: "retry";

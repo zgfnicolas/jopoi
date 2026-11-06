@@ -6,8 +6,8 @@ import type { OperationIntent } from "@/shared/operation-intents";
 import { API_ERROR_CATALOG, isApiErrorCode } from "@/shared/api-errors";
 import { retryAfterMessage } from "./retry-after";
 import { readApi, type ReadError } from "./api";
-import { deleteOperation, postOperation, type MutationError } from "./operation-api";
-import { commandResponseSchema, operationViewSchema, retryResponseSchema, runIntentSchema, sessionResponseSchema } from "./operation-models";
+import { deleteOperation, patchOperation, postOperation, type MutationError } from "./operation-api";
+import { commandResponseSchema, operationPatchResponseSchema, operationResourceSchema, operationViewSchema, retryResponseSchema, runIntentSchema, sessionResponseSchema } from "./operation-models";
 import { clearCsrfToken } from "./csrf";
 
 type IntentResolution =
@@ -43,12 +43,14 @@ export function useOperationPanel() {
   const lock = useRef(false), active = useRef(false), generation = useRef(0);
   const controller = useRef<AbortController | null>(null), path = useRef(currentPath);
   const resetDraftOnRead = useRef(false);
+  const operationEtag = useRef<string | null>(null);
   const remember = useCallback((run: PublicLink) => {
     const link = { traceId: run.traceId, expiresAt: run.expiresAt };
     setLinks(previous => [...previous.filter(item => item.traceId !== link.traceId && Date.parse(item.expiresAt) > Date.now()), link]);
   }, []);
   const expire = useCallback(() => {
     clearCsrfToken();
+    operationEtag.current = null;
     generation.current++; controller.current?.abort(); transition({ kind: "ready" }); snapshot.current = null;
     lock.current = false; setActivity("idle"); setData(null); setStale(false);
     setMessage(""); setError({ code: "SESSION_EXPIRED" }); setDraftRevision(value => value + 1);
@@ -64,9 +66,24 @@ export function useOperationPanel() {
   const load = useCallback(async (signal: AbortSignal) => {
     const result = await readApi(path.current, operationViewSchema, signal);
     if (!active.current || signal.aborted) return false;
-    if (result.ok) { if (!accept(result.data)) return false; setError(null); return true; }
+    if (result.ok) {
+      if (result.data.run) {
+        const opResult = await readApi(
+          `/api/demo/runs/${result.data.run.traceId}/operation`,
+          operationResourceSchema,
+          signal,
+        );
+        if (opResult.ok && opResult.etag) {
+          operationEtag.current = opResult.etag;
+        }
+      }
+      if (!accept(result.data)) return false;
+      setError(null);
+      return true;
+    }
     if (["SESSION_REQUIRED", "SESSION_EXPIRED", "NOT_FOUND"].includes(result.error.code)) {
       clearCsrfToken();
+      operationEtag.current = null;
       transition({ kind: "ready" }); snapshot.current = null; setData(null);
       setDraftRevision(value => value + 1);
     }
@@ -141,13 +158,33 @@ export function useOperationPanel() {
         setMessage(result.data.created ? "El nuevo recorrido quedó guardado." : "Retomamos el recorrido guardado de esta intención.");
         resetDraftOnRead.current = true;
       } else if (intent.kind === "command") {
-        const result = await postOperation(intent.path, intent.body, commandResponseSchema, [200], request.signal);
-        if (!alive()) return;
-        if (!result.ok) { failure(result.error); if (conflictCodes(result.error.code)) { await load(request.signal); if (alive()) setError(result.error); } return; }
-        if (result.data.traceId !== intent.traceId || result.data.applied.version !== intent.expectedVersion + 1
-          || (result.data.event === null) !== (intent.action === "save")) { failure({ code: "INVALID_RESPONSE", status: 200, fields: {} }); return; }
-        setMessage("La acción quedó guardada en SQL. El estado de red se muestra por separado.");
-        resetDraftOnRead.current = true;
+        if (intent.path.endsWith("/operation")) {
+          const result = await patchOperation(intent.path, intent.body, operationPatchResponseSchema, {
+            ifMatch: intent.ifMatch,
+            idempotencyKey: intent.idempotencyKey ?? crypto.randomUUID(),
+            signal: request.signal,
+          });
+          if (!alive()) return;
+          if (!result.ok) {
+            failure(result.error);
+            if (conflictCodes(result.error.code)) {
+              await load(request.signal);
+              if (alive()) setError(result.error);
+            }
+            return;
+          }
+          if (result.etag) operationEtag.current = result.etag;
+          setMessage("La acción quedó guardada en SQL. El estado de red se muestra por separado.");
+          resetDraftOnRead.current = true;
+        } else {
+          const result = await postOperation(intent.path, intent.body, commandResponseSchema, [200], request.signal);
+          if (!alive()) return;
+          if (!result.ok) { failure(result.error); if (conflictCodes(result.error.code)) { await load(request.signal); if (alive()) setError(result.error); } return; }
+          if (result.data.traceId !== intent.traceId || result.data.applied.version !== intent.expectedVersion + 1
+            || (result.data.event === null) !== (intent.action === "save")) { failure({ code: "INVALID_RESPONSE", status: 200, fields: {} }); return; }
+          setMessage("La acción quedó guardada en SQL. El estado de red se muestra por separado.");
+          resetDraftOnRead.current = true;
+        }
       } else if (intent.kind === "retry") {
         const result = await postOperation(intent.path, intent.body, retryResponseSchema, [200, 202], request.signal);
         if (!alive()) return;
@@ -177,9 +214,21 @@ export function useOperationPanel() {
   function command(value: OperationCommand) {
     const run = snapshot.current?.run;
     if (!run || lock.current || !canCreateIntent(intentState.current) || stale) return;
-    try { void execute({ kind: "command", traceId: run.traceId, action: value.action, expectedVersion: run.version, path: `/api/demo/runs/${run.traceId}/commands`,
-      body: JSON.stringify({ ...value, requestId: crypto.randomUUID(), expectedVersion: run.version }) }); }
-    catch { setError({ code: "INVALID_RESPONSE" }); }
+    try {
+      const idempotencyKey = crypto.randomUUID();
+      void execute({
+        kind: "command",
+        traceId: run.traceId,
+        action: value.action,
+        expectedVersion: run.version,
+        path: `/api/demo/runs/${run.traceId}/operation`,
+        ifMatch: operationEtag.current ?? undefined,
+        idempotencyKey,
+        body: JSON.stringify({ ...value, requestId: idempotencyKey, expectedVersion: run.version }),
+      });
+    } catch {
+      setError({ code: "INVALID_RESPONSE" });
+    }
   }
   function retryPublication(eventId: string) {
     const run = snapshot.current?.run;
@@ -214,4 +263,12 @@ export function useOperationPanel() {
     acknowledgeConflict: () => { if (!lock.current && !stale && intentState.current.kind === "conflict") { transition({ kind: "ready" }); setError(null); } },
   };
 }
-function conflictCodes(code: string) { return ["VERSION_CONFLICT", "STATE_CONFLICT", "IDEMPOTENCY_CONFLICT"].includes(code); }
+function conflictCodes(code: string) {
+  return [
+    "VERSION_CONFLICT",
+    "STATE_CONFLICT",
+    "IDEMPOTENCY_CONFLICT",
+    "PRECONDITION_FAILED",
+    "PRECONDITION_REQUIRED",
+  ].includes(code);
+}

@@ -6,8 +6,8 @@ import { z } from "zod";
 import { Prisma, type CommandAction, type SimulatedRole as SqlRole } from "../../generated/prisma/client";
 import { canonicalJson } from "../../domain/canonical-json";
 import { decideOperation, normalizeOperationCommand } from "../../domain/operations";
-import type { PersistedCommandResult } from "../../shared/event-contracts";
-import type { OperationAction, OperationCommand, SimulatedRole } from "../../shared/operation-contracts";
+import type { PersistedCommandResult, PublicEventRecord } from "../../shared/event-contracts";
+import type { OperationAction, OperationCommand, OperationData, SimulatedRole } from "../../shared/operation-contracts";
 import { ApplicationError } from "../application-error";
 import { advanceRunVersion, withTransaction } from "../database";
 import { createPublicEvent, eventTypeForAction, readPublicEvent } from "../events/payload";
@@ -17,6 +17,8 @@ import { reserveRunIntent, reserveSessionRateLimit } from "../security/rate-limi
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun, touchSessionActivity } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, readReceiptResult, runChanges } from "./storage";
+import { computeOperationEtag, matchesIfMatch } from "./etag";
+import type { OperationResource } from "../../shared/run-contracts";
 
 export interface OperationCommandInput {
   readonly token: string | undefined;
@@ -25,6 +27,39 @@ export interface OperationCommandInput {
   readonly expectedVersion: number;
   readonly command: OperationCommand;
 }
+
+export interface OperationPatchInputInternal {
+  readonly token: string | undefined;
+  readonly traceId: string;
+  readonly idempotencyKey: string;
+  readonly ifMatch: string | undefined;
+  readonly command: OperationCommand;
+  readonly expectedVersion?: number | undefined;
+}
+
+export interface OperationPatchResult {
+  readonly traceId: string;
+  readonly version: number;
+  readonly operation: OperationData;
+  readonly etag: string;
+  readonly replayed: boolean;
+  readonly applied: {
+    readonly operation: OperationData;
+    readonly version: number;
+    readonly eventId: string | null;
+  };
+  readonly current: {
+    readonly operation: OperationData;
+    readonly version: number;
+  };
+  readonly event: PublicEventRecord | null;
+}
+
+const patchMetadataSchema = z.strictObject({
+  traceId: z.uuid().transform((value) => value.toLowerCase()),
+  idempotencyKey: z.uuid().transform((value) => value.toLowerCase()),
+  expectedVersion: z.number().int().positive().max(2147483647).optional(),
+});
 
 const metadataSchema = z.strictObject({
   traceId: z.uuid().transform((value) => value.toLowerCase()),
@@ -146,6 +181,189 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
       || error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
     if (!conflict) throw error;
     // Snapshot nuevo y nueva autorización, solo lectura. Nunca reintentar una escritura automáticamente.
+    return withTransaction((tx) => resolve(tx, false));
+  }
+}
+
+/**
+ * Edición de la operación con precondición fuerte If-Match y clave idempotente Idempotency-Key (S22 / D08).
+ * Resuelve replays autorizados antes de volver a aplicar la precondición.
+ */
+export async function patchOperationCommand(input: OperationPatchInputInternal): Promise<OperationPatchResult> {
+  const metadata = patchMetadataSchema.safeParse({
+    traceId: input.traceId,
+    idempotencyKey: input.idempotencyKey,
+    expectedVersion: input.expectedVersion,
+  });
+  if (!metadata.success) {
+    throw new ApplicationError("INVALID_INPUT", { form: ["Ingresá identificadores UUID válidos."] });
+  }
+  const { traceId, idempotencyKey, expectedVersion: inputExpectedVersion } = metadata.data;
+  const tokenHash = sessionTokenHash(input.token);
+  if (tokenHash === undefined) throw new ApplicationError("SESSION_REQUIRED");
+
+  async function resolve(tx: Prisma.TransactionClient, allowWrite: boolean): Promise<OperationPatchResult> {
+    const { run, session } = await requireOwnedRun(tx, tokenHash, traceId);
+    const snapshot = readRunSnapshot(run);
+    const current = readRunOperation(run, snapshot);
+    const currentResource: OperationResource = { traceId: run.traceId, version: run.version, operation: current };
+    const currentEtag = computeOperationEtag(currentResource);
+    const normalized = normalizeOperationCommand(input.command, snapshot);
+    if (!normalized.ok) throw new ApplicationError(normalized.error.code, normalized.error.fields);
+    const command = normalized.value;
+
+    const previous = await tx.commandReceipt.findUnique({
+      where: { runId_requestId: { runId: run.id, requestId: idempotencyKey } },
+      include: { event: { include: { publication: true } } },
+    });
+
+    if (previous !== null) {
+      const historicalExpectedVersion = previous.resultingVersion - 1;
+      if (inputExpectedVersion !== undefined && inputExpectedVersion !== historicalExpectedVersion) {
+        throw new ApplicationError("IDEMPOTENCY_CONFLICT");
+      }
+      const intentHash = createHash("sha256")
+        .update(canonicalJson({ version: 1, expectedVersion: historicalExpectedVersion, command }), "utf8")
+        .digest("hex");
+      if (previous.intentHash !== intentHash) throw new ApplicationError("IDEMPOTENCY_CONFLICT");
+
+      const original = readReceiptResult(previous.result, snapshot);
+      if (
+        previous.action !== ACTIONS[command.action] ||
+        previous.resultingVersion !== historicalExpectedVersion + 1 ||
+        previous.resultingVersion > run.version ||
+        original.eventId !== (previous.event?.id ?? null) ||
+        (previous.event === null) !== (command.action === "save")
+      ) {
+        throw new ApplicationError("INTERNAL_ERROR");
+      }
+      const event = previous.event === null ? null : readPublicEvent(previous.event, run.traceId, snapshot);
+      if (
+        (event === null && original.operation.state !== "DRAFT") ||
+        (event !== null && event.payload.type !== eventTypeForAction(command.action))
+      ) {
+        throw new ApplicationError("INTERNAL_ERROR");
+      }
+      const publication = previous.event?.publication ?? null;
+      if (event !== null && publication === null) throw new ApplicationError("INTERNAL_ERROR");
+      if (
+        event !== null &&
+        (event.payload.detail.state !== original.operation.state ||
+          event.payload.detail.quantityKg !== original.operation.quantityKg ||
+          event.payload.detail.humidityPercent !== original.operation.humidityPercent ||
+          event.payload.detail.receivedKg !== original.operation.receivedKg ||
+          event.payload.detail.buyer.id !== snapshot.buyer.id ||
+          (event.payload.detail.trip?.id ?? null) !== original.operation.assignedTripId ||
+          (event.payload.detail.reason?.code ?? null) !==
+            (original.operation.rejectionReasonCode ?? original.operation.incidentReasonCode))
+      ) {
+        throw new ApplicationError("INTERNAL_ERROR");
+      }
+      if (event !== null && tokenHash !== undefined) {
+        await reserveSessionRateLimit(tx, tokenHash, "PUBLICATION", wallNow());
+      }
+      return {
+        traceId: run.traceId,
+        version: run.version,
+        operation: current,
+        etag: currentEtag,
+        replayed: true,
+        applied: { operation: original.operation, version: previous.resultingVersion, eventId: original.eventId },
+        current: { operation: current, version: run.version },
+        event,
+      };
+    }
+
+    // Si no es un replay, evaluamos la precondición fuerte If-Match antes de mutar
+    if (input.ifMatch === undefined || input.ifMatch.trim() === "") {
+      throw new ApplicationError("PRECONDITION_REQUIRED");
+    }
+    if (!matchesIfMatch(input.ifMatch, currentEtag)) {
+      throw new ApplicationError("PRECONDITION_FAILED");
+    }
+    if (inputExpectedVersion !== undefined && inputExpectedVersion !== run.version) {
+      throw new ApplicationError("PRECONDITION_FAILED");
+    }
+    if (!allowWrite || run.version === 2147483647) {
+      throw new ApplicationError("PRECONDITION_FAILED");
+    }
+
+    const decision = decideOperation(current, command, snapshot);
+    if (!decision.ok) throw new ApplicationError(decision.error.code, decision.error.fields);
+    const operation = decision.value.operation;
+    const type = eventTypeForAction(command.action);
+    if (decision.value.createsMilestone !== (type !== null)) throw new ApplicationError("INTERNAL_ERROR");
+
+    const appliedAt = wallNow();
+    if (session.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("SESSION_EXPIRED");
+    await touchSessionActivity(tx, session, appliedAt);
+    if (run.expiresAt.getTime() <= appliedAt.getTime()) throw new ApplicationError("NOT_FOUND");
+
+    const eventId = type === null ? null : randomUUID();
+    const latest = type === null ? null : await tx.operationEvent.aggregate({ where: { runId: run.id }, _max: { ordinal: true } });
+    const event = type === null || eventId === null ? null : createPublicEvent({
+      traceId: run.traceId, eventId, ordinal: (latest?._max.ordinal ?? 0) + 1,
+      type, role: command.role, appliedAt, operation, snapshot,
+    });
+    const expectedVersion = run.version;
+    const resultingVersion = expectedVersion + 1;
+    const intentHash = createHash("sha256")
+      .update(canonicalJson({ version: 1, expectedVersion, command }), "utf8")
+      .digest("hex");
+
+    const receipt = await tx.commandReceipt.create({
+      data: {
+        runId: run.id, requestId: idempotencyKey, intentHash, action: ACTIONS[command.action], resultingVersion, createdAt: appliedAt,
+        result: jsonObject({ version: 1, operation, eventId }),
+      }, select: { id: true },
+    });
+    await reserveRunIntent(tx, run, session.expiresAt, appliedAt);
+    if (event !== null && tokenHash !== undefined) await reserveSessionRateLimit(tx, tokenHash, "PUBLICATION", appliedAt);
+    await advanceRunVersion(tx, run.id, expectedVersion);
+    const target = command.action === "publish" ? configuredTarget(process.env) : null;
+    await tx.demoRun.update({
+      where: { id: run.id },
+      data: {
+        ...runChanges(operation, command.action, appliedAt),
+        ...(target === null ? {} : { hcsConfigurationGeneration: target.generation, hcsTopicId: target.topicId, hcsOperatorId: target.operatorId }),
+      },
+      select: { id: true },
+    });
+
+    if (event !== null) {
+      await tx.operationEvent.create({
+        data: {
+          id: event.payload.eventId, runId: run.id, commandId: receipt.id,
+          ordinal: event.payload.ordinal, type: event.payload.type, simulatedRole: ROLES[command.role],
+          appliedAt, payloadVersion: 1, payload: jsonObject(event.payload), digest: event.digest,
+          publication: { create: { network: "testnet", state: "QUEUED", verificationState: "NOT_CHECKED",
+            automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt } },
+        },
+      });
+    }
+
+    const newResource: OperationResource = { traceId: run.traceId, version: resultingVersion, operation };
+    const newEtag = computeOperationEtag(newResource);
+
+    return {
+      traceId: run.traceId,
+      version: resultingVersion,
+      operation,
+      etag: newEtag,
+      replayed: false,
+      applied: { operation, version: resultingVersion, eventId },
+      current: { operation, version: resultingVersion },
+      event,
+    };
+  }
+
+  try {
+    return await withTransaction((tx) => resolve(tx, true));
+  } catch (error) {
+    const conflict =
+      (error instanceof ApplicationError && (error.code === "VERSION_CONFLICT" || error.code === "PRECONDITION_FAILED")) ||
+      (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002");
+    if (!conflict) throw error;
     return withTransaction((tx) => resolve(tx, false));
   }
 }

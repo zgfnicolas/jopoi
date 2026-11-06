@@ -651,7 +651,13 @@
         "S22-13",
         "S22-14"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-17-edicion-etag-idempotency-key.md",
+        "validation": "Subrecurso desacoplado /api/demo/runs/{traceId}/operation con GET (ETag fuerte SHA-256 e If-None-Match con respuesta 304 validando sesión antes de evaluar condición) y PATCH (precondición obligatoria If-Match, emitiendo 428 Precondition Required si falta y 412 Precondition Failed si hay desactualización o concurrencia evitando lost updates). Encabezado Idempotency-Key estándar resolviendo replays legítimos antes de la precondición, rechazando colisiones de carga (409 IDEMPOTENCY_CONFLICT) y discrepancias de entrada (400 INVALID_INPUT). Integración en hook y panel operativo para capturar ETag y gestionar conflictos; compatibilidad preservada en /commands. 20 contratos, 29 seguridad (incluye S22-13 y S22-14), 71 HTTP en total, puerta completa y build aprobados; cero diagnósticos estrictos."
+      }
     },
     {
       "id": "18",

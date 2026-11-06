@@ -4,7 +4,7 @@
 
 **Blocked by:** 04 · Guardar y recuperar operaciones con invariantes semánticas; 11 · Limitar intenciones y proteger las lecturas y comandos privados; 15 · Proteger la sesión HTTPS y sus mutaciones con CSRF
 
-**Status:** approved — desglose y dependencias aprobados; pendiente de configurar el tracker y publicar como ready-for-agent.
+**Status:** completado y validado localmente (2026-11-06). Ver evidencia en [docs/s22-17-edicion-etag-idempotency-key.md](../../docs/s22-17-edicion-etag-idempotency-key.md).
 
 **Trazabilidad:** Spec S22; decisiones D06, D07, D08; hallazgos AUD-07, AUD-14; historias 10, 11, 36, 39, 40, 42, 55, 75; escenarios S22-01, S22-03, S22-12, S22-13, S22-14.
 
@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] GET/PATCH del subrecurso operativo tiene representación y media type definidos, sin mezclar cuotas/publicación; PATCH permite sólo cambios de dominio válidos.
-- [ ] ETag fuerte representa ese recurso y la condición se aplica atómicamente tras autorizar: falta If-Match da 428 y mismatch da 412 sin efectos.
-- [ ] Header Idempotency-Key se vincula al recibo existente: discrepancia con UUID de cuerpo da 400 y contenido distinto con la misma clave da 409.
-- [ ] Un replay autorizado se resuelve antes de reaplicar la precondición causada por su propia ejecución; distingue resultado histórico/actual y no vuelve a escribir.
-- [ ] El panel usa la nueva operación y ETag, maneja conflicto/incertidumbre y refresh; comandos anteriores siguen adaptados sin otra lógica ni bypass de admisión/CSRF, con contrato y pruebas concurrentes.
+- [x] GET/PATCH del subrecurso operativo tiene representación y media type definidos, sin mezclar cuotas/publicación; PATCH permite sólo cambios de dominio válidos.
+- [x] ETag fuerte representa ese recurso y la condición se aplica atómicamente tras autorizar: falta If-Match da 428 y mismatch da 412 sin efectos.
+- [x] Header Idempotency-Key se vincula al recibo existente: discrepancia con UUID de cuerpo da 400 y contenido distinto con la misma clave da 409.
+- [x] Un replay autorizado se resuelve antes de reaplicar la precondición causada por su propia ejecución; distingue resultado histórico/actual y no vuelve a escribir.
+- [x] El panel usa la nueva operación y ETag, maneja conflicto/incertidumbre y refresh; comandos anteriores siguen adaptados sin otra lógica ni bypass de admisión/CSRF, con contrato y pruebas concurrentes.
 

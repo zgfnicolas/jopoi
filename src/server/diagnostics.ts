@@ -10,6 +10,8 @@ export const HTTP_OPERATIONS = {
   "session.delete": ["DELETE", "/api/demo/session"],
   "runs.start": ["POST", "/api/demo/runs"], "runs.reset": ["POST", "/api/demo/runs/reset"],
   "runs.current": ["GET", "/api/demo/runs/current"], "runs.read": ["GET", "/api/demo/runs/:traceId"],
+  "runs.operation.read": ["GET", "/api/demo/runs/:traceId/operation"],
+  "runs.operation.patch": ["PATCH", "/api/demo/runs/:traceId/operation"],
   "runs.command": ["POST", "/api/demo/runs/:traceId/commands"],
   "traces.read": ["GET", "/api/traces/:traceId"], "traces.verify": ["GET", "/api/traces/:traceId/events/:eventId/verification"],
   "publications.retry": ["POST", "/api/demo/runs/:traceId/events/:eventId/retry"],

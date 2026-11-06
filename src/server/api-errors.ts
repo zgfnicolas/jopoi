@@ -38,7 +38,20 @@ export function toApiError(
 export function toProblemDetails(body: ApiErrorBody, context: RequestContext) {
   const { code, requestId, fields } = body.error;
   const definition = API_ERROR_CATALOG[code];
-  const titles = { 400: "Solicitud inválida", 401: "Autenticación requerida", 403: "Acceso denegado", 404: "Recurso no disponible", 409: "Conflicto", 410: "Recurso vencido", 422: "Acción inválida", 429: "Límite alcanzado", 500: "Error interno", 503: "Servicio no disponible" };
+  const titles = {
+    400: "Solicitud inválida",
+    401: "Autenticación requerida",
+    403: "Acceso denegado",
+    404: "Recurso no disponible",
+    409: "Conflicto",
+    410: "Recurso vencido",
+    412: "Precondición no cumplida",
+    422: "Acción inválida",
+    428: "Precondición requerida",
+    429: "Límite alcanzado",
+    500: "Error interno",
+    503: "Servicio no disponible",
+  };
   return { type: problemType(code), title: titles[definition.status], status: definition.status, detail: definition.message,
     code, requestId, traceId: context.telemetryTraceId, ...(fields === undefined ? {} : { fields }) };
 }

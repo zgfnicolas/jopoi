@@ -13,6 +13,7 @@ export const PUBLIC_FIELD_MESSAGES = Object.freeze({
   state: "Actualizá la información antes de continuar.", form: "Revisá los campos permitidos y las condiciones de la acción.",
   requestId: "Ingresá un identificador UUID válido.", expectedVersion: "Ingresá una versión positiva válida.",
   traceId: "Ingresá un identificador UUID válido.", eventId: "Ingresá un identificador UUID válido.",
+  ifMatch: "Ingresá un encabezado If-Match válido.", idempotencyKey: "Ingresá una clave Idempotency-Key UUID válida.",
 });
 /** Elegí mensajes propios por nombre permitido; no reproduzcas valores ni mensajes externos. */
 export function publicFields(fields: FieldErrors | undefined): Record<string, readonly string[]> {

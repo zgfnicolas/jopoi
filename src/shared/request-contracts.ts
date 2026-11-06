@@ -19,3 +19,22 @@ export const commandBody: z.ZodType<DemoCommandInput> = z.discriminatedUnion("ac
   z.strictObject({ ...common, action: z.literal("receive"), receivedKg: z.string() }),
   z.strictObject({ ...common, action: z.literal("incident"), receivedKg: z.string(), reasonCode: z.string() }),
 ]);
+
+const patchCommon = {
+  requestId: uuid.optional(),
+  expectedVersion: z.number().int().positive().max(2147483647).optional(),
+  role: z.enum(["generator", "coordinator", "carrier", "buyer"]),
+};
+
+export const operationPatchBody = z.discriminatedUnion("action", [
+  z.strictObject({ ...patchCommon, action: z.literal("save"), quantityKg: z.string(), humidityPercent: z.string() }),
+  z.strictObject({ ...patchCommon, action: z.literal("publish"), quantityKg: z.string(), humidityPercent: z.string() }),
+  z.strictObject({ ...patchCommon, action: z.literal("approve") }),
+  z.strictObject({ ...patchCommon, action: z.literal("reject"), reasonCode: z.string() }),
+  z.strictObject({ ...patchCommon, action: z.literal("assign"), tripId: z.string() }),
+  z.strictObject({ ...patchCommon, action: z.literal("pickup") }),
+  z.strictObject({ ...patchCommon, action: z.literal("receive"), receivedKg: z.string() }),
+  z.strictObject({ ...patchCommon, action: z.literal("incident"), receivedKg: z.string(), reasonCode: z.string() }),
+]);
+
+export type OperationPatchInput = z.infer<typeof operationPatchBody>;

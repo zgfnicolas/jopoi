@@ -36,3 +36,27 @@ export interface DemoCommandResponse extends PersistedCommandResult {
   readonly saved: true;
   readonly traceId: string;
 }
+
+/** Subrecurso privado de operación (GET /api/demo/runs/{traceId}/operation). */
+export interface OperationResource {
+  readonly traceId: string;
+  readonly version: number;
+  readonly operation: OperationData;
+}
+
+/** Respuesta de edición de operación (PATCH /api/demo/runs/{traceId}/operation). */
+export interface OperationPatchResponse {
+  readonly traceId: string;
+  readonly version: number;
+  readonly operation: OperationData;
+  readonly replayed: boolean;
+  readonly applied: {
+    readonly operation: OperationData;
+    readonly version: number;
+    readonly eventId: string | null;
+  };
+  readonly current: {
+    readonly operation: OperationData;
+    readonly version: number;
+  };
+}

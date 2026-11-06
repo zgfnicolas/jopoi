@@ -69,3 +69,88 @@ export async function deleteOperation(
     return fail("NETWORK_UNAVAILABLE");
   }
 }
+
+export interface PatchResult<T> {
+  readonly ok: true;
+  readonly data: T;
+  readonly etag: string | null;
+}
+
+export type OperationPatchApiResult<T> = PatchResult<T> | { readonly ok: false; readonly error: MutationError };
+
+/**
+ * Edición condicional e idempotente de la operación (PATCH /api/demo/runs/:traceId/operation).
+ * Exige If-Match y vincula Idempotency-Key.
+ */
+export async function patchOperation<T>(
+  path: string,
+  body: string,
+  schema: z.ZodType<T>,
+  options: {
+    readonly ifMatch?: string | undefined;
+    readonly idempotencyKey: string;
+    readonly signal: AbortSignal;
+    readonly csrfTokenOverride?: string | undefined;
+  },
+): Promise<OperationPatchApiResult<T>> {
+  const fail = (code: MutationError["code"], status: number | null = null): { ok: false; error: MutationError } => ({
+    ok: false,
+    error: { code, status, fields: {} },
+  });
+  if (!/^\/api\/demo\/runs\/[a-f0-9-]{36}\/operation$/.test(path) || new TextEncoder().encode(body).byteLength > 4096) {
+    return fail("INVALID_INPUT", 400);
+  }
+  try {
+    const csrf = options.csrfTokenOverride ?? getCsrfToken() ?? "";
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      "X-Jopoi-Request": "demo",
+      Accept: API_ACCEPT,
+      "X-CSRF-Token": csrf,
+      "Idempotency-Key": options.idempotencyKey,
+    };
+    if (options.ifMatch) {
+      headers["If-Match"] = options.ifMatch;
+    }
+    const response = await fetch(path, {
+      method: "PATCH",
+      body,
+      credentials: "same-origin",
+      cache: "no-store",
+      redirect: "error",
+      signal: AbortSignal.any([options.signal, AbortSignal.timeout(15000)]),
+      headers,
+    });
+    const responseCsrf = response.headers.get("x-csrf-token");
+    if (responseCsrf) setCsrfToken(responseCsrf);
+    const media = apiMediaType(response.headers);
+    if (!["application/json", "application/problem+json"].includes(media)) {
+      return fail("INVALID_RESPONSE", response.status);
+    }
+    const value: unknown = await response.json();
+    if (response.status === 200 && media === "application/json") {
+      const parsed = schema.safeParse(value);
+      return parsed.success
+        ? { ok: true, data: parsed.data, etag: response.headers.get("etag") }
+        : fail("INVALID_RESPONSE", response.status);
+    }
+    const parsed = parseApiFailure(value, response.status, media);
+    if (!parsed) return fail("INVALID_RESPONSE", response.status);
+    if (response.status === 401 && ["SESSION_REQUIRED", "SESSION_EXPIRED"].includes(parsed.code)) {
+      clearCsrfToken();
+    }
+    const retryAfter = retryAfterSeconds(response);
+    return {
+      ok: false,
+      error: {
+        code: parsed.code,
+        status: response.status,
+        fields: parsed.fields,
+        ...(parsed.requestId === undefined ? {} : { requestId: parsed.requestId }),
+        ...(retryAfter === undefined ? {} : { retryAfter }),
+      },
+    };
+  } catch {
+    return fail("NETWORK_UNAVAILABLE");
+  }
+}

@@ -5,6 +5,7 @@ import { ApplicationError } from "../../src/server/application-error";
 import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort, sqlStepBudget } from "../../src/server/deadlines";
 import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
 import { isSessionActive } from "../../src/server/sessions/service";
+import { computeOperationEtag, computeRunEtag, matchesIfMatch, matchesIfNoneMatch } from "../../src/server/operations/etag";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
@@ -264,4 +265,53 @@ test("S22-16 / S22-17: isSessionActive valida inactividad (60 min), máximo abso
   assert.equal(isSessionActive(expiredSession, expiresAt), false);
   // Inválida después de las 24 h aun con actividad reciente
   assert.equal(isSessionActive(expiredSession, new Date(expiresAt.getTime() + 1000)), false);
+});
+
+test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Match e If-None-Match", () => {
+  const resource = {
+    traceId: "00000000-0000-4000-8000-000000000001",
+    version: 1,
+    operation: {
+      state: "DRAFT" as const,
+      quantityKg: "12000.000",
+      humidityPercent: "28.00",
+      assignedBuyerId: null,
+      assignedTripId: null,
+      receivedKg: null,
+      rejectionReasonCode: null,
+      incidentReasonCode: null,
+    },
+  };
+
+  const etag = computeOperationEtag(resource);
+  assert.ok(/^"[a-f0-9]{64}"$/.test(etag), `ETag inválido: ${etag}`);
+
+  // ETag idéntico ante los mismos datos canónicos
+  assert.equal(computeOperationEtag({ ...resource }), etag);
+
+  // ETag distinto si cambia la versión
+  const v2Etag = computeOperationEtag({ ...resource, version: 2 });
+  assert.notEqual(v2Etag, etag);
+
+  // matchesIfMatch
+  assert.equal(matchesIfMatch(etag, etag), true);
+  assert.equal(matchesIfMatch("*", etag), true);
+  assert.equal(matchesIfMatch(etag.replaceAll('"', ""), etag), true); // unquoted tolerante
+  assert.equal(matchesIfMatch(`"other-etag", ${etag}`, etag), true);
+  assert.equal(matchesIfMatch('"other-etag"', etag), false);
+  assert.equal(matchesIfMatch(null, etag), false);
+  assert.equal(matchesIfMatch(undefined, etag), false);
+  assert.equal(matchesIfMatch("", etag), false);
+
+  // matchesIfNoneMatch
+  assert.equal(matchesIfNoneMatch(etag, etag), true);
+  assert.equal(matchesIfNoneMatch("*", etag), true);
+  assert.equal(matchesIfNoneMatch('"other"', etag), false);
+  assert.equal(matchesIfNoneMatch(null, etag), false);
+
+  // Run ETag distingue cuotas o publicaciones sin afectar el ETag de la operación
+  const run1 = { ...resource, quota: { used: 1 } };
+  const run2 = { ...resource, quota: { used: 2 } };
+  assert.notEqual(computeRunEtag(run1), computeRunEtag(run2));
+  assert.equal(computeOperationEtag(resource), etag);
 });

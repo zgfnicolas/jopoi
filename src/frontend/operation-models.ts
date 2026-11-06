@@ -2,7 +2,7 @@ import { z } from "zod";
 import { snapshotSchema } from "@/domain/scenario-schema";
 import { eventDigest, eventUuid, operationDataSchema, publicEventSchema } from "@/domain/event-schemas";
 import { PUBLICATION_RETRY_OUTCOMES } from "@/shared/event-contracts";
-import type { DemoCommandResponse, DemoRunResponse } from "@/shared/run-contracts";
+import type { DemoCommandResponse, DemoRunResponse, OperationPatchResponse, OperationResource } from "@/shared/run-contracts";
 import type { DemoRunIntentResponse, DemoSessionResponse } from "@/shared/session-contracts";
 import type { PublicationRetryResponse } from "@/shared/event-contracts";
 import { operationStates, publicationStates, verificationStates } from "./read-models";
@@ -42,3 +42,18 @@ export const commandResponseSchema: z.ZodType<DemoCommandResponse> = z.object({ 
     && value.traceId === value.event.payload.traceId && value.applied.operation.state === value.event.payload.detail.state));
 export const retryResponseSchema: z.ZodType<PublicationRetryResponse> = z.object({ saved: z.literal(true), replayed: z.boolean(), traceId: eventUuid,
   eventId: eventUuid, outcome: z.enum(PUBLICATION_RETRY_OUTCOMES), publication, quota });
+
+export const operationResourceSchema: z.ZodType<OperationResource> = z.object({
+  traceId: eventUuid,
+  version,
+  operation: operationDataSchema,
+});
+
+export const operationPatchResponseSchema: z.ZodType<OperationPatchResponse> = z.object({
+  traceId: eventUuid,
+  version,
+  operation: operationDataSchema,
+  replayed: z.boolean(),
+  applied: z.object({ operation: operationDataSchema, version, eventId: eventUuid.nullable() }),
+  current: z.object({ operation: operationDataSchema, version }),
+});

@@ -5,7 +5,7 @@ import { retryAfterSeconds } from "./retry-after";
 import { setCsrfToken } from "./csrf";
 
 export interface ReadError { readonly code: ApiErrorCode | "NETWORK_UNAVAILABLE" | "INVALID_RESPONSE"; readonly requestId?: string; readonly retryAfter?: number }
-export type ReadResult<T> = { ok: true; data: T } | { ok: false; error: ReadError };
+export type ReadResult<T> = { ok: true; data: T; etag?: string | null } | { ok: false; error: ReadError };
 
 /** Read-only same-origin transport. There is deliberately no mutation/retry capability. */
 export async function readApi<T>(path: string, schema: z.ZodType<T>, signal: AbortSignal, credentials: "same-origin" | "omit" = "same-origin"): Promise<ReadResult<T>> {
@@ -26,6 +26,6 @@ export async function readApi<T>(path: string, schema: z.ZodType<T>, signal: Abo
     }
     if (apiMediaType(response.headers) !== "application/json") return { ok: false, error: { code: "INVALID_RESPONSE" } };
     const parsed = schema.safeParse(body);
-    return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: { code: "INVALID_RESPONSE" } };
+    return parsed.success ? { ok: true, data: parsed.data, etag: response.headers.get("etag") } : { ok: false, error: { code: "INVALID_RESPONSE" } };
   } catch { return { ok: false, error: { code: "NETWORK_UNAVAILABLE" } }; }
 }

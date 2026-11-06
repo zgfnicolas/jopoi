@@ -5,7 +5,7 @@ import { z } from "zod";
 import { API_ERROR_CATALOG, isApiErrorCode } from "../../src/shared/api-errors";
 import { API_ACCEPT, PROBLEM_MEDIA_TYPE, acceptsProblemDetails, problemType } from "../../src/shared/problem-details";
 import { readApi } from "../../src/frontend/api";
-import { deleteOperation, postOperation } from "../../src/frontend/operation-api";
+import { deleteOperation, patchOperation, postOperation } from "../../src/frontend/operation-api";
 import { postDemoRequest } from "../../src/frontend/demo-request";
 import { retryAfterSeconds } from "../../src/frontend/retry-after";
 import { clearCsrfToken, getCsrfToken } from "../../src/frontend/csrf";
@@ -156,4 +156,47 @@ test("S22-16: deleteOperation envía DELETE a /api/demo/session con CSRF, devuel
   assert.equal(sentHeaders?.get("x-jopoi-request"), "demo");
   // En 204 se limpia el token de memoria
   assert.equal(getCsrfToken(), undefined);
+});
+
+test("S22-13 / S22-17: patchOperation envía PATCH con If-Match e Idempotency-Key y captura ETag", async t => {
+  const signal = new AbortController().signal;
+  let sentMethod = "";
+  let sentHeaders: Headers | undefined;
+  const traceId = randomUUID();
+  const idempotencyKey = randomUUID();
+
+  t.mock.method(globalThis, "fetch", async (_input: unknown, init?: RequestInit) => {
+    sentMethod = init?.method ?? "";
+    sentHeaders = new Headers(init?.headers);
+    return new Response(JSON.stringify({ saved: true }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "private, no-store",
+        ETag: '"new-op-etag"',
+      },
+    });
+  });
+
+  const result = await patchOperation(
+    `/api/demo/runs/${traceId}/operation`,
+    JSON.stringify({ action: "approve", role: "coordinator" }),
+    z.object({ saved: z.boolean() }),
+    {
+      ifMatch: '"old-op-etag"',
+      idempotencyKey,
+      signal,
+    },
+  );
+
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.etag, '"new-op-etag"');
+    assert.deepEqual(result.data, { saved: true });
+  }
+  assert.equal(sentMethod, "PATCH");
+  assert.equal(sentHeaders?.get("if-match"), '"old-op-etag"');
+  assert.equal(sentHeaders?.get("idempotency-key"), idempotencyKey);
+  assert.equal(sentHeaders?.get("content-type"), "application/json");
+  assert.equal(sentHeaders?.get("x-jopoi-request"), "demo");
 });

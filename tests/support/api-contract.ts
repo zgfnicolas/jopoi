@@ -28,7 +28,7 @@ export function assertApiContract(method: string, path: string, status: number, 
   const contract = operation.parse(raw);
   const response = contract.responses[String(status)];
   assert.ok(response, `OPENAPI_UNDECLARED_STATUS:${method}:${route}:${status}`);
-  if (status === 204) {
+  if (status === 204 || status === 304) {
     assert.ok(headers.get("cache-control")?.includes("no-store"), `OPENAPI_CACHE_POLICY:${route}`);
     assert.ok(z.uuid().safeParse(headers.get("x-request-id")).success, `OPENAPI_REFERENCE:${route}`);
     return;

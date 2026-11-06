@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { assertApiContract } from "./api-contract";
 import { inject } from "vitest";
 import type { DemoRunIntentResponse, DemoSessionResponse } from "../../src/shared/session-contracts";
-import type { DemoCommandResponse, DemoRunResponse } from "../../src/shared/run-contracts";
+import type { DemoCommandResponse, DemoRunResponse, OperationPatchResponse, OperationResource } from "../../src/shared/run-contracts";
 import type { OperationCommand } from "../../src/shared/operation-contracts";
 import type { PublicationRetryResponse } from "../../src/shared/event-contracts";
 import type { PublicTraceResponse, PublicTraceVerificationResponse } from "../../src/shared/trace-contracts";
@@ -22,9 +22,9 @@ export class Visitor {
   async request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<HttpResult<T>> {
     const response = await fetch(environment.origin + path, {
       method, headers: { "X-S21-Visitor": this.identity, ...(this.cookie ? { Cookie: this.cookie } : {}),
-        ...(method === "POST" || method === "DELETE" ? { Origin: environment.origin, "X-Jopoi-Request": "demo",
+        ...(method === "POST" || method === "DELETE" || method === "PATCH" ? { Origin: environment.origin, "X-Jopoi-Request": "demo",
           ...(this.csrfToken ? { "X-CSRF-Token": this.csrfToken } : {}) } : {}),
-        ...(method === "POST" ? { "Content-Type": "application/json" } : {}), ...headers },
+        ...(method === "POST" || method === "PATCH" ? { "Content-Type": "application/json" } : {}), ...headers },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(60000),
     });
     const setCookies = typeof (response.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === "function"
@@ -45,7 +45,7 @@ export class Visitor {
       this.cookie = "";
       this.csrfToken = "";
     }
-    const responseBody: unknown = response.status === 204 ? null : await response.json().catch(() => null);
+    const responseBody: unknown = response.status === 204 || response.status === 304 ? null : await response.json().catch(() => null);
     const csrf = response.headers.get("x-csrf-token")
       ?? (responseBody && typeof responseBody === "object" && "csrfToken" in responseBody && typeof (responseBody as Record<string, unknown>).csrfToken === "string"
         ? (responseBody as Record<string, unknown>).csrfToken as string
@@ -56,8 +56,23 @@ export class Visitor {
   }
   get<T = DemoRunResponse>(path: string, headers?: Record<string, string>) { return this.request<T>("GET", path, undefined, headers); }
   post<T = DemoCommandResponse>(path: string, body: unknown, headers?: Record<string, string>) { return this.request<T>("POST", path, body, headers); }
+  patch<T = OperationPatchResponse>(path: string, body: unknown, headers?: Record<string, string>) { return this.request<T>("PATCH", path, body, headers); }
   delete<T = void>(path: string, headers?: Record<string, string>) { return this.request<T>("DELETE", path, undefined, headers); }
   async end() { return this.delete("/api/demo/session"); }
+  async operationResource(traceId = this.traceId, headers?: Record<string, string>) {
+    return this.get<OperationResource>(`/api/demo/runs/${traceId}/operation`, headers);
+  }
+  async patchOp(command: OperationCommand, options?: { ifMatch?: string; idempotencyKey?: string; headers?: Record<string, string> }) {
+    const currentOp = await this.operationResource();
+    const ifMatch = options?.ifMatch ?? currentOp.headers.get("etag") ?? undefined;
+    const idempotencyKey = options?.idempotencyKey ?? randomUUID();
+    const headers = {
+      ...(ifMatch ? { "If-Match": ifMatch } : {}),
+      "Idempotency-Key": idempotencyKey,
+      ...options?.headers,
+    };
+    return this.patch<OperationPatchResponse>(`/api/demo/runs/${this.traceId}/operation`, command, headers);
+  }
   async begin() {
     const result = await this.post<DemoSessionResponse>("/api/demo/session", {});
     if (![200, 201].includes(result.status)) throw new Error(`BEGIN_FAILED_${result.status}`);

@@ -4,7 +4,7 @@ import "server-only";
 import type { DemoRun, DemoSession, Prisma } from "../../generated/prisma/client";
 import { evaluateTripCompatibility } from "../../domain/compatibility";
 import { calculateEconomics } from "../../domain/economics";
-import type { DemoRunDetail, DemoRunResponse } from "../../shared/run-contracts";
+import type { DemoRunDetail, DemoRunResponse, OperationResource } from "../../shared/run-contracts";
 import { ApplicationError } from "../application-error";
 import { withTransaction } from "../database";
 import { readPublicEvent } from "../events/payload";
@@ -68,5 +68,21 @@ export async function getOwnedRun(token: string | undefined, traceId: string): P
     const detail = await runDetail(tx, run);
     requireReadValidity(session, run);
     return { session: sessionSummary(session), run: detail };
+  });
+}
+
+export async function getOperationResource(token: string | undefined, traceId: string): Promise<OperationResource> {
+  const hash = sessionTokenHash(token);
+  if (hash === undefined) throw new ApplicationError("SESSION_REQUIRED");
+  return withTransaction(async (tx) => {
+    const { session, run } = await requireOwnedRun(tx, hash, traceId);
+    requireReadValidity(session, run);
+    const scenario = readRunSnapshot(run);
+    const operation = readRunOperation(run, scenario);
+    return {
+      traceId: run.traceId,
+      version: run.version,
+      operation,
+    };
   });
 }

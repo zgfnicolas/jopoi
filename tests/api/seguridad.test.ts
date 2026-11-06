@@ -1226,3 +1226,191 @@ test("S22-29 · migración aditiva y backfill de lastActivityAt conservan sesion
     await db.end();
   }
 });
+
+test("S22-13 · edición con If-Match e Idempotency-Key previene sobrescrituras perdidas, detecta colisión y autoriza replays", async () => {
+  const visitor = await new Visitor().setup();
+  const run = await visitor.run();
+  const traceId = visitor.traceId;
+  const opRes = await visitor.operationResource();
+  expect(opRes.status).toBe(200);
+  const etagInitial = opRes.headers.get("etag");
+  expect(etagInitial).toMatch(/^"[a-f0-9]{64}"$/);
+
+  // 1. Falta If-Match en PATCH da 428 PRECONDITION_REQUIRED sin efectos
+  const missingIfMatch = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "Idempotency-Key": randomUUID() },
+  );
+  expect(missingIfMatch.status).toBe(428);
+  expect(missingIfMatch.body).toMatchObject({ error: { code: "PRECONDITION_REQUIRED" } });
+  expect((await visitor.run()).version).toBe(run.version);
+
+  // 2. Mismatch de If-Match da 412 PRECONDITION_FAILED sin efectos
+  const wrongEtag = '"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"';
+  const mismatchIfMatch = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "If-Match": wrongEtag, "Idempotency-Key": randomUUID() },
+  );
+  expect(mismatchIfMatch.status).toBe(412);
+  expect(mismatchIfMatch.body).toMatchObject({ error: { code: "PRECONDITION_FAILED" } });
+  expect((await visitor.run()).version).toBe(run.version);
+
+  // 3. Idempotency-Key ausente o no UUID da 400 INVALID_INPUT
+  const missingKey = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "If-Match": etagInitial! },
+  );
+  expect(missingKey.status).toBe(400);
+  expect(missingKey.body).toMatchObject({ error: { code: "INVALID_INPUT" } });
+
+  const invalidKey = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "If-Match": etagInitial!, "Idempotency-Key": "not-a-valid-uuid" },
+  );
+  expect(invalidKey.status).toBe(400);
+  expect(invalidKey.body).toMatchObject({ error: { code: "INVALID_INPUT" } });
+
+  // 4. Discrepancia entre header Idempotency-Key y requestId en el body da 400 INVALID_INPUT
+  const headerKey = randomUUID();
+  const bodyKey = randomUUID();
+  const mismatchKey = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28", requestId: bodyKey },
+    { "If-Match": etagInitial!, "Idempotency-Key": headerKey },
+  );
+  expect(mismatchKey.status).toBe(400);
+  expect(mismatchKey.body).toMatchObject({ error: { code: "INVALID_INPUT" } });
+
+  // 5. Aplicar edición atómica con If-Match correcto actualiza el recurso y genera nuevo ETag fuerte
+  const patchKey = randomUUID();
+  const applied = await visitor.patchOp(
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { ifMatch: etagInitial!, idempotencyKey: patchKey },
+  );
+  expect(applied.status).toBe(200);
+  expect(applied.body.replayed).toBe(false);
+  expect(applied.body.version).toBe(2);
+  expect(applied.body.operation.quantityKg).toBe("12000.000");
+  const etagAfterSave = applied.headers.get("etag");
+  expect(etagAfterSave).toMatch(/^"[a-f0-9]{64}"$/);
+  expect(etagAfterSave).not.toBe(etagInitial);
+
+  // 6. Replay autorizado se resuelve antes de reaplicar precondición causada por su propia ejecución
+  // Enviamos el If-Match anterior (etagInitial) que ahora no coincide con el recurso actual (etagAfterSave)
+  const replayed = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "If-Match": etagInitial!, "Idempotency-Key": patchKey },
+  );
+  expect(replayed.status).toBe(200);
+  expect(replayed.body.replayed).toBe(true);
+  expect(replayed.body.version).toBe(2);
+  expect(replayed.body.operation.quantityKg).toBe("12000.000");
+  expect(replayed.headers.get("etag")).toBe(etagAfterSave);
+  expect((await visitor.run()).version).toBe(2);
+
+  // 7. Misma Idempotency-Key con carga distinta da 409 IDEMPOTENCY_CONFLICT sin efectos
+  const conflictPayload = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "11500", humidityPercent: "28" },
+    { "If-Match": etagAfterSave!, "Idempotency-Key": patchKey },
+  );
+  expect(conflictPayload.status).toBe(409);
+  expect(conflictPayload.body).toMatchObject({ error: { code: "IDEMPOTENCY_CONFLICT" } });
+  expect((await visitor.run()).version).toBe(2);
+
+  // 8. Ediciones concurrentes con la misma ETag aplican exactamente una y la otra falla con 412
+  const keyA = randomUUID();
+  const keyB = randomUUID();
+  const [resA, resB] = await Promise.all([
+    visitor.patch(
+      `/api/demo/runs/${traceId}/operation`,
+      { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "29" },
+      { "If-Match": etagAfterSave!, "Idempotency-Key": keyA },
+    ),
+    visitor.patch(
+      `/api/demo/runs/${traceId}/operation`,
+      { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "30" },
+      { "If-Match": etagAfterSave!, "Idempotency-Key": keyB },
+    ),
+  ]);
+  const statuses = [resA.status, resB.status].sort();
+  expect(statuses).toEqual([200, 412]);
+  const failed = resA.status === 412 ? resA : resB;
+  expect(failed.body).toMatchObject({ error: { code: "PRECONDITION_FAILED" } });
+  expect((await visitor.run()).version).toBe(3);
+});
+
+test("S22-14 · subrecurso operativo GET /api/demo/runs/{traceId}/operation aísla estado, valida sesión y soporta 304 Not Modified", async () => {
+  const visitor = await new Visitor().setup();
+  const traceId = visitor.traceId;
+
+  // 1. GET inicial del subrecurso devuelve solo datos operativos, sin mezcla de cuotas ni publicación
+  const opRes = await visitor.operationResource();
+  expect(opRes.status).toBe(200);
+  expect(opRes.headers.get("content-type")).toContain("application/json");
+  expect(opRes.headers.get("etag")).toMatch(/^"[a-f0-9]{64}"$/);
+  expect(opRes.body).toHaveProperty("traceId", traceId);
+  expect(opRes.body).toHaveProperty("version", 1);
+  expect(opRes.body).toHaveProperty("operation");
+  expect((opRes.body as unknown as Record<string, unknown>).session).toBeUndefined();
+  expect((opRes.body as unknown as Record<string, unknown>).publication).toBeUndefined();
+  expect((opRes.body as unknown as Record<string, unknown>).events).toBeUndefined();
+
+  const currentEtag = opRes.headers.get("etag")!;
+
+  // 2. If-None-Match con ETag actual devuelve 304 sin cuerpo
+  const notModified = await visitor.operationResource(traceId, { "If-None-Match": currentEtag });
+  expect(notModified.status).toBe(304);
+  expect(notModified.body).toBeNull();
+  expect(notModified.headers.get("etag")).toBe(currentEtag);
+
+  // 3. If-None-Match con lista que incluye el ETag o comodín '*' devuelve 304
+  const wildcardNotModified = await visitor.operationResource(traceId, { "If-None-Match": `\"other-etag\", ${currentEtag}` });
+  expect(wildcardNotModified.status).toBe(304);
+
+  // 4. If-None-Match con ETag diferente devuelve 200 con cuerpo completo
+  const modified = await visitor.operationResource(traceId, { "If-None-Match": '"other-etag"' });
+  expect(modified.status).toBe(200);
+  expect(modified.body.traceId).toBe(traceId);
+
+  // 5. Aislamiento multitenant: otro visitante no accede al subrecurso operativo de la víctima
+  const stranger = await new Visitor().setup();
+  const strangerGet = await stranger.operationResource(traceId);
+  expect(strangerGet.status).toBe(404);
+  const strangerPatch = await stranger.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "If-Match": currentEtag, "Idempotency-Key": randomUUID() },
+  );
+  expect(strangerPatch.status).toBe(404);
+
+  // 6. Mutaciones protegidas por CSRF y encabezados seguros
+  const badOrigin = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { Origin: "https://attacker.example", "If-Match": currentEtag, "Idempotency-Key": randomUUID() },
+  );
+  expect(badOrigin.status).toBe(403);
+
+  const badCsrf = await visitor.patch(
+    `/api/demo/runs/${traceId}/operation`,
+    { action: "save", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    { "X-CSRF-Token": "bad-token", "If-Match": currentEtag, "Idempotency-Key": randomUUID() },
+  );
+  expect(badCsrf.status).toBe(403);
+
+  // 7. La validación de sesión precede al 304: con sesión vencida If-None-Match da 401, nunca 304
+  await environment.clock("2026-03-01T10:00:00.000Z");
+  const timedVisitor = await new Visitor().setup();
+  const timedOp = await timedVisitor.operationResource();
+  const timedEtag = timedOp.headers.get("etag")!;
+  await environment.clock("2026-03-01T12:00:00.000Z"); // +2 horas: inactividad superada
+  const expiredConditional = await timedVisitor.operationResource(timedVisitor.traceId, { "If-None-Match": timedEtag });
+  expect(expiredConditional.status).toBe(401);
+  expect(expiredConditional.body).toMatchObject({ error: { code: "SESSION_EXPIRED" } });
+});
