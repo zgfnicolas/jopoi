@@ -18,7 +18,7 @@ export function useTraceVerification(trace: PublicTraceResponse, invalidate: (er
     setResults(previous => ({ ...previous, [event.eventId]: { status: "loading" } }));
     const controller = new AbortController(); request.current = controller;
     try {
-      const result = await readApi(`/api/traces/${trace.traceId}/events/${event.eventId}/verification`, publicVerificationSchema, controller.signal, "omit");
+      const result = await readApi(`/api/v1/traces/${trace.traceId}/events/${event.eventId}/verification`, publicVerificationSchema, controller.signal, "omit");
       if (!active.current || controller.signal.aborted) return;
       if (Date.parse(trace.expiresAt) <= Date.now()) { invalidate({ code: "TRACE_EXPIRED" }); return; }
       if (!result.ok) {

@@ -5,7 +5,7 @@ import { ApplicationError } from "../../src/server/application-error";
 import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort, sqlStepBudget } from "../../src/server/deadlines";
 import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
 import { isSessionActive } from "../../src/server/sessions/service";
-import { computeOperationEtag, computeRunEtag, matchesIfMatch, matchesIfNoneMatch } from "../../src/server/operations/etag";
+import { computeOperationEtag, computeRunEtag, computeTraceEtag, matchesIfMatch, matchesIfNoneMatch } from "../../src/server/operations/etag";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
@@ -314,4 +314,14 @@ test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Mat
   const run2 = { ...resource, quota: { used: 2 } };
   assert.notEqual(computeRunEtag(run1), computeRunEtag(run2));
   assert.equal(computeOperationEtag(resource), etag);
+
+  // Trace ETag representa la proyección pública completa
+  const trace1 = { traceId: resource.traceId, version: 1, state: "PUBLISHED", events: [] };
+  const trace2 = { traceId: resource.traceId, version: 1, state: "PUBLISHED", events: [{ eventId: "e1" }] };
+  const traceEtag1 = computeTraceEtag(trace1);
+  const traceEtag2 = computeTraceEtag(trace2);
+  assert.ok(/^"[a-f0-9]{64}"$/.test(traceEtag1));
+  assert.notEqual(traceEtag1, traceEtag2);
+  assert.equal(matchesIfNoneMatch(traceEtag1, traceEtag1), true);
+  assert.equal(matchesIfNoneMatch(traceEtag2, traceEtag1), false);
 });

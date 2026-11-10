@@ -111,7 +111,17 @@ export class Visitor {
     await this.apply({ role: "coordinator", action: "assign", tripId: "return-a" });
     await this.apply({ role: "carrier", action: "pickup" });
   }
-  trace() { return this.get<PublicTraceResponse>(`/api/traces/${this.traceId}`); }
-  verification(eventId: string) { return this.get<PublicTraceVerificationResponse>(`/api/traces/${this.traceId}/events/${eventId}/verification`); }
+  trace(headers?: Record<string, string>, traceId = this.traceId) {
+    return this.get<PublicTraceResponse>(`/api/traces/${traceId}`, headers);
+  }
+  traceV1(headers?: Record<string, string>, traceId = this.traceId) {
+    return this.get<PublicTraceResponse>(`/api/v1/traces/${traceId}`, headers);
+  }
+  verification(eventId: string, headers?: Record<string, string>, traceId = this.traceId) {
+    return this.get<PublicTraceVerificationResponse>(`/api/traces/${traceId}/events/${eventId}/verification`, headers);
+  }
+  verificationV1(eventId: string, headers?: Record<string, string>, traceId = this.traceId) {
+    return this.get<PublicTraceVerificationResponse>(`/api/v1/traces/${traceId}/events/${eventId}/verification`, headers);
+  }
   retry(eventId: string, requestId = randomUUID()) { return this.post<PublicationRetryResponse>(`/api/demo/runs/${this.traceId}/events/${eventId}/retry`, { requestId }); }
 }

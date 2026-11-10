@@ -30,6 +30,15 @@ export function computeRunEtag(run: unknown): string {
   return `"${hash}"`;
 }
 
+/**
+ * ETag de la respuesta de trazabilidad pública (/api/v1/traces/{traceId} y /api/traces/{traceId}).
+ * RFC 9110: entidad opaca entre comillas dobles, representando la proyección pública completa.
+ */
+export function computeTraceEtag(trace: unknown): string {
+  const hash = createHash("sha256").update(canonicalJson(trace), "utf8").digest("hex");
+  return `"${hash}"`;
+}
+
 export function parseEtags(header: string): string[] {
   return header
     .split(",")

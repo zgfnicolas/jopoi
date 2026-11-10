@@ -14,6 +14,7 @@ export const HTTP_OPERATIONS = {
   "runs.operation.patch": ["PATCH", "/api/demo/runs/:traceId/operation"],
   "runs.command": ["POST", "/api/demo/runs/:traceId/commands"],
   "traces.read": ["GET", "/api/traces/:traceId"], "traces.verify": ["GET", "/api/traces/:traceId/events/:eventId/verification"],
+  "traces.v1.read": ["GET", "/api/v1/traces/:traceId"], "traces.v1.verify": ["GET", "/api/v1/traces/:traceId/events/:eventId/verification"],
   "publications.retry": ["POST", "/api/demo/runs/:traceId/events/:eventId/retry"],
   "contacts.create": ["POST", "/api/demo-requests"], "maintenance.run": ["GET", "/api/cron"],
 } as const;

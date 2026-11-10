@@ -691,7 +691,13 @@
         "S22-14",
         "S22-19"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-18-api-publica-versionada-condicional.md",
+        "validation": "Superficie pública canónica /api/v1/traces/{traceId} y /api/v1/traces/{traceId}/events/{eventId}/verification con adaptadores de compatibilidad en /api/traces/... emitiendo Deprecation: true y Link: </api/v1/...>; rel=\"successor-version\" sin emitir Sunset prematuro. ETag fuerte SHA-256 e If-None-Match respondiendo 304 Not Modified sin cuerpo únicamente después de verificar existencia (404), vigencia de 7 días (410) y admisión/rate limit (429). Caché público no-store y Vary: Accept sin mezclar validadores de cuota/operación; privacidad estricta sin cookies ni escrituras por GET y observedAt distinguiendo lecturas vivas del Mirror Node. 20 contratos, 30 seguridad (incluye S22-19), 72 HTTP en total, puerta completa y build aprobados; cero diagnósticos estrictos."
+      }
     },
     {
       "id": "19",
@@ -721,7 +727,13 @@
         "S22-19",
         "S22-21"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-19-historial-inicial-sin-javascript.md",
+        "validation": "Frontera previa en proxy.ts (/trazabilidad/:path*) que resuelve UUID inválido (404), inexistente (404), vencido tras 7 días (410), límite de tasa (429) y servicio no disponible (503) con HTML seguro accesible y negociación Problem Details antes del shell. Render inicial SSR consumiendo el servicio compartido sin fetch servidor→API propia, entregando historial, escenario, cantidades, eventos y enlaces textuales al mirror sin JavaScript. Interacción progresiva en useReadResource con initialData sin duplicar lecturas iniciales en montaje ni provocar hydration mismatches; geometría reservada 256x256 para QR (CLS=0) y verificación de que navegar o prefetchear no consume cupos de sesión ni envía mensajes HCS. Pruebas S22-19 y build de producción aprobados."
+      }
     },
     {
       "id": "20",
