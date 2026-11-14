@@ -1,10 +1,12 @@
 import "server-only";
+import crypto from "node:crypto";
 import { performance } from "node:perf_hooks";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ApplicationError } from "../application-error";
 import { bindBusinessTraceId, logDiagnostic } from "../diagnostics";
 import { RateLimitError, requireRateLimit } from "../security/rate-limit";
+import { getSecurityHeaders } from "../security/headers";
 import { publicTraceReader } from "./queries";
 
 function escapeHtml(text: string): string {
@@ -38,7 +40,11 @@ export function renderSafePageResponse(request: Request, options: SafePageOption
   const headers = new Headers();
   headers.set("Cache-Control", "no-store");
   headers.set("Vary", "Accept");
-  headers.set("X-Content-Type-Options", "nosniff");
+  const isHttps = request.headers.get("x-forwarded-proto") === "https" || request.url.startsWith("https:");
+  const secHeaders = getSecurityHeaders({ isHttps });
+  for (const [key, value] of Object.entries(secHeaders)) {
+    headers.set(key, value);
+  }
   if (options.retryAfter) {
     headers.set("Retry-After", String(options.retryAfter));
   }
@@ -171,11 +177,24 @@ export async function handleTraceProxyRequest(request: NextRequest): Promise<Nex
     if (serialized.length < 8000) {
       requestHeaders.set("x-jopoi-trace-payload", Buffer.from(serialized).toString("base64"));
     }
-    return NextResponse.next({
+
+    const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+    const isHttps = request.headers.get("x-forwarded-proto") === "https" || request.url.startsWith("https:");
+    const secHeaders = getSecurityHeaders({ isHttps, nonce });
+    for (const [key, value] of Object.entries(secHeaders)) {
+      requestHeaders.set(key, value);
+    }
+    requestHeaders.set("x-nonce", nonce);
+
+    const response = NextResponse.next({
       request: {
         headers: requestHeaders,
       },
     });
+    for (const [key, value] of Object.entries(secHeaders)) {
+      response.headers.set(key, value);
+    }
+    return response;
   } catch (error) {
     if (error instanceof RateLimitError || (error instanceof ApplicationError && error.code === "RATE_LIMITED")) {
       const retryAfter = error instanceof RateLimitError ? error.retryAfter : (error.retryAfterSeconds ?? 60);

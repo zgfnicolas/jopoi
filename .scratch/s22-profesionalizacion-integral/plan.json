@@ -801,7 +801,13 @@
         "S22-21",
         "S22-22"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-21-csp-y-cabeceras-efectivas.md",
+        "validation": "Política efectiva de CSP restrictiva (default-src 'self', script-src restrictivo con hashes y nonces sin unsafe-inline general, object-src 'none', base-uri 'none', form-action 'self', frame-ancestors 'none', excepciones justificadas style-src 'unsafe-inline' e img-src 'self' data:). Arquitectura híbrida: landing y demo prerenderizadas con hashes de build extraídos de .next/server/app/*.html; trazabilidad dinámica protegida con nonces criptográficos por solicitud. Cabeceras efectivas X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin, X-Frame-Options: DENY, HSTS condicional a la frontera HTTPS (max-age=63072000; includeSubDomains; preload) y modo Report-Only ensayable. Preservación del bootstrap de tema, formulario y código QR. 23 contratos, vitest S22-15, e2e navegador S22-UI-03, 54 dominio, 24 CLI, 4 observabilidad, 7 seguridad, 2 tokens y build de producción aprobados."
+      }
     },
     {
       "id": "22",

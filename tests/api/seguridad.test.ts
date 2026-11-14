@@ -15,6 +15,9 @@ import type { DemoSessionResponse } from "../../src/shared/session-contracts";
 import type { DemoRunResponse, OperationResource } from "../../src/shared/run-contracts";
 import { operationResourceSchema, operationViewSchema } from "../../src/frontend/operation-models";
 import { publicTraceSchema } from "../../src/frontend/trace-models";
+import { THEME_BOOTSTRAP_HASH } from "../../src/server/security/headers";
+import { THEME_BOOTSTRAP } from "../../src/frontend/theme";
+import crypto from "node:crypto";
 
 beforeEach(() => environment.reset());
 afterAll(() => environment.close());
@@ -2243,4 +2246,86 @@ test("S22-20 · lecturas exponen observedAt, staleness a 60s, contraste etiqueta
   expect(html).toContain("Lectura del historial obtenida el");
   expect(html).toContain("No hay seguimiento continuo ni reintentos automáticos");
   expect(html).toContain("Actualizar vuelve a leer SQL y descarta las observaciones transitorias anteriores");
+});
+
+test("S22-15 · CSP y cabeceras efectivas sin unsafe-inline general, bloqueo de frames y compatibilidad de tema y QR", async () => {
+  // 1. Landing (GET /)
+  const homeRes = await fetch(`${environment.origin}/`);
+  expect(homeRes.status).toBe(200);
+  const homeCsp = homeRes.headers.get("content-security-policy");
+  expect(homeCsp).toBeTruthy();
+  expect(homeCsp).toContain("default-src 'self'");
+  expect(homeCsp).toContain("object-src 'none'");
+  expect(homeCsp).toContain("base-uri 'none'");
+  expect(homeCsp).toContain("form-action 'self'");
+  expect(homeCsp).toContain("frame-ancestors 'none'");
+  expect(homeCsp).toContain("img-src 'self' data:");
+  expect(homeCsp).toContain("style-src 'self' 'unsafe-inline'");
+  expect(homeCsp).toContain("font-src 'self'");
+  expect(homeCsp).toContain("connect-src 'self' https://testnet.mirrornode.hedera.com");
+  expect(homeRes.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(homeRes.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+  expect(homeRes.headers.get("x-frame-options")).toBe("DENY");
+  // No emite HSTS en HTTP inseguro
+  expect(homeRes.headers.get("strict-transport-security")).toBeNull();
+
+  // El script-src contiene hashes autorizados y no tiene 'unsafe-inline' general
+  const homeScriptDir = homeCsp!.split(";").map(d => d.trim()).find(d => d.startsWith("script-src"));
+  expect(homeScriptDir).toBeDefined();
+  expect(homeScriptDir).toContain("'self'");
+  expect(homeScriptDir).toContain(`'${THEME_BOOTSTRAP_HASH}'`);
+  expect(homeScriptDir).not.toContain("'unsafe-inline'");
+
+  // 2. Demo shell (GET /demo)
+  const demoRes = await fetch(`${environment.origin}/demo`);
+  expect(demoRes.status).toBe(200);
+  const demoCsp = demoRes.headers.get("content-security-policy");
+  expect(demoCsp).toBeTruthy();
+  expect(demoCsp).toContain("frame-ancestors 'none'");
+  expect(demoCsp).toContain("object-src 'none'");
+  expect(demoCsp).toContain("base-uri 'none'");
+  expect(demoCsp).toContain("form-action 'self'");
+  expect(demoRes.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(demoRes.headers.get("x-frame-options")).toBe("DENY");
+
+  // 3. Consulta de trazabilidad pública existente (GET /trazabilidad/:traceId)
+  const visitor = await new Visitor().setup();
+  await visitor.publish();
+  const traceId = visitor.traceId;
+  const traceRes = await fetch(`${environment.origin}/trazabilidad/${traceId}`);
+  expect(traceRes.status).toBe(200);
+  const traceCsp = traceRes.headers.get("content-security-policy");
+  expect(traceCsp).toBeTruthy();
+  expect(traceCsp).toContain("frame-ancestors 'none'");
+  expect(traceCsp).toContain("object-src 'none'");
+  expect(traceCsp).toContain("base-uri 'none'");
+  expect(traceCsp).toContain("form-action 'self'");
+  expect(traceRes.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(traceRes.headers.get("x-frame-options")).toBe("DENY");
+  expect(traceCsp).toMatch(/'nonce-[A-Za-z0-9+/=_-]+'|sha256-/);
+
+  // 4. Frontera de error seguro / 404 en trazabilidad
+  const unknownRes = await fetch(`${environment.origin}/trazabilidad/00000000-0000-4000-8000-000000000000`);
+  expect(unknownRes.status).toBe(404);
+  const unknownCsp = unknownRes.headers.get("content-security-policy");
+  expect(unknownCsp).toBeTruthy();
+  expect(unknownCsp).toContain("frame-ancestors 'none'");
+  expect(unknownCsp).toContain("object-src 'none'");
+  expect(unknownCsp).toContain("base-uri 'none'");
+  expect(unknownRes.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(unknownRes.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+  expect(unknownRes.headers.get("x-frame-options")).toBe("DENY");
+
+  // 5. Frontera HTTPS emite HSTS estricto
+  const httpsSafeRes = await fetch(`${environment.origin}/trazabilidad/00000000-0000-4000-8000-000000000000`, {
+    headers: { "X-Forwarded-Proto": "https" },
+  });
+  expect(httpsSafeRes.headers.get("strict-transport-security")).toBe("max-age=63072000; includeSubDomains; preload");
+
+  // 6. Integridad de scripts legítimos: el hash del bootstrap coincide con el script inyectado en el HTML
+  const homeHtml = await homeRes.text();
+  expect(homeHtml).toContain(THEME_BOOTSTRAP);
+  const expectedHash = `sha256-${crypto.createHash("sha256").update(THEME_BOOTSTRAP).digest("base64")}`;
+  expect(THEME_BOOTSTRAP_HASH).toBe(expectedHash);
+  expect(homeCsp).toContain(expectedHash);
 });

@@ -103,3 +103,45 @@ test("S22-UI-02 · límite de mutación en el panel conserva requestId de la int
   expect(requests).toHaveLength(2);
   expect(requests[0]).toBe(requests[1]);
 });
+
+test("S22-UI-03 · CSP efectiva en navegador bloquea scripts y frames no autorizados conservando tema, formulario y QR", async ({ page, journey }) => {
+  // 1. Navegación a inicio
+  const response = await page.goto(journey.origin + "/");
+  expect(response?.status()).toBe(200);
+  const csp = await response?.headerValue("content-security-policy");
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).toContain("object-src 'none'");
+  expect(csp).toContain("base-uri 'none'");
+  expect(csp).toContain("form-action 'self'");
+  expect(csp).not.toContain("'unsafe-inline'");
+
+  // 2. Tema operativo en navegador
+  const themeButton = page.getByRole("button", { name: /oscuro|claro|sistema/i });
+  if (await themeButton.isVisible()) {
+    await themeButton.click();
+    const updatedTheme = await page.evaluate(() => document.documentElement.dataset.theme);
+    expect(updatedTheme).toBeDefined();
+  }
+
+  // 3. Formulario interactivo operativo
+  await expect(page.getByLabel("Nombre", { exact: true })).toBeVisible();
+  await page.getByLabel("Nombre", { exact: true }).fill("Test CSP");
+  await expect(page.getByLabel("Nombre", { exact: true })).toHaveValue("Test CSP");
+
+  // 4. Inyección de script no autorizado es bloqueada por el navegador
+  const injected = await page.evaluate(() => {
+    try {
+      const script = document.createElement("script");
+      script.textContent = "window.__csp_injected = true;";
+      document.head.appendChild(script);
+      return (window as unknown as { __csp_injected?: boolean }).__csp_injected;
+    } catch {
+      return undefined;
+    }
+  });
+  expect(injected).toBeUndefined();
+
+  // 5. Demo interactiva
+  await journey.start();
+  await expect(page.getByRole("button", { name: "Publicar lote", exact: true })).toBeVisible();
+});

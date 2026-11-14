@@ -2,10 +2,37 @@ import type { NextConfig } from "next";
 import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { readFileSync } from "node:fs";
 import { resolve, sep } from "node:path";
+import { buildContentSecurityPolicy } from "./src/server/security/headers";
 
 export default function configuration(phase: string): NextConfig {
-  const config: NextConfig = { serverExternalPackages: ["@hiero-ledger/sdk"],
-    async headers() { return [{ source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }]; },
+  const isDev = phase === PHASE_DEVELOPMENT_SERVER;
+  const reportOnly = process.env.JOPOI_CSP_REPORT_ONLY === "true";
+  const cspHeaderKey = reportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy";
+  const cspHeaderValue = buildContentSecurityPolicy({ isDev, reportOnly });
+
+  const config: NextConfig = {
+    serverExternalPackages: ["@hiero-ledger/sdk"],
+    async headers() {
+      return [
+        { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+        {
+          source: "/(.*)",
+          headers: [
+            { key: cspHeaderKey, value: cspHeaderValue },
+            { key: "X-Content-Type-Options", value: "nosniff" },
+            { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+            { key: "X-Frame-Options", value: "DENY" },
+          ],
+        },
+        {
+          source: "/(.*)",
+          has: [{ type: "header", key: "x-forwarded-proto", value: "https" }],
+          headers: [
+            { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          ],
+        },
+      ];
+    },
   };
   const directory = process.env.JOPOI_API_TEST_DIRECTORY;
   if (!directory) return config;

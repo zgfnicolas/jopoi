@@ -8,6 +8,8 @@ import { isSessionActive } from "../../src/server/sessions/service";
 import { computeOperationEtag, computeRunEtag, computeTraceEtag, matchesIfMatch, matchesIfNoneMatch } from "../../src/server/operations/etag";
 import type { OperationResource } from "../../src/shared/run-contracts";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
+import { buildContentSecurityPolicy, getSecurityHeaders, THEME_BOOTSTRAP_HASH, STATIC_SCRIPT_HASHES } from "../../src/server/security/headers";
+import { renderSafePageResponse } from "../../src/server/traces/page-boundary";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
   const response = await apiBoundary("contacts.create", new Request("https://example.invalid/api/demo-requests", { headers: { Accept: PROBLEM_MEDIA_TYPE } }), async () => {
@@ -328,4 +330,84 @@ test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Mat
   assert.equal(computeTraceEtag({ ...trace1, observedAt: "2026-01-15T13:00:00.000Z" }), traceEtag1);
   assert.equal(matchesIfNoneMatch(traceEtag1, traceEtag1), true);
   assert.equal(matchesIfNoneMatch(traceEtag2, traceEtag1), false);
+});
+
+test("S22-15: CSP efectiva define script-src restrictivo, object-src, base-uri, form-action y frame-ancestors sin unsafe-inline general", () => {
+  const cspProd = buildContentSecurityPolicy({ isDev: false });
+  assert.ok(cspProd.includes("default-src 'self'"));
+  assert.ok(cspProd.includes("object-src 'none'"));
+  assert.ok(cspProd.includes("base-uri 'none'"));
+  assert.ok(cspProd.includes("form-action 'self'"));
+  assert.ok(cspProd.includes("frame-ancestors 'none'"));
+  assert.ok(cspProd.includes("img-src 'self' data:"));
+  assert.ok(cspProd.includes("style-src 'self' 'unsafe-inline'"));
+  assert.ok(cspProd.includes("font-src 'self'"));
+  assert.ok(cspProd.includes("connect-src 'self' https://testnet.mirrornode.hedera.com"));
+
+  // script-src restrictivo: tiene 'self' y hashes, y NO tiene 'unsafe-inline' ni 'unsafe-eval' en prod
+  const scriptDirective = cspProd.split(";").map(d => d.trim()).find(d => d.startsWith("script-src"));
+  assert.ok(scriptDirective);
+  assert.ok(scriptDirective.includes("'self'"));
+  assert.ok(scriptDirective.includes(`'${THEME_BOOTSTRAP_HASH}'`));
+  assert.ok(!scriptDirective.includes("'unsafe-inline'"));
+  assert.ok(!scriptDirective.includes("'unsafe-eval'"));
+
+  // En dev incluye 'unsafe-eval'
+  const cspDev = buildContentSecurityPolicy({ isDev: true });
+  const devScriptDirective = cspDev.split(";").map(d => d.trim()).find(d => d.startsWith("script-src"));
+  assert.ok(devScriptDirective?.includes("'unsafe-eval'"));
+
+  // Con nonce incluye 'nonce-...'
+  const cspNonce = buildContentSecurityPolicy({ nonce: "test-nonce-123", isDev: false });
+  assert.ok(cspNonce.includes("'nonce-test-nonce-123'"));
+});
+
+test("S22-15: getSecurityHeaders y safe boundary emiten nosniff, referrer, DENY, HSTS condicional y Report-Only ensayable", () => {
+  // Plain HTTP
+  const httpHeaders = getSecurityHeaders({ isHttps: false, reportOnly: false });
+  assert.equal(httpHeaders["X-Content-Type-Options"], "nosniff");
+  assert.equal(httpHeaders["Referrer-Policy"], "strict-origin-when-cross-origin");
+  assert.equal(httpHeaders["X-Frame-Options"], "DENY");
+  assert.ok(httpHeaders["Content-Security-Policy"]);
+  assert.equal(httpHeaders["Content-Security-Policy-Report-Only"], undefined);
+  assert.equal(httpHeaders["Strict-Transport-Security"], undefined);
+
+  // HTTPS emite HSTS con max-age=63072000; includeSubDomains; preload
+  const httpsHeaders = getSecurityHeaders({ isHttps: true, reportOnly: false });
+  assert.equal(httpsHeaders["Strict-Transport-Security"], "max-age=63072000; includeSubDomains; preload");
+
+  // Report-Only ensayable
+  const reportOnlyHeaders = getSecurityHeaders({ isHttps: true, reportOnly: true });
+  assert.ok(reportOnlyHeaders["Content-Security-Policy-Report-Only"]);
+  assert.equal(reportOnlyHeaders["Content-Security-Policy"], undefined);
+
+  // renderSafePageResponse emite todas las cabeceras de seguridad efectivas en HTML y Problem Details
+  const htmlSafeReq = new Request("https://example.invalid/trazabilidad/unknown", { headers: { Accept: "text/html" } });
+  const htmlSafeRes = renderSafePageResponse(htmlSafeReq, {
+    status: 404,
+    code: "NOT_FOUND",
+    problemType: "not-found",
+    title: "No encontrado",
+    heading: "No encontrado",
+    message: "No encontramos el recorrido.",
+  });
+  assert.equal(htmlSafeRes.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(htmlSafeRes.headers.get("referrer-policy"), "strict-origin-when-cross-origin");
+  assert.equal(htmlSafeRes.headers.get("x-frame-options"), "DENY");
+  assert.ok(htmlSafeRes.headers.get("content-security-policy"));
+  assert.equal(htmlSafeRes.headers.get("strict-transport-security"), "max-age=63072000; includeSubDomains; preload");
+
+  const jsonSafeReq = new Request("http://example.invalid/trazabilidad/unknown", { headers: { Accept: "application/problem+json" } });
+  const jsonSafeRes = renderSafePageResponse(jsonSafeReq, {
+    status: 404,
+    code: "NOT_FOUND",
+    problemType: "not-found",
+    title: "No encontrado",
+    heading: "No encontrado",
+    message: "No encontramos el recorrido.",
+  });
+  assert.equal(jsonSafeRes.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(jsonSafeRes.headers.get("x-frame-options"), "DENY");
+  assert.ok(jsonSafeRes.headers.get("content-security-policy"));
+  assert.equal(jsonSafeRes.headers.get("strict-transport-security"), null);
 });
