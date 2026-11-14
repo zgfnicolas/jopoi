@@ -12,7 +12,7 @@ import { currentRequestContext, logDiagnostic } from "../diagnostics";
 import { createHcsEnvelope } from "../events/payload";
 import type { VerificationResult } from "../hedera/contracts";
 import { readRunOperation, readRunSnapshot } from "../operations/storage";
-import { hasSubmittedAttempt, projectTraceEvent, publicEventSelect, traceLinks } from "./projection";
+import { hasSubmittedAttempt, projectTraceEvent, publicTraceEventSelect, publicVerificationEventSelect, traceLinks } from "./projection";
 
 const runSelect = { id: true, traceId: true, state: true, expiresAt: true, scenarioVersion: true, scenarioSnapshot: true,
   declaredGrams: true, humidityHundredths: true, assignedBuyerId: true, assignedTripId: true, assignedAt: true,
@@ -35,7 +35,7 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
   async function loadEvent(tx: Prisma.TransactionClient, traceId: string, eventId: string) {
     const run = await loadRun(tx, traceId);
     if (run.state === "DRAFT") throw new ApplicationError("NOT_FOUND");
-    const row = await tx.operationEvent.findFirst({ where: { id: eventId, runId: run.id }, select: publicEventSelect });
+    const row = await tx.operationEvent.findFirst({ where: { id: eventId, runId: run.id }, select: publicVerificationEventSelect });
     if (row === null) throw new ApplicationError("NOT_FOUND");
     const event = projectTraceEvent(row, traceId, readRunSnapshot(run));
     requireValidity(run.expiresAt);
@@ -46,7 +46,7 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
       return transaction(async tx => {
         const run = await loadRun(tx, traceId);
         const snapshot = readRunSnapshot(run);
-        const rows = run.state === "DRAFT" ? [] : await tx.operationEvent.findMany({ where: { runId: run.id }, orderBy: { ordinal: "asc" }, select: publicEventSelect });
+        const rows = run.state === "DRAFT" ? [] : await tx.operationEvent.findMany({ where: { runId: run.id }, orderBy: { ordinal: "asc" }, select: publicTraceEventSelect });
         const events = rows.map(row => projectTraceEvent(row, traceId, snapshot));
         const declaration = events.find(event => event.type === "LOT_PUBLISHED" && event.event !== null);
         const reception = events.find(event => ["RECEIPT_ACCEPTED", "RECEIPT_ISSUE_REPORTED"].includes(event.type) && event.event !== null);

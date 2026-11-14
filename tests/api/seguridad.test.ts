@@ -2329,3 +2329,74 @@ test("S22-15 · CSP y cabeceras efectivas sin unsafe-inline general, bloqueo de 
   expect(THEME_BOOTSTRAP_HASH).toBe(expectedHash);
   expect(homeCsp).toContain(expectedHash);
 });
+
+test("S22-22 · replay y proyecciones no devuelven bytes firmados ni historiales de reintentos y conservan semántica", async () => {
+  const visitor = await new Visitor().setup();
+  const publishReqId = randomUUID();
+  const publishRes = await visitor.command(
+    { action: "publish", role: "generator", quantityKg: "12000", humidityPercent: "28" },
+    publishReqId,
+  );
+  expect(publishRes.status).toBe(200);
+  const eventId = publishRes.body.applied.eventId;
+  expect(eventId).toBeDefined();
+
+  // 1. Replay POST de comando existente (con la misma versión esperada original 1)
+  const replayPost = await visitor.post<{ replayed: boolean }>(`/api/demo/runs/${visitor.traceId}/commands`, {
+    action: "publish",
+    role: "generator",
+    quantityKg: "12000",
+    humidityPercent: "28",
+    requestId: publishReqId,
+    expectedVersion: 1,
+  });
+  expect(replayPost.status).toBe(200);
+  expect(replayPost.body.replayed).toBe(true);
+  const replayPostRaw = JSON.stringify(replayPost.body);
+  expect(replayPostRaw).not.toContain("signedTransactionBytes");
+  expect(replayPostRaw).not.toContain("attemptHistory");
+  expect(replayPostRaw).not.toContain("leaseOwner");
+  expect(replayPostRaw).not.toContain("leaseExpiresAt");
+
+  // 2. Mutación PATCH y su posterior replay
+  const currentOp = await visitor.operationResource(visitor.traceId);
+  const etag = currentOp.headers.get("etag")!;
+  const patchKey = randomUUID();
+  const patchRes = await visitor.patchOp(
+    { action: "approve", role: "coordinator" },
+    { ifMatch: etag, idempotencyKey: patchKey },
+  );
+  expect(patchRes.status).toBe(200);
+  expect(patchRes.body.replayed).toBe(false);
+
+  const replayPatch = await visitor.patch(
+    `/api/demo/runs/${visitor.traceId}/operation`,
+    { action: "approve", role: "coordinator" },
+    { "If-Match": etag, "Idempotency-Key": patchKey },
+  );
+  expect(replayPatch.status).toBe(200);
+  expect(replayPatch.body.replayed).toBe(true);
+  const replayPatchRaw = JSON.stringify(replayPatch.body);
+  expect(replayPatchRaw).not.toContain("signedTransactionBytes");
+  expect(replayPatchRaw).not.toContain("attemptHistory");
+  expect(replayPatchRaw).not.toContain("leaseOwner");
+
+  // 3. Proyección pública del trace: omite attempts y signedTransactionBytes
+  const traceRes = await visitor.traceV1();
+  expect(traceRes.status).toBe(200);
+  const traceRaw = JSON.stringify(traceRes.body);
+  expect(traceRaw).not.toContain("signedTransactionBytes");
+  expect(traceRaw).not.toContain("attemptHistory");
+  expect(traceRaw).not.toContain("leaseOwner");
+  for (const ev of traceRes.body.events) {
+    expect((ev.publication as unknown as Record<string, unknown>).attempts).toBeUndefined();
+  }
+
+  // 4. Proyección de verificación: omite signedTransactionBytes y conserva integridad
+  const verifRes = await visitor.verificationV1(eventId!);
+  expect(verifRes.status).toBe(200);
+  const verifRaw = JSON.stringify(verifRes.body);
+  expect(verifRaw).not.toContain("signedTransactionBytes");
+  expect(verifRaw).not.toContain("attemptHistory");
+  expect(verifRaw).not.toContain("leaseOwner");
+});

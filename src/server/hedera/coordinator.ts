@@ -236,7 +236,10 @@ export function createCoordinator(context: CoordinationContext) {
       if (permit === null) {
         // Rechazo temprano sin tocar el proveedor: se difiere con cooldown/jitter y se conserva el estado honesto.
         await transaction(async (tx) => {
-          const row = await tx.hcsPublication.findUnique({ where: { eventId }, include: { event: { include: { run: true } } } });
+          const row = await tx.hcsPublication.findUnique({
+            where: { eventId },
+            select: { event: { select: { run: { select: { expiresAt: true } } } } },
+          });
           if (row === null || row.event.run.expiresAt <= now()) return;
           await tx.hcsPublication.update({ where: { eventId }, data: {
             lastErrorCode: "HCS_CAPACITY_BUSY",

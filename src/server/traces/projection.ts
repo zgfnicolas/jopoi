@@ -20,15 +20,29 @@ const evidenceSchema: z.ZodType<TraceEvidence> = z.strictObject({
   sequenceNumber: sequence.nullable(), consensusTimestamp: timestamp.nullable(), localDigest: eventDigest,
   remoteDigest: eventDigest.nullable(), identifiersMatch: z.boolean(), digestMatch: z.boolean(),
 });
-export const publicEventSelect = {
+export const publicTracePublicationSelect = {
+  state: true, network: true, topicId: true, transactionId: true, sequenceNumber: true, consensusTimestamp: true,
+  confirmedAt: true, lastErrorCode: true, verificationState: true, verifiedAt: true, verificationEvidence: true,
+} as const satisfies Prisma.HcsPublicationSelect;
+
+export const publicTraceEventSelect = {
   id: true, ordinal: true, type: true, simulatedRole: true, appliedAt: true, payloadVersion: true, payload: true, digest: true,
-  publication: { select: {
-    state: true, network: true, topicId: true, transactionId: true, sequenceNumber: true, consensusTimestamp: true,
-    confirmedAt: true, lastErrorCode: true, verificationState: true, verifiedAt: true, verificationEvidence: true,
-    attempts: { select: { transactionId: true, state: true } },
-  } },
+  publication: { select: publicTracePublicationSelect },
 } as const satisfies Prisma.OperationEventSelect;
-export type TraceEventRow = Prisma.OperationEventGetPayload<{ select: typeof publicEventSelect }>;
+
+export const publicVerificationPublicationSelect = {
+  ...publicTracePublicationSelect,
+  attempts: { select: { transactionId: true, state: true } },
+} as const satisfies Prisma.HcsPublicationSelect;
+
+export const publicVerificationEventSelect = {
+  id: true, ordinal: true, type: true, simulatedRole: true, appliedAt: true, payloadVersion: true, payload: true, digest: true,
+  publication: { select: publicVerificationPublicationSelect },
+} as const satisfies Prisma.OperationEventSelect;
+
+export const publicEventSelect = publicVerificationEventSelect;
+export type TraceEventRow = Prisma.OperationEventGetPayload<{ select: typeof publicTraceEventSelect }>;
+export type VerificationEventRow = Prisma.OperationEventGetPayload<{ select: typeof publicVerificationEventSelect }>;
 type PublicationRow = NonNullable<TraceEventRow["publication"]>;
 
 export function traceLinks(publication: TracePublication, observation: TraceEvidence | null = null): TraceLinks {
@@ -60,7 +74,7 @@ function storedVerification(row: PublicationRow, storedDigest: string | null): T
   return { state: terminal && (evidence === null || !validMatch) ? "UNAVAILABLE" : row.verificationState,
     verifiedAt: row.verifiedAt?.toISOString() ?? null, evidence };
 }
-export function projectTraceEvent(row: TraceEventRow, traceId: string, snapshot: ScenarioSnapshot): TraceEvent {
+export function projectTraceEvent(row: TraceEventRow | VerificationEventRow, traceId: string, snapshot: ScenarioSnapshot): TraceEvent {
   if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
   const inspected = inspectPublicEvent(row, traceId, snapshot);
   const summary = publication(row.publication);
@@ -71,7 +85,7 @@ export function projectTraceEvent(row: TraceEventRow, traceId: string, snapshot:
     storedVerification: storedVerification(row.publication, inspected.integrity.storedDigest), links: traceLinks(summary),
   };
 }
-export function hasSubmittedAttempt(row: TraceEventRow): boolean {
+export function hasSubmittedAttempt(row: { publication?: { transactionId: string | null; attempts: readonly { transactionId: string; state: string }[] } | null }): boolean {
   return row.publication?.attempts.some(attempt => attempt.transactionId === row.publication?.transactionId
     && ["STARTED", "UNCERTAIN", "REJECTED", "CONFIRMED"].includes(attempt.state)) ?? false;
 }

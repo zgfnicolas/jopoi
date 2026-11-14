@@ -12,7 +12,7 @@ import { ApplicationError } from "../application-error";
 import { advanceRunVersion, withTransaction } from "../database";
 import { createPublicEvent, eventTypeForAction, readPublicEvent } from "../events/payload";
 import { configuredTarget } from "../hedera/target";
-import { privatePublicationSummary } from "../hedera/summary";
+import { privatePublicationSummary, publicationSummarySelect } from "../hedera/summary";
 import { reserveRunIntent, reserveSessionRateLimit } from "../security/rate-limit";
 import { sessionTokenHash } from "../sessions/credentials";
 import { requireOwnedRun, touchSessionActivity } from "../sessions/service";
@@ -92,7 +92,26 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
     const intentHash = createHash("sha256").update(canonicalJson({ version: 1, expectedVersion, command }), "utf8").digest("hex");
     const previous = await tx.commandReceipt.findUnique({
       where: { runId_requestId: { runId: run.id, requestId } },
-      include: { event: { include: { publication: true } } },
+      select: {
+        intentHash: true,
+        action: true,
+        resultingVersion: true,
+        result: true,
+        event: {
+          select: {
+            id: true,
+            runId: true,
+            ordinal: true,
+            type: true,
+            simulatedRole: true,
+            appliedAt: true,
+            payloadVersion: true,
+            digest: true,
+            payload: true,
+            publication: { select: publicationSummarySelect },
+          },
+        },
+      },
     });
     if (previous !== null) {
       if (previous.intentHash !== intentHash) throw new ApplicationError("IDEMPOTENCY_CONFLICT");
@@ -163,7 +182,7 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
         appliedAt, payloadVersion: 1, payload: jsonObject(event.payload), digest: event.digest,
         publication: { create: { network: "testnet", state: "QUEUED", verificationState: "NOT_CHECKED",
           automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt } },
-      }, include: { publication: true } });
+      }, select: { publication: { select: publicationSummarySelect } } });
       publication = stored.publication;
       if (publication === null) throw new ApplicationError("INTERNAL_ERROR");
     }
@@ -214,7 +233,25 @@ export async function patchOperationCommand(input: OperationPatchInputInternal):
 
     const previous = await tx.commandReceipt.findUnique({
       where: { runId_requestId: { runId: run.id, requestId: idempotencyKey } },
-      include: { event: { include: { publication: true } } },
+      select: {
+        intentHash: true,
+        action: true,
+        resultingVersion: true,
+        result: true,
+        event: {
+          select: {
+            id: true,
+            ordinal: true,
+            type: true,
+            simulatedRole: true,
+            appliedAt: true,
+            payloadVersion: true,
+            digest: true,
+            payload: true,
+            publication: { select: { eventId: true } },
+          },
+        },
+      },
     });
 
     if (previous !== null) {

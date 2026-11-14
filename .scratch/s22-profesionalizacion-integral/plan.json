@@ -841,7 +841,13 @@
         "S22-28",
         "S22-30"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-22-proyecciones-y-exportacion-eficientes.md",
+        "validation": "Proyecciones explícitas select en replays de comandos (executeOperationCommand y patchOperationCommand), creación de eventos y coordinador HCS, eliminando la transferencia de signedTransactionBytes, attemptHistory, verificationEvidence, scenarioSnapshot y campos de lease. Desacoplamiento de publicTraceEventSelect (sin attempts) para vistas de trazas de publicVerificationEventSelect (con attempts) para verificación puntual. Simplificación lineal O(n) del cálculo de bloqueo de hitos (blockedBy) en runDetail. Exportación de contactos acotada por cursor (createdAt, id) en páginas de 500 filas con delimitador ;, BOM UTF-8, CRLF, escape de fórmulas CSV y permisos 0600/0700. Justificación de índices en DemoRequest por plan y costo relativo bajo política de presupuesto cero. 25 contratos, vitest S22-22, 54 dominio, 24 CLI, typecheck, lint y build de producción aprobados."
+      }
     },
     {
       "id": "23",

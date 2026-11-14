@@ -21,15 +21,31 @@ async function runDetail(tx: Prisma.TransactionClient, run: DemoRun): Promise<De
   const economics = calculateEconomics(operation.quantityKg, scenario.pricing);
   if (!compatibility.ok || !economics.ok) throw new ApplicationError("INTERNAL_ERROR");
   const rows = await tx.operationEvent.findMany({
-    where: { runId: run.id }, orderBy: { ordinal: "asc" },
-    include: { publication: { select: publicationSummarySelect } },
+    where: { runId: run.id },
+    orderBy: { ordinal: "asc" },
+    select: {
+      id: true,
+      ordinal: true,
+      type: true,
+      simulatedRole: true,
+      appliedAt: true,
+      payloadVersion: true,
+      digest: true,
+      payload: true,
+      publication: { select: publicationSummarySelect },
+    },
   });
   const quota = await quotaSummary(tx, process.env, wallNow());
+  let firstUnconfirmedId: string | null = null;
   const events = rows.map((row) => {
     if (row.publication === null) throw new ApplicationError("INTERNAL_ERROR");
+    const blockedBy = firstUnconfirmedId;
+    if (firstUnconfirmedId === null && row.publication.state !== "CONFIRMED") {
+      firstUnconfirmedId = row.id;
+    }
     return {
       event: readPublicEvent(row, run.traceId, scenario),
-      publication: publicationSummary(row.publication, { blockedBy: rows.find(previous => previous.ordinal < row.ordinal && previous.publication?.state !== "CONFIRMED")?.id ?? null, quota }),
+      publication: publicationSummary(row.publication, { blockedBy, quota }),
     };
   });
   return {

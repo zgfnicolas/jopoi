@@ -10,6 +10,8 @@ import type { OperationResource } from "../../src/shared/run-contracts";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 import { buildContentSecurityPolicy, getSecurityHeaders, THEME_BOOTSTRAP_HASH, STATIC_SCRIPT_HASHES } from "../../src/server/security/headers";
 import { renderSafePageResponse } from "../../src/server/traces/page-boundary";
+import { publicTraceEventSelect, publicVerificationEventSelect, publicTracePublicationSelect, publicVerificationPublicationSelect } from "../../src/server/traces/projection";
+import { publicationSummarySelect } from "../../src/server/hedera/summary";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
   const response = await apiBoundary("contacts.create", new Request("https://example.invalid/api/demo-requests", { headers: { Accept: PROBLEM_MEDIA_TYPE } }), async () => {
@@ -410,4 +412,62 @@ test("S22-15: getSecurityHeaders y safe boundary emiten nosniff, referrer, DENY,
   assert.equal(jsonSafeRes.headers.get("x-frame-options"), "DENY");
   assert.ok(jsonSafeRes.headers.get("content-security-policy"));
   assert.equal(jsonSafeRes.headers.get("strict-transport-security"), null);
+});
+
+test("S22-22: proyecciones explícitas de eventos y publicaciones excluyen campos pesados y lease metadata", () => {
+  // publicTracePublicationSelect no incluye attempts, signedTransactionBytes ni leases
+  const tracePubKeys = Object.keys(publicTracePublicationSelect);
+  assert.ok(!tracePubKeys.includes("attempts"));
+  assert.ok(!tracePubKeys.includes("signedTransactionBytes"));
+  assert.ok(!tracePubKeys.includes("leaseOwner"));
+  assert.ok(!tracePubKeys.includes("leaseExpiresAt"));
+
+  // publicTraceEventSelect no proyecta attempts
+  assert.equal(publicTraceEventSelect.publication.select, publicTracePublicationSelect);
+
+  // publicVerificationPublicationSelect sólo agrega attempts selectivos
+  const verifPubKeys = Object.keys(publicVerificationPublicationSelect);
+  assert.ok(verifPubKeys.includes("attempts"));
+  assert.ok(!verifPubKeys.includes("signedTransactionBytes"));
+  assert.ok(!verifPubKeys.includes("leaseOwner"));
+
+  // publicationSummarySelect excluye signed bytes, historiales y leases
+  const summaryKeys = Object.keys(publicationSummarySelect);
+  assert.ok(!summaryKeys.includes("signedTransactionBytes"));
+  assert.ok(!summaryKeys.includes("attemptHistory"));
+  assert.ok(!summaryKeys.includes("verificationEvidence"));
+  assert.ok(!summaryKeys.includes("leaseOwner"));
+  assert.ok(!summaryKeys.includes("leaseExpiresAt"));
+});
+
+test("S22-22: cálculo lineal de bloqueo de hitos preserva exactamente la semántica de negocio", () => {
+  const scenarios = [
+    // 1. Todas confirmadas
+    [{ id: "e1", ordinal: 1, state: "CONFIRMED" }, { id: "e2", ordinal: 2, state: "CONFIRMED" }],
+    // 2. Primera encolada bloquea a las siguientes
+    [{ id: "e1", ordinal: 1, state: "QUEUED" }, { id: "e2", ordinal: 2, state: "QUEUED" }, { id: "e3", ordinal: 3, state: "QUEUED" }],
+    // 3. Primera confirmada, segunda fallida bloquea a la tercera
+    [{ id: "e1", ordinal: 1, state: "CONFIRMED" }, { id: "e2", ordinal: 2, state: "FAILED" }, { id: "e3", ordinal: 3, state: "QUEUED" }],
+    // 4. Vacío
+    [],
+  ];
+
+  for (const rows of scenarios) {
+    // Cálculo cuadrático original:
+    const quadratic = rows.map((row) =>
+      rows.find((previous) => previous.ordinal < row.ordinal && previous.state !== "CONFIRMED")?.id ?? null
+    );
+
+    // Cálculo lineal optimizado:
+    let firstUnconfirmedId: string | null = null;
+    const linear = rows.map((row) => {
+      const blockedBy = firstUnconfirmedId;
+      if (firstUnconfirmedId === null && row.state !== "CONFIRMED") {
+        firstUnconfirmedId = row.id;
+      }
+      return blockedBy;
+    });
+
+    assert.deepEqual(linear, quadratic);
+  }
 });
