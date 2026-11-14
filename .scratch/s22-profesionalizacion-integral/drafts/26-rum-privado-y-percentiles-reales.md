@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Navegador envía sólo métricas/contexto mínimo permitido con versión, ruta plantilla y clase de dispositivo; no URL libre, UUID de recorrido, contactos, body o credenciales.
-- [ ] Ingesta y exportación validan esquema, tamaño, rate/capacidad y cardinalidad; telemetría inválida no crea eventos de dominio ni trabajo sin límite.
-- [ ] El informe calcula p75 por ruta/cohorte en ventana móvil de 28 días y exige 200 muestras válidas por métrica/cohorte; falta de datos se informa como evidencia insuficiente.
-- [ ] Se preservan objetivos LCP ≤2,5 s, INP ≤200 ms y CLS ≤0,1; TBT no se reutiliza como INP y no se agrupan rutas para ocultar regresiones.
-- [ ] Pruebas de navegador/recepción/exportador observan señal y privacidad con costos/retención acotados; este ticket implementa medición y no finge completar una ventana de campo.
+- [x] Navegador envía sólo métricas/contexto mínimo permitido con versión, ruta plantilla y clase de dispositivo; no URL libre, UUID de recorrido, contactos, body o credenciales.
+- [x] Ingesta y exportación validan esquema, tamaño, rate/capacidad y cardinalidad; telemetría inválida no crea eventos de dominio ni trabajo sin límite.
+- [x] El informe calcula p75 por ruta/cohorte en ventana móvil de 28 días y exige 200 muestras válidas por métrica/cohorte; falta de datos se informa como evidencia insuficiente.
+- [x] Se preservan objetivos LCP ≤2,5 s, INP ≤200 ms y CLS ≤0,1; TBT no se reutiliza como INP y no se agrupan rutas para ocultar regresiones.
+- [x] Pruebas de navegador/recepción/exportador observan señal y privacidad con costos/retención acotados; este ticket implementa medición y no finge completar una ventana de campo.
 

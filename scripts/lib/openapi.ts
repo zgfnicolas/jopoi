@@ -7,6 +7,7 @@ import { DEMO_REQUEST_CONFIRMATION } from "../../src/shared/contact-contracts";
 import { sessionResponseSchema, runIntentSchema, operationViewSchema, commandResponseSchema, retryResponseSchema, operationResourceSchema, operationPatchResponseSchema } from "../../src/frontend/operation-models";
 import { publicTraceSchema, publicVerificationSchema } from "../../src/frontend/trace-models";
 import { healthLiveSchema, healthReadySchema, healthStartupSchema } from "../../src/shared/health-models";
+import { rumMetricInputSchema, rumConfirmationSchema } from "../../src/shared/rum-contracts";
 
 const jsonSchema = (schema: z.ZodType) => z.toJSONSchema(schema, { io: "input" });
 const uuid = z.uuid(), integer = z.number().int().nonnegative();
@@ -121,12 +122,20 @@ export function buildOpenApi() {
       "/api/health/live": { get: { ...operation("readHealthLive", "Sonda de vitalidad (liveness): proceso y event loop sin dependencias", "HealthLive", [200], "public"), description: "Sonda de liveness para orquestadores. No consulta PostgreSQL ni Hedera HCS." } },
       "/api/health/ready": { get: { ...operation("readHealthReady", "Sonda de preparación (readiness): verifica SQL con timeout y distingue degradación HCS", "HealthReady", [200], "public"), description: "Sonda de preparación con presupuesto estricto (2000 ms). 503 si PostgreSQL no está disponible; 200 con degraded=true si Hedera HCS falla o no está configurado." } },
       "/api/health/startup": { get: { ...operation("readHealthStartup", "Sonda de inicio (startup): arranque en entorno serverless", "HealthStartup", [200], "public"), description: "Sonda de arranque para entornos serverless y contenedores. Confirma que la inicialización del módulo concluyó." } },
+      "/api/rum": {
+        post: {
+          ...operation("recordRumMetric", "Ingesta de telemetría de rendimiento web (RUM) de visitantes", "RumConfirmation", [200], "public", "RumMetricInput", 2048),
+          description: "Ingesta de métricas Web Vitals (LCP, INP, CLS) con minimización radical: solo ruta plantilla, clase de dispositivo y valor numérico. Sin URLs libres, UUIDs, contactos ni cookies. Presupuesto temporal acotado y rate limit.",
+          "x-rate-limit": "60 por visitante / 1000 global cada 60 segundos",
+        },
+      },
     },
     components: { securitySchemes: { demoSession: { type: "apiKey", in: "cookie", name: "__Host-jopoi_session", description: "Credencial opaca restringida al host en HTTPS (__Host-jopoi_session; Secure; HttpOnly; SameSite=Lax; Path=/; sin Domain) o jopoi_session en HTTP local; ownership y vigencia verificados en servidor. Roles del escenario son simulados. Máximo tres recorridos por sesión; sesión siete días, escritura 24 horas y lectura pública siete días por recorrido." }, cronBearer: { type: "http", scheme: "bearer", description: "Secreto de mantenimiento, solo servidor/cron." } },
       schemas: { EmptyBody: jsonSchema(emptyBody), RunIntentInput: jsonSchema(runIntentBody), CommandInput: jsonSchema(commandBody), OperationPatchInput: jsonSchema(operationPatchBody), ContactInput: { ...jsonSchema(demoRequestSchema), examples: [{ requestId: "00000000-0000-4000-8000-000000000001", name: "Persona sintética", email: "demo@example.invalid", company: "Empresa ficticia", message: "Solicitud de ejemplo." }] },
         SessionResponse: jsonSchema(sessionResponseSchema), RunIntent: jsonSchema(runIntentSchema), RunResponse: jsonSchema(operationViewSchema), CommandResponse: jsonSchema(commandResponseSchema), RetryResponse: jsonSchema(retryResponseSchema), OperationResource: jsonSchema(operationResourceSchema), OperationPatchResponse: jsonSchema(operationPatchResponseSchema),
         PublicTrace: jsonSchema(publicTraceSchema), PublicVerification: jsonSchema(publicVerificationSchema), ContactConfirmation: jsonSchema(confirmation), Maintenance: jsonSchema(maintenance),
         HealthLive: jsonSchema(healthLiveSchema), HealthReady: jsonSchema(healthReadySchema), HealthStartup: jsonSchema(healthStartupSchema),
+        RumMetricInput: jsonSchema(rumMetricInputSchema), RumConfirmation: jsonSchema(rumConfirmationSchema),
         ProblemDetails: { ...problem, examples: [{ type: "urn:jopoi:problem:invalid-input", title: "Solicitud inválida", status: 400, detail: API_ERROR_CATALOG.INVALID_INPUT.message, code: "INVALID_INPUT", requestId: "00000000-0000-4000-8000-000000000001", traceId: "11111111111111111111111111111111" }], properties: { ...problem.properties, code: { type: "string", enum: Object.keys(API_ERROR_CATALOG) }, fields: { type: "object", additionalProperties: false, properties: Object.fromEntries(Object.entries(PUBLIC_FIELD_MESSAGES).map(([key, message]) => [key, { type: "array", items: { const: message }, maxItems: 1 }])) } } },
         LegacyError: { type: "object", required: ["error"], properties: { error: { type: "object", required: ["code", "message", "requestId"], properties: { code: { type: "string", enum: Object.keys(API_ERROR_CATALOG) }, message: { type: "string" }, requestId: { type: "string", format: "uuid" }, fields: { type: "object", additionalProperties: { type: "array", items: { type: "string" } } } } } } },
       } },

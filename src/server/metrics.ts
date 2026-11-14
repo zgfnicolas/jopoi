@@ -30,6 +30,7 @@ export const CLOSED_ROUTES = [
   "/api/health/live",
   "/api/health/ready",
   "/api/health/startup",
+  "/api/rum",
   "other",
 ] as const;
 export type ClosedRoute = (typeof CLOSED_ROUTES)[number];

@@ -27,6 +27,7 @@ export const HTTP_OPERATIONS = {
   "health.live": ["GET", "/api/health/live"],
   "health.ready": ["GET", "/api/health/ready"],
   "health.startup": ["GET", "/api/health/startup"],
+  "rum.record": ["POST", "/api/rum"],
 } as const;
 export type HttpOperation = keyof typeof HTTP_OPERATIONS;
 type Operation = HttpOperation | "database.transaction" | "database.query" | "publications.drain" | "database.pool" | "provider.call";

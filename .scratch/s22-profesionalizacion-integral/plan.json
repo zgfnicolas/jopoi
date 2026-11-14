@@ -1017,7 +1017,13 @@
         "S22-26",
         "S22-32"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-26-rum-privado-y-percentiles-reales.md",
+        "validation": "Telemetría RUM privada implementada en cliente (<RumCollector /> con useReportWebVitals nativo) y servidor (POST /api/rum) con minimización radical: solo métrica (LCP, INP, CLS), valor numérico, plantilla de ruta anonimizada ('/', '/demo', '/trazabilidad/:traceId', 'other'), clase de dispositivo deducida por media queries sin User-Agent sniffing ('desktop', 'mobile', 'tablet') y versión. Rechazo estricto por Zod de URLs completas, parámetros de búsqueda, UUIDs de recorrido, credenciales, cookies o cuerpos de solicitud. Ingesta HTTP acotada a un máximo de 2048 bytes por cuerpo y protegida por límites de tasa estrictos (60 peticiones/minuto por cliente y 1000/minuto global con Retry-After). Cardinalidad estrictamente acotada a un máximo de 36 cohortes en memoria con tope de 1000 muestras por cohorte y ventana móvil de 28 días sin desbordar memoria. Cálculo exacto del percentil 75 matemático para LCP (<= 2500 ms), INP (<= 200 ms) y CLS (<= 0.10), con exigencia de al menos 200 muestras válidas por cohorte (RUM_MIN_SAMPLE_COUNT = 200) para evitar falsos cumplimientos (reportando INSUFFICIENT_DATA ante falta de datos). Prohibición expresa de sustitución de INP por TBT sintético de laboratorio (inpIsLaboratoryTbt: false) y evaluación independiente por ruta sin promedios heterogéneos que oculten regresiones. CLI de auditoría (scripts/rum-report.ts y npm run rum:report) con salida tabular y JSON estructurada. 28 pruebas de observabilidad (incluyendo 8 pruebas de RUM), 28 contratos OpenAPI, 54 de dominio, 24 de CLI, 9 de calidad, 7 de seguridad, typecheck estricto con 0 errores, Biome lint y build de producción con Turbopack exitosos."
+      }
     },
     {
       "id": "27",
