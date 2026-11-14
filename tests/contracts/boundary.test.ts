@@ -6,6 +6,7 @@ import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort,
 import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
 import { isSessionActive } from "../../src/server/sessions/service";
 import { computeOperationEtag, computeRunEtag, computeTraceEtag, matchesIfMatch, matchesIfNoneMatch } from "../../src/server/operations/etag";
+import type { OperationResource } from "../../src/shared/run-contracts";
 import { PROBLEM_MEDIA_TYPE, problemDetailsSchema } from "../../src/shared/problem-details";
 
 test("S22-12: boundary conserva privacidad, referencias y Retry-After conocido de 503", async () => {
@@ -268,9 +269,10 @@ test("S22-16 / S22-17: isSessionActive valida inactividad (60 min), máximo abso
 });
 
 test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Match e If-None-Match", () => {
-  const resource = {
+  const resource: OperationResource = {
     traceId: "00000000-0000-4000-8000-000000000001",
     version: 1,
+    observedAt: "2026-01-15T12:00:00.000Z",
     operation: {
       state: "DRAFT" as const,
       quantityKg: "12000.000",
@@ -313,6 +315,7 @@ test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Mat
   const run1 = { ...resource, quota: { used: 1 } };
   const run2 = { ...resource, quota: { used: 2 } };
   assert.notEqual(computeRunEtag(run1), computeRunEtag(run2));
+  assert.equal(computeRunEtag({ ...run1, observedAt: "2026-01-15T13:00:00.000Z" }), computeRunEtag(run1));
   assert.equal(computeOperationEtag(resource), etag);
 
   // Trace ETag representa la proyección pública completa
@@ -322,6 +325,7 @@ test("S22-13 / S22-14: ETag fuerte representa el recurso y precondiciones If-Mat
   const traceEtag2 = computeTraceEtag(trace2);
   assert.ok(/^"[a-f0-9]{64}"$/.test(traceEtag1));
   assert.notEqual(traceEtag1, traceEtag2);
+  assert.equal(computeTraceEtag({ ...trace1, observedAt: "2026-01-15T13:00:00.000Z" }), traceEtag1);
   assert.equal(matchesIfNoneMatch(traceEtag1, traceEtag1), true);
   assert.equal(matchesIfNoneMatch(traceEtag2, traceEtag1), false);
 });

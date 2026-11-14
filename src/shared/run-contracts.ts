@@ -29,6 +29,7 @@ export interface DemoRunDetail {
 export interface DemoRunResponse {
   readonly session: DemoSessionSummary;
   readonly run: DemoRunDetail | null;
+  readonly observedAt: string;
 }
 
 export interface DemoCommandResponse extends PersistedCommandResult {
@@ -42,6 +43,7 @@ export interface OperationResource {
   readonly traceId: string;
   readonly version: number;
   readonly operation: OperationData;
+  readonly observedAt: string;
 }
 
 /** Respuesta de edición de operación (PATCH /api/demo/runs/{traceId}/operation). */

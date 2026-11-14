@@ -15,6 +15,29 @@ const roles = { generator: "Generador", coordinator: "Coordinador Jopói", carri
 export function TraceEventView({ event, current, busyEvent, verify }: { event: TraceEvent; current: CurrentVerification | undefined; busyEvent: string | null; verify: () => void }) {
   const feedback = useRef<HTMLDivElement>(null);
   useEffect(() => { if (current && current.status !== "loading") feedback.current?.focus(); }, [current]);
+  const observedAt = current?.status === "ready" ? current.data.observation?.evidence.observedAt : null;
+  const [isOldObservation, setIsOldObservation] = useState(false);
+  useEffect(() => {
+    if (!observedAt) {
+      setIsOldObservation(false);
+      return;
+    }
+    const observedMs = Date.parse(observedAt);
+    const check = () => {
+      setIsOldObservation(Date.now() - observedMs >= 300_000);
+    };
+    check();
+    const elapsed = Date.now() - observedMs;
+    if (elapsed >= 300_000) return;
+    const timer = setTimeout(check, 300_000 - elapsed);
+    window.addEventListener("pageshow", check);
+    document.addEventListener("visibilitychange", check);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pageshow", check);
+      document.removeEventListener("visibilitychange", check);
+    };
+  }, [observedAt]);
   const payload = event.event?.payload;
   return <li className={styles.event}>
     <h3>{traceEventNames[event.type]}</h3><p>{roles[event.role]} · rol simulado · Aplicado en SQL el {formatDate(event.appliedAt)}</p>
@@ -38,12 +61,22 @@ export function TraceEventView({ event, current, busyEvent, verify }: { event: T
         <div ref={feedback} tabIndex={-1} className="stack">
           {current?.status === "loading" && <Notice title="Consultando la evidencia de este hito…" announce><p>Una lectura acotada, sin reintentos automáticos.</p></Notice>}
           {current?.status === "error" && <Notice title="No pudimos obtener un contraste actual" tone="error" announce><p>{current.error.code in API_ERROR_CATALOG ? API_ERROR_CATALOG[current.error.code as keyof typeof API_ERROR_CATALOG].message : "No recibimos una respuesta válida. Podés volver a consultar manualmente."}{retryAfterMessage(current.error.retryAfter)}</p><p>El historial guardado se conserva; esta respuesta no confirma una coincidencia actual.</p>{current.error.requestId && <p>Referencia: <span className="identifier">{current.error.requestId}</span></p>}</Notice>}
-          {current?.status === "ready" && <><Notice title="Resultado de esta consulta" announce><VerificationStatus state={current.data.state} />
-            {current.data.state === "NOT_CHECKED" && <p>No hay un intento verificable disponible. No se realizó un contraste remoto.</p>}
-            {current.data.state === "PENDING" && <p>La evidencia todavía no está disponible para confirmar una coincidencia.</p>}
-            {current.data.state === "MISMATCH" && <p>Hay una discrepancia local o remota. No se modificó el detalle original ni se confirmó su integridad.</p>}
-            {current.data.state === "UNAVAILABLE" && <p>No se pudo comprobar la evidencia ahora. Una coincidencia histórica no sustituye este resultado.</p>}
-            {current.data.state === "MATCHED" && <p>El mensaje y sus identificadores coinciden en esta observación. Esto no reconcilia el estado SQL ni certifica una entrega física.</p>}
+          {current?.status === "ready" && <><Notice title={isOldObservation ? "Observación anterior (hace más de 5 minutos)" : "Resultado de esta consulta"} tone={isOldObservation ? "warning" : "info"} announce><VerificationStatus state={current.data.state} />
+            {isOldObservation ? (
+              <p>
+                Esta consulta de contraste tiene más de cinco minutos ({formatDate(observedAt!)}). No sustituye una
+                verificación actual ni garantiza coincidencia vigente en testnet. La confirmación histórica de red
+                permanece registrada. Podés solicitar un nuevo contraste para actualizarla.
+              </p>
+            ) : (
+              <>
+                {current.data.state === "NOT_CHECKED" && <p>No hay un intento verificable disponible. No se realizó un contraste remoto.</p>}
+                {current.data.state === "PENDING" && <p>La evidencia todavía no está disponible para confirmar una coincidencia.</p>}
+                {current.data.state === "MISMATCH" && <p>Hay una discrepancia local o remota. No se modificó el detalle original ni se confirmó su integridad.</p>}
+                {current.data.state === "UNAVAILABLE" && <p>No se pudo comprobar la evidencia ahora. Una coincidencia histórica no sustituye este resultado.</p>}
+                {current.data.state === "MATCHED" && <p>El mensaje y sus identificadores coinciden en esta observación. Esto no reconcilia el estado SQL ni certifica una entrega física.</p>}
+              </>
+            )}
           </Notice><p>Publicación guardada al obtener esta respuesta: <PublicationStatus state={current.data.publication.state} /></p>
             {current.data.observation && <EvidenceView evidence={current.data.observation.evidence} />}
             <TestnetLinks links={current.data.links} />

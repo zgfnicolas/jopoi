@@ -3,12 +3,13 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { canonicalJson } from "../../domain/canonical-json";
 import type { OperationResource } from "../../shared/run-contracts";
+import type { OperationData } from "../../shared/operation-contracts";
 
 /**
  * ETag fuerte del subrecurso de operación privada.
  * RFC 9110: entidad opaca entre comillas dobles, representando exactamente el contenido/versión.
  */
-export function computeOperationEtag(resource: OperationResource): string {
+export function computeOperationEtag(resource: { traceId: string; version: number; operation: OperationData }): string {
   const hash = createHash("sha256").update(
     canonicalJson({
       traceId: resource.traceId.toLowerCase(),
@@ -24,8 +25,14 @@ export function computeOperationEtag(resource: OperationResource): string {
  * ETag del recurso de recorrido completo (incluye cuotas y publicaciones).
  * RFC 9110: garantiza que cambios en publicación o cuotas cambien este ETag
  * sin reutilizar indebidamente el ETag de la operación.
+ * Omitimos observedAt para que lecturas idénticas en instantes distintos mantengan un ETag estable (304).
  */
 export function computeRunEtag(run: unknown): string {
+  if (run && typeof run === "object") {
+    const { observedAt: _, ...rest } = run as Record<string, unknown>;
+    const hash = createHash("sha256").update(canonicalJson(rest), "utf8").digest("hex");
+    return `"${hash}"`;
+  }
   const hash = createHash("sha256").update(canonicalJson(run), "utf8").digest("hex");
   return `"${hash}"`;
 }
@@ -33,8 +40,14 @@ export function computeRunEtag(run: unknown): string {
 /**
  * ETag de la respuesta de trazabilidad pública (/api/v1/traces/{traceId} y /api/traces/{traceId}).
  * RFC 9110: entidad opaca entre comillas dobles, representando la proyección pública completa.
+ * Omitimos observedAt para que lecturas idénticas en instantes distintos mantengan un ETag estable (304).
  */
 export function computeTraceEtag(trace: unknown): string {
+  if (trace && typeof trace === "object") {
+    const { observedAt: _, ...rest } = trace as Record<string, unknown>;
+    const hash = createHash("sha256").update(canonicalJson(rest), "utf8").digest("hex");
+    return `"${hash}"`;
+  }
   const hash = createHash("sha256").update(canonicalJson(trace), "utf8").digest("hex");
   return `"${hash}"`;
 }

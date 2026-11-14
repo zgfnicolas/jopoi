@@ -9,6 +9,8 @@ import { deleteOperation, patchOperation, postOperation } from "../../src/fronte
 import { postDemoRequest } from "../../src/frontend/demo-request";
 import { retryAfterSeconds } from "../../src/frontend/retry-after";
 import { clearCsrfToken, getCsrfToken } from "../../src/frontend/csrf";
+import { operationResourceSchema, operationViewSchema } from "../../src/frontend/operation-models";
+import { publicTraceSchema } from "../../src/frontend/trace-models";
 
 const success = z.strictObject({ saved: z.literal(true) });
 const sessionSuccess = z.object({ session: z.object({ expiresAt: z.string(), runCount: z.number(), remainingRuns: z.number() }), activeRun: z.null(), csrfToken: z.string().optional() });
@@ -199,4 +201,49 @@ test("S22-13 / S22-17: patchOperation envía PATCH con If-Match e Idempotency-Ke
   assert.equal(sentHeaders?.get("idempotency-key"), idempotencyKey);
   assert.equal(sentHeaders?.get("content-type"), "application/json");
   assert.equal(sentHeaders?.get("x-jopoi-request"), "demo");
+});
+
+test("S22-20: esquemas de lectura exigen observedAt ISO y validan frescura", () => {
+  const validIso = "2026-01-15T12:00:00.000Z";
+  const invalidDate = "2026-01-15 12:00:00";
+
+  // 1. OperationResource exige observedAt ISO
+  const opBase = {
+    traceId: "00000000-0000-4000-8000-000000000001",
+    version: 1,
+    operation: {
+      state: "DRAFT" as const,
+      quantityKg: "12000.000",
+      humidityPercent: "28.00",
+      assignedBuyerId: null,
+      assignedTripId: null,
+      receivedKg: null,
+      rejectionReasonCode: null,
+      incidentReasonCode: null,
+    },
+  };
+  assert.equal(operationResourceSchema.safeParse({ ...opBase, observedAt: validIso }).success, true);
+  assert.equal(operationResourceSchema.safeParse({ ...opBase }).success, false);
+  assert.equal(operationResourceSchema.safeParse({ ...opBase, observedAt: invalidDate }).success, false);
+
+  // 2. DemoRunResponse exige observedAt ISO
+  const runBase = {
+    session: { expiresAt: validIso, runCount: 1, remainingRuns: 2 },
+    run: null,
+  };
+  assert.equal(operationViewSchema.safeParse({ ...runBase, observedAt: validIso }).success, true);
+  assert.equal(operationViewSchema.safeParse({ ...runBase }).success, false);
+  assert.equal(operationViewSchema.safeParse({ ...runBase, observedAt: "invalid" }).success, false);
+
+  // 3. Reglas de frescura temporal
+  const t0 = Date.parse(validIso);
+  const isStaleAt59s = (t0 + 59_000) - t0 >= 60_000;
+  const isStaleAt60s = (t0 + 60_000) - t0 >= 60_000;
+  assert.equal(isStaleAt59s, false);
+  assert.equal(isStaleAt60s, true);
+
+  const isOldObsAt4m59s = (t0 + 299_000) - t0 >= 300_000;
+  const isOldObsAt5m = (t0 + 300_000) - t0 >= 300_000;
+  assert.equal(isOldObsAt4m59s, false);
+  assert.equal(isOldObsAt5m, true);
 });

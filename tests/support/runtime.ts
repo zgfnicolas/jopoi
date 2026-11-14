@@ -45,6 +45,10 @@ export class TestRuntime {
       }
     }
   }
+  async now(): Promise<Date> {
+    const iso = JSON.parse(await readFile(resolve(this.resources.directory, "clock.json"), "utf8"));
+    return new Date(iso);
+  }
   async advance(milliseconds: number) {
     const iso = JSON.parse(await readFile(resolve(this.resources.directory, "clock.json"), "utf8"));
     await this.clock(new Date(new Date(iso).getTime() + milliseconds).toISOString());

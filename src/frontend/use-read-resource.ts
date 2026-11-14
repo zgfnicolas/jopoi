@@ -5,7 +5,7 @@ import { readApi, type ReadError } from "./api";
 
 type Resource<T> =
   | { key: string; status: "loading" }
-  | { key: string; status: "ready"; data: T }
+  | { key: string; status: "ready"; data: T; observedAt: string }
   | { key: string; status: "error"; error: ReadError };
 export function useReadResource<T>(
   path: string,
@@ -16,7 +16,17 @@ export function useReadResource<T>(
   initialData?: T,
 ) {
   const [state, setState] = useState<Resource<T>>(
-    initialData ? { key: path, status: "ready", data: initialData } : { key: path, status: "loading" },
+    initialData
+      ? {
+          key: path,
+          status: "ready",
+          data: initialData,
+          observedAt:
+            typeof initialData === "object" && initialData !== null && "observedAt" in initialData
+              ? String((initialData as Record<string, unknown>).observedAt)
+              : new Date().toISOString(),
+        }
+      : { key: path, status: "loading" },
   );
   const initialSkip = useRef(Boolean(initialData));
   const [revision, setRevision] = useState(0);
@@ -52,7 +62,15 @@ export function useReadResource<T>(
       if (controller.signal.aborted || request !== sequence.current) return;
       busy.current = false;
       if (result.ok && Date.parse(expiry(result.data)) > Date.now())
-        setState({ key: path, status: "ready", data: result.data });
+        setState({
+          key: path,
+          status: "ready",
+          data: result.data,
+          observedAt:
+            typeof result.data === "object" && result.data !== null && "observedAt" in result.data
+              ? String((result.data as Record<string, unknown>).observedAt)
+              : new Date().toISOString(),
+        });
       else setState({ key: path, status: "error", error: result.ok ? { code: expiredCode } : result.error });
     });
     return () => {

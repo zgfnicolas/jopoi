@@ -56,7 +56,7 @@ export async function getCurrentRun(token: string | undefined): Promise<DemoRunR
     });
     const detail = run === null ? null : await runDetail(tx, run);
     requireReadValidity(session, run);
-    return { session: sessionSummary(session), run: detail };
+    return { session: sessionSummary(session), run: detail, observedAt: wallNow().toISOString() };
   });
 }
 
@@ -67,7 +67,7 @@ export async function getOwnedRun(token: string | undefined, traceId: string): P
     const { session, run } = await requireOwnedRun(tx, hash, traceId);
     const detail = await runDetail(tx, run);
     requireReadValidity(session, run);
-    return { session: sessionSummary(session), run: detail };
+    return { session: sessionSummary(session), run: detail, observedAt: wallNow().toISOString() };
   });
 }
 
@@ -83,6 +83,7 @@ export async function getOperationResource(token: string | undefined, traceId: s
       traceId: run.traceId,
       version: run.version,
       operation,
+      observedAt: wallNow().toISOString(),
     };
   });
 }

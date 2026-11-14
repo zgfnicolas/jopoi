@@ -82,7 +82,7 @@ test("API-23 · DTO y errores públicos excluyen contactos, credenciales y atrib
   expect(trace.status).toBe(200);
   expect(invalid.status).toBe(400);
   expect(unauthorized.status).toBe(401);
-  expect(Object.keys(trace.body).sort()).toEqual(["version", "demo", "network", "traceId", "expiresAt", "state", "scenario", "declaration", "reception", "events"].sort());
+  expect(Object.keys(trace.body).sort()).toEqual(["version", "demo", "network", "traceId", "expiresAt", "observedAt", "state", "scenario", "declaration", "reception", "events"].sort());
   const combined = JSON.stringify([trace.body, verification.body, invalid.body, unauthorized.body]);
   for (const marker of ["PERSONA_PRIVADA_S17", "CONTACTO_PRIVADO_S17", "synthetic@example.invalid", owner.cookie.split("=")[1], environment.env.SESSION_SECRET!, environment.env.HEDERA_OPERATOR_KEY!]) {
     expect(combined).not.toContain(marker);

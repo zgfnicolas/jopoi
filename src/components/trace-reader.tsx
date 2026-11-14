@@ -120,7 +120,10 @@ function TraceContent({
               ficticio.
             </p>
           )}
-          <p className="muted">Consulta disponible hasta {formatDate(trace.expiresAt)}.</p>
+          <p className="muted">
+            Lectura del historial obtenida el {formatDate(trace.observedAt)}. Consulta disponible hasta{" "}
+            {formatDate(trace.expiresAt)}.
+          </p>
         </div>
         <div className="stack">
           {trace.declaration ? (
@@ -227,7 +230,14 @@ function TraceContent({
           ni reintentos automáticos.
         </p>
         <div>
-          <ActionButton type="button" variant="secondary" onClick={refresh}>
+          <ActionButton
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              verification.clear();
+              refresh();
+            }}
+          >
             Actualizar lectura
           </ActionButton>
         </div>

@@ -37,13 +37,26 @@ export function OperationPanel({ publicOrigin }: { publicOrigin: string | null }
         {panel.error.requestId && <p>Referencia: <span className="identifier">{panel.error.requestId}</span></p>}
         {panel.error.code === "SESSION_EXPIRED" && <p>Retiramos la vista privada por cierre, inactividad o vencimiento. Los enlaces públicos siguen disponibles hasta su propio vencimiento. Una nueva sesión no será propietaria de la anterior.</p>}
       </Notice>}
+      {panel.stale && !panel.busy && (
+        <Notice title="La lectura tiene más de 60 segundos" tone="warning" announce>
+          <p>
+            El estado privado visible es antiguo. Para evitar sobreescrituras y conflictos de concurrencia, actualizá la
+            lectura antes de realizar otra acción. Tu borrador y cambios locales se conservan.
+          </p>
+          <div>
+            <ActionButton type="button" onClick={panel.refresh}>
+              Actualizar lectura
+            </ActionButton>
+          </div>
+        </Notice>
+      )}
       {panel.uncertain && <Notice title="Conservamos la intención original"><p>La edición y las demás escrituras están bloqueadas. Reintentar enviará el mismo contenido y la misma clave; actualizar solo consulta y no resuelve por sí solo el guardado incierto.</p><p>El borrador y esta intención viven en memoria y se pierden al salir o recargar. Una sesión inicial cuya cookie nunca llegó no puede recuperarse con garantía.</p>
         <div><ActionButton type="button" disabled={panel.busy} onClick={panel.retryIntent}>Reintentar la misma acción</ActionButton></div></Notice>}
     </div>
     {startAllowed && !panel.uncertain && <section className="stack" aria-labelledby="start-title"><h2 id="start-title">Un lote y tres resultados para explorar</h2><p>Vas a representar generador, coordinador, transportista y comprador con empresas ficticias. Cada sesión dura hasta 24 horas (o 60 minutos de inactividad) y permite hasta tres recorridos, incluido el primero.</p><p>Las acciones se guardan realmente; los hitos se envían a Hedera testnet cuando la red y las cuotas lo permiten.</p><div><ActionButton type="button" disabled={panel.busy} onClick={panel.start}>{panel.error?.code === "SESSION_EXPIRED" ? "Comenzar una nueva sesión" : "Comenzar"}</ActionButton></div></section>}
     {panel.data && <Notice title="Tu sesión de demostración"><p>Recorridos usados: {panel.data.session.runCount} de 3. Disponibles: {panel.data.session.remainingRuns}. Vigente hasta {formatDate(panel.data.session.expiresAt)} (vence tras 60 minutos de inactividad).</p><p>Los cambios de rol son simulados; no representan firmas independientes de empresas.</p><div><ActionButton type="button" variant="secondary" disabled={panel.busy} onClick={panel.endSession}>Cerrar sesión</ActionButton></div></Notice>}
     {run && <>
-      <div className={styles.statusHeader}><OperationalStatus state={run.operation.state} /><span>Versión guardada {run.version} · Datos disponibles hasta {formatDate(run.expiresAt)}</span></div>
+      <div className={styles.statusHeader}><OperationalStatus state={run.operation.state} /><span>Versión guardada {run.version}{panel.observedAt ? ` · Lectura: ${formatDate(panel.observedAt)}` : ""} · Datos disponibles hasta {formatDate(run.expiresAt)}</span></div>
       <ol className={styles.progress} aria-label="Progreso del recorrido">{progressLabels.map((label, index) => {
         const terminal = ["RECEIVED", "REJECTED", "INCIDENT"].includes(run.operation.state), current = progressIndex[run.operation.state];
         return <li key={label} aria-current={!terminal && index === current ? "step" : undefined}><strong>{label}</strong><span>{index < current ? "Completado" : index === current ? terminal ? "Cierre alternativo" : "Paso actual" : terminal ? "No aplica" : "Por realizar"}</span></li>;

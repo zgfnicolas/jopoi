@@ -43,5 +43,9 @@ export function useTraceVerification(trace: PublicTraceResponse, invalidate: (er
       if (active.current && !controller.signal.aborted) { lock.current = false; request.current = null; setBusyEvent(null); }
     }
   }
-  return { results, busyEvent, verify };
+  function clear() {
+    request.current?.abort();
+    setResults({});
+  }
+  return { results, busyEvent, verify, clear };
 }

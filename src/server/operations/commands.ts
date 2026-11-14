@@ -206,7 +206,7 @@ export async function patchOperationCommand(input: OperationPatchInputInternal):
     const { run, session } = await requireOwnedRun(tx, tokenHash, traceId);
     const snapshot = readRunSnapshot(run);
     const current = readRunOperation(run, snapshot);
-    const currentResource: OperationResource = { traceId: run.traceId, version: run.version, operation: current };
+    const currentResource: OperationResource = { traceId: run.traceId, version: run.version, operation: current, observedAt: wallNow().toISOString() };
     const currentEtag = computeOperationEtag(currentResource);
     const normalized = normalizeOperationCommand(input.command, snapshot);
     if (!normalized.ok) throw new ApplicationError(normalized.error.code, normalized.error.fields);
@@ -342,7 +342,7 @@ export async function patchOperationCommand(input: OperationPatchInputInternal):
       });
     }
 
-    const newResource: OperationResource = { traceId: run.traceId, version: resultingVersion, operation };
+    const newResource: OperationResource = { traceId: run.traceId, version: resultingVersion, operation, observedAt: wallNow().toISOString() };
     const newEtag = computeOperationEtag(newResource);
 
     return {

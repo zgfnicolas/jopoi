@@ -54,7 +54,8 @@ export function createTraceReader({ transaction, verify, now }: TraceReaderDepen
         if (trip === undefined) throw new ApplicationError("INTERNAL_ERROR");
         const company = (value: { id: string; name: string }) => ({ id: value.id, name: value.name, isFictitious: true as const });
         const response: PublicTraceResponse = {
-          version: 1, demo: true, network: "testnet", traceId: run.traceId, expiresAt: run.expiresAt.toISOString(), state: run.state,
+          version: 1, demo: true, network: "testnet", traceId: run.traceId, expiresAt: run.expiresAt.toISOString(),
+          observedAt: now().toISOString(), state: run.state,
           scenario: {
             version: snapshot.version, isIllustrative: true, disclaimer: snapshot.disclaimer,
             material: { id: snapshot.material.id, label: snapshot.material.label, description: snapshot.material.description },

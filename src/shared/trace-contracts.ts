@@ -58,6 +58,7 @@ export interface PublicTraceResponse {
   readonly network: "testnet";
   readonly traceId: string;
   readonly expiresAt: string;
+  readonly observedAt: string;
   readonly state: OperationState;
   readonly scenario: {
     readonly version: string;

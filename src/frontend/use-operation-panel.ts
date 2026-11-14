@@ -112,8 +112,31 @@ export function useOperationPanel() {
     return () => { clearTimeout(timer); window.removeEventListener("pageshow", check); document.removeEventListener("visibilitychange", check); };
   }, [deadline, expire]);
 
+  const observedTime = data ? Date.parse(data.observedAt) : null;
+  useEffect(() => {
+    if (observedTime === null) return;
+    const checkStale = () => {
+      if (Date.now() - observedTime >= 60_000) {
+        setStale(true);
+      }
+    };
+    const elapsed = Date.now() - observedTime;
+    if (elapsed >= 60_000) {
+      setStale(true);
+      return;
+    }
+    const timer = setTimeout(checkStale, 60_000 - elapsed);
+    window.addEventListener("pageshow", checkStale);
+    document.addEventListener("visibilitychange", checkStale);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pageshow", checkStale);
+      document.removeEventListener("visibilitychange", checkStale);
+    };
+  }, [observedTime]);
+
   async function execute(intent: OperationIntent) {
-    if (lock.current) return;
+    if (lock.current || (stale && intent.kind !== "bootstrap")) return;
     if (snapshot.current && Math.min(Date.parse(snapshot.current.session.expiresAt), snapshot.current.run ? Date.parse(snapshot.current.run.expiresAt) : Infinity) <= Date.now()) { expire(); return; }
     lock.current = true; transition({ kind: "pending", intent }); setActivity("submitting"); setError(null); setMessage("");
     let confirmed = false;
@@ -204,7 +227,7 @@ export function useOperationPanel() {
     } finally { if (alive()) { lock.current = false; setActivity("idle"); } }
   }
   function makeIntent(kind: "start" | "reset") {
-    if (lock.current || !canCreateIntent(intentState.current)) return;
+    if (lock.current || !canCreateIntent(intentState.current) || (kind === "reset" && stale)) return;
     try {
       if (kind === "start" && !snapshot.current) void execute({ kind: "bootstrap", path: "/api/demo/session", body: "{}" });
       else if (kind === "reset") void execute({ kind: "reset", path: "/api/demo/runs/reset", body: JSON.stringify({ requestId: crypto.randomUUID() }) });
@@ -255,6 +278,7 @@ export function useOperationPanel() {
     }
   }
   return { data: deadline !== null && deadline <= Date.now() ? null : data, busy, uncertain, conflict, stale, error,
+    observedAt: data?.observedAt ?? null,
     errorText: error ? errorMessage(error) : "", message, links: links.filter(link => Date.parse(link.expiresAt) > Date.now()), draftRevision,
     blocked: busy || uncertain || conflict || stale, refresh, endSession,
     recoverCurrent: () => { if (!lock.current) { path.current = currentPath; void refresh(); } },

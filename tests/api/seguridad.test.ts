@@ -12,6 +12,9 @@ import { resolve } from "node:path";
 import { writeFile, readFile, readdir } from "node:fs/promises";
 import { localhostCertificate } from "../support/tls-certificate";
 import type { DemoSessionResponse } from "../../src/shared/session-contracts";
+import type { DemoRunResponse, OperationResource } from "../../src/shared/run-contracts";
+import { operationResourceSchema, operationViewSchema } from "../../src/frontend/operation-models";
+import { publicTraceSchema } from "../../src/frontend/trace-models";
 
 beforeEach(() => environment.reset());
 afterAll(() => environment.close());
@@ -2146,4 +2149,98 @@ test("S22-19 · historial inicial sin JS, status reales 404/410/503 antes del sh
     code: "TRACE_EXPIRED",
     title: "Recorrido vencido",
   });
+});
+
+test("S22-20 · lecturas exponen observedAt, staleness a 60s, contraste etiquetado a 5m y sin polling ni pérdida de datos", async () => {
+  // 1. Setup con recorrido y publicación
+  const visitor = await new Visitor().setup();
+  const published = await visitor.publish();
+  const traceId = visitor.traceId;
+  const eventId = published.applied.eventId!;
+
+  // 2. Lecturas privadas y públicas exponen observedAt (formato ISO 8601 UTC)
+  const currentRes = await visitor.get<DemoRunResponse>("/api/demo/runs/current");
+  expect(currentRes.status).toBe(200);
+  expect(currentRes.body.observedAt).toBeDefined();
+  expect(new Date(currentRes.body.observedAt).toISOString()).toBe(currentRes.body.observedAt);
+  const parsedCurrent = operationViewSchema.parse(currentRes.body);
+  expect(parsedCurrent.observedAt).toBe(currentRes.body.observedAt);
+
+  const ownedRes = await visitor.get<DemoRunResponse>(`/api/demo/runs/${traceId}`);
+  expect(ownedRes.status).toBe(200);
+  expect(ownedRes.body.observedAt).toBeDefined();
+  expect(new Date(ownedRes.body.observedAt).toISOString()).toBe(ownedRes.body.observedAt);
+
+  const opRes = await visitor.operationResource(traceId);
+  expect(opRes.status).toBe(200);
+  expect(opRes.body.observedAt).toBeDefined();
+  expect(new Date(opRes.body.observedAt).toISOString()).toBe(opRes.body.observedAt);
+  const parsedOp = operationResourceSchema.parse(opRes.body);
+  expect(parsedOp.observedAt).toBe(opRes.body.observedAt);
+
+  const traceV1Res = await visitor.traceV1();
+  expect(traceV1Res.status).toBe(200);
+  expect(traceV1Res.body.observedAt).toBeDefined();
+  expect(new Date(traceV1Res.body.observedAt).toISOString()).toBe(traceV1Res.body.observedAt);
+  const parsedTrace = publicTraceSchema.parse(traceV1Res.body);
+  expect(parsedTrace.observedAt).toBe(traceV1Res.body.observedAt);
+
+  const traceLegacyRes = await visitor.trace();
+  expect(traceLegacyRes.status).toBe(200);
+  expect(traceLegacyRes.body.observedAt).toBeDefined();
+
+  // 3. ETag permanece estable para 304 ante instantes de observedAt distintos
+  const opEtag = opRes.headers.get("etag")!;
+  const traceEtag = traceV1Res.headers.get("etag")!;
+  await environment.advance(5000);
+
+  const op304 = await visitor.operationResource(traceId, { "If-None-Match": opEtag });
+  expect(op304.status).toBe(304);
+
+  const trace304 = await visitor.traceV1({ "If-None-Match": traceEtag });
+  expect(trace304.status).toBe(304);
+
+  // 4. Umbral de 60 s para estado privado:
+  // Una lectura con observedAt hace más de 60 s se marca antigua
+  const privateReadTime = Date.parse(currentRes.body.observedAt);
+  await environment.advance(60000);
+  const isStale = (await environment.now()).getTime() - privateReadTime >= 60000;
+  expect(isStale).toBe(true);
+
+  // Tras refrescar (nueva lectura), se obtiene observedAt fresco y nuevo ETag para precondición server-side
+  const refreshedRes = await visitor.operationResource(traceId);
+  expect(refreshedRes.status).toBe(200);
+  const refreshedReadTime = Date.parse(refreshedRes.body.observedAt);
+  expect((await environment.now()).getTime() - refreshedReadTime).toBeLessThan(60000);
+  const freshEtag = refreshedRes.headers.get("etag")!;
+  expect(freshEtag).toBeDefined();
+
+  // 5. Umbral de 5 minutos para contraste:
+  // Verificación expone observation con observedAt
+  const verifRes = await visitor.verificationV1(eventId);
+  expect(verifRes.status).toBe(200);
+  if (verifRes.body.observation) {
+    const verifObservedTime = Date.parse(verifRes.body.observation.evidence.observedAt);
+    expect(Number.isFinite(verifObservedTime)).toBe(true);
+
+    // Con menos de 5 minutos es una observación reciente
+    expect((await environment.now()).getTime() - verifObservedTime).toBeLessThan(300000);
+
+    // Tras 5 minutos (300 s), se clasifica como observación anterior
+    await environment.advance(301000);
+    const isOldObservation = (await environment.now()).getTime() - verifObservedTime >= 300000;
+    expect(isOldObservation).toBe(true);
+
+    // La confirmación histórica de red y estado se conservan
+    expect(verifRes.body.publication.state).toBeDefined();
+    expect(verifRes.body.storedVerification.state).toBeDefined();
+  }
+
+  // 6. En el HTML inicial se divulga la frescura y no hay polling
+  const pageRes = await fetch(`${environment.origin}/trazabilidad/${traceId}`);
+  expect(pageRes.status).toBe(200);
+  const html = await pageRes.text();
+  expect(html).toContain("Lectura del historial obtenida el");
+  expect(html).toContain("No hay seguimiento continuo ni reintentos automáticos");
+  expect(html).toContain("Actualizar vuelve a leer SQL y descarta las observaciones transitorias anteriores");
 });

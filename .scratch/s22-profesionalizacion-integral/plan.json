@@ -764,7 +764,13 @@
         "S22-20",
         "S22-21"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-06",
+        "evidence": "docs/s22-20-frescura-operacion-y-trazabilidad.md",
+        "validation": "Contratos DemoRunResponse, OperationResource y PublicTraceResponse exponen observedAt con validación estricta Zod en formato ISO 8601 UTC y OpenAPI sincronizado. Estabilidad de ETag (computeRunEtag y computeTraceEtag omiten observedAt del digest para soportar 304 Not Modified con If-None-Match). Estado privado marca staleness a partir de 60 s, exigiendo refresh antes de editar y preservando borrador local e intenciones inciertas; refresh actualiza snapshot y ETag para If-Match server-side. Contraste por hito etiqueta observaciones de más de 5 minutos como anteriores sin borrar confirmaciones históricas de red. Ciclo de vida con pageshow y visibilitychange sin polling ni reintentos automáticos. Escenario S22-20 en vitest, test:contracts, test:quality y build aprobados."
+      }
     },
     {
       "id": "21",

@@ -33,7 +33,7 @@ const publication = z.object({ state: z.enum(publicationStates), network: z.lite
 const company = z.object({ id: eventText, name: eventText, isFictitious: z.literal(true) });
 const reason = z.object({ code: eventText, label: eventText });
 export const publicTraceSchema: z.ZodType<PublicTraceResponse> = z.object({
-  version: z.literal(1), demo: z.literal(true), network: z.literal("testnet"), traceId: eventUuid, expiresAt: date, state: eventState,
+  version: z.literal(1), demo: z.literal(true), network: z.literal("testnet"), traceId: eventUuid, expiresAt: date, observedAt: date, state: eventState,
   scenario: z.object({ version: eventText, isIllustrative: z.literal(true), disclaimer: eventText,
     material: z.object({ id: eventText, label: eventText, description: eventText }), generator: company, buyer: company,
     route: z.object({ id: eventText, label: eventText, origin: eventText, destination: eventText, distanceKm: z.string().regex(/^\d+\.\d{3}$/) }),

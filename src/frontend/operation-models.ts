@@ -32,7 +32,7 @@ export const operationViewSchema: z.ZodType<DemoRunResponse> = z.object({ sessio
     materialCost: money, returnFreight: money, jopoiFee: money, jopoiTotal: money, dedicatedFreight: money, alternativeTotal: money,
     difference: money, differenceKind: z.enum(["saving", "extra_cost", "equal"]) }),
   quota, events: z.array(z.object({ event, publication })),
-}).nullable() });
+}).nullable(), observedAt: date });
 export const commandResponseSchema: z.ZodType<DemoCommandResponse> = z.object({ saved: z.literal(true), traceId: eventUuid, replayed: z.boolean(),
   applied: z.object({ operation: operationDataSchema, version, eventId: eventUuid.nullable() }),
   current: z.object({ operation: operationDataSchema, version }), event: event.nullable(), publication: publication.nullable(),
@@ -47,6 +47,7 @@ export const operationResourceSchema: z.ZodType<OperationResource> = z.object({
   traceId: eventUuid,
   version,
   operation: operationDataSchema,
+  observedAt: date,
 });
 
 export const operationPatchResponseSchema: z.ZodType<OperationPatchResponse> = z.object({
