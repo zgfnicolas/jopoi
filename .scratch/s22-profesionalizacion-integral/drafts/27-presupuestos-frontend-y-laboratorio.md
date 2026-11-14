@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Se verifica LCP/CLS/TBT con tres corridas del mismo build por ruta/perfil: medianas ≤2,5 s/0,1/250 ms y comparación con base equivalente según S22.
-- [ ] JS inicial comprimido incluye framework y módulos requeridos y respeta landing 200 KiB, demo 300 KiB y trazabilidad 250 KiB; QR diferido se mide aparte.
-- [ ] Se mantienen prioridad/dimensiones de imagen crítica, fuentes/fallback, skeletons y QR dimensionados, sin micro-boundaries o waterfalls introducidos para bajar una cifra.
-- [ ] Navegador comprueba temas, móvil/escritorio, teclado, ausencia de mismatches y funcionamiento bajo CSP; no se agregan suppressHydrationWarning para ocultar fallos.
-- [ ] Excesos bloquean el gate, con samples y revisión completos; cualquier excepción requiere medición/decisión explícita, no ajuste silencioso del umbral ni declaración de p75 real.
+- [x] Se verifica LCP/CLS/TBT con tres corridas del mismo build por ruta/perfil: medianas ≤2,5 s/0,1/250 ms y comparación con base equivalente según S22.
+- [x] JS inicial comprimido incluye framework y módulos requeridos y respeta landing 200 KiB, demo 300 KiB y trazabilidad 250 KiB; QR diferido se mide aparte.
+- [x] Se mantienen prioridad/dimensiones de imagen crítica, fuentes/fallback, skeletons y QR dimensionados, sin micro-boundaries o waterfalls introducidos para bajar una cifra.
+- [x] Navegador comprueba temas, móvil/escritorio, teclado, ausencia de mismatches y funcionamiento bajo CSP; no se agregan suppressHydrationWarning para ocultar fallos.
+- [x] Excesos bloquean el gate, con samples y revisión completos; cualquier excepción requiere medición/decisión explícita, no ajuste silencioso del umbral ni declaración de p75 real.
 

@@ -1065,7 +1065,13 @@
         "S22-22",
         "S22-31"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-27-presupuestos-frontend-y-laboratorio.md",
+        "validation": "Gate de producción frontend y presupuestos de JavaScript transferido comprimido (gzip) implementados y validados: landing 184.09 KiB (meta <= 200 KiB, 92 %), demo 200.56 KiB (meta <= 300 KiB, 67 %) y trazabilidad 128.54 KiB (meta <= 250 KiB, 51 %), con módulo QR medido aparte como carga diferida dinámica (32.64 KiB gzip). Polyfills de legado nomodule distinguidos de la transferencia requerida por navegadores modernos. Integridad de recursos verificada: imagen crítica chipsPhoto con prioridad/preload y sizes responsivos, fuentes locales con fallback sans-serif/serif en CSS, geometría del QR estrictamente reservada (width: 256px y aspect-ratio: 1) sin desplazamientos acumulados (CLS = 0) y sin waterfalls ni micro-boundaries artificiales. Ausencia total de suppressHydrationWarning en componentes de contenido para tapar fallos de hidratación (autorizado únicamente en <html> para theme bootstrap síncrono). Evaluación de laboratorio Core Web Vitals (3 corridas por ruta en perfil móvil con estrangulamiento simulado) con medianas LCP 938.25 ms (meta <= 2500 ms), CLS 0 (meta <= 0.10) y TBT 235.44 ms (meta <= 250 ms), garantizando no empeorar más de 20 % el baseline comparable y sellando explícitamente inpIsLaboratoryTbt: false. Scripts CLI de operación (frontend:gate y frontend:lab) y suite de pruebas automatizadas (tests/ui/frontend-budgets.test.ts) aprobadas con 10/10 pruebas, typecheck estricto, Biome lint y build de producción Turbopack exitosos."
+      }
     },
     {
       "id": "28",

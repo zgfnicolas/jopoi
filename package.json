@@ -56,7 +56,9 @@
     "metrics:report": "node --import tsx -- scripts/metrics-report.ts",
     "rum:report": "node --import tsx -- scripts/rum-report.ts",
     "test:seo": "node --import tsx tests/seo/production.ts",
-    "test:ui:tokens": "node --import tsx --test tests/ui/tokens.test.ts"
+    "test:ui:tokens": "node --import tsx --test tests/ui/tokens.test.ts tests/ui/frontend-budgets.test.ts",
+    "frontend:gate": "node --import tsx -- scripts/frontend-gate.ts",
+    "frontend:lab": "node --import tsx -- scripts/frontend-lab.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",
