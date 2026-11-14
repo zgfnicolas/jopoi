@@ -20,7 +20,7 @@
     "quality:check": "node --import tsx scripts/quality.ts",
     "test:quality": "node --test --test-concurrency=1 tests/quality/gate.test.mjs",
     "test:domain": "node --import tsx --test tests/domain/operation-snapshot.test.ts tests/domain/persisted-operation.test.ts",
-    "test:observability": "node --import tsx --test --test-concurrency=1 tests/observability/diagnostics.test.ts",
+    "test:observability": "node --import tsx --test --test-concurrency=1 tests/observability/diagnostics.test.ts tests/observability/metrics.test.ts",
     "api:generate": "node --import tsx scripts/openapi.ts",
     "api:check": "node --import tsx scripts/openapi.ts --check",
     "test:contracts": "node --conditions=react-server --import tsx --test --test-concurrency=1 tests/contracts/openapi.test.ts tests/contracts/transports.test.ts tests/contracts/boundary.test.ts",
@@ -53,6 +53,7 @@
     "delivery:check": "node --import tsx -- scripts/delivery.ts check",
     "delivery:build": "node --import tsx -- scripts/delivery.ts build",
     "ops:status": "node --import tsx -- scripts/ops-status.ts",
+    "metrics:report": "node --import tsx -- scripts/metrics-report.ts",
     "test:seo": "node --import tsx tests/seo/production.ts",
     "test:ui:tokens": "node --import tsx --test tests/ui/tokens.test.ts"
   },

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Prisma } from "../../generated/prisma/client";
 import { ApplicationError } from "../application-error";
+import { recordExternalCapacityAcquire } from "../metrics";
 
 /**
  * Shared admission for costly external calls (HCS preparation/submission/receipt and mirror reads).
@@ -38,7 +39,7 @@ export function createExternalCapacity(dependencies: {
     for (let attempt = 1; attempt <= policy.acquireAttempts; attempt++) {
       const owner = randomUUID();
       try {
-        return await transaction(async (tx) => {
+        const permit = await transaction(async (tx) => {
           await tx.maintenanceLease.createMany({ data: names.map((name) => ({ name })), skipDuplicates: true });
           const at = now();
           const expiresAt = new Date(at.getTime() + policy.permitTtlMs);
@@ -51,11 +52,17 @@ export function createExternalCapacity(dependencies: {
           }
           return null;
         });
+        if (permit) {
+          recordExternalCapacityAcquire(true);
+          return permit;
+        }
       } catch (error) {
         // Another instance claimed concurrently: retry, then report saturation instead of waiting.
         if (!(error instanceof ApplicationError && error.code === "VERSION_CONFLICT")) throw error;
+        recordExternalCapacityAcquire(false, true);
       }
     }
+    recordExternalCapacityAcquire(false);
     return null;
   }
   async function release(permit: CapacityPermit): Promise<void> {

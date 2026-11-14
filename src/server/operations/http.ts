@@ -1,6 +1,7 @@
 import "server-only";
 import { commandBody, operationPatchBody } from "../../shared/request-contracts";
 import { bindBusinessTraceId, logDiagnostic } from "../diagnostics";
+import { recordReplay } from "../metrics";
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -141,6 +142,7 @@ export async function patchOperationHttp(request: NextRequest, context: TraceCon
     };
 
     logDiagnostic({ event: "operation.committed", outcome: "success", code: "OPERATION_COMMITTED", durationMs: 0 });
+    if (result.replayed) recordReplay();
     if (result.event !== null) schedulePublications(traceId);
     return NextResponse.json(body, { headers: { ...PRIVATE_RESPONSE_HEADERS, ETag: result.etag } });
   });
@@ -184,6 +186,7 @@ export async function postCommandHttp(request: NextRequest, context: TraceContex
     };
     const etag = computeOperationEtag({ traceId, version: result.current.version, operation: result.current.operation });
     logDiagnostic({ event: "operation.committed", outcome: "success", code: "OPERATION_COMMITTED", durationMs: 0 });
+    if (result.replayed) recordReplay();
     if (result.event !== null) schedulePublications(traceId);
     return NextResponse.json(body, { headers: { ...PRIVATE_RESPONSE_HEADERS, ETag: etag } });
   });

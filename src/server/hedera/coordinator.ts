@@ -1,5 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { logDiagnostic, currentRequestContext, withRequestContext, type RequestContext } from "../diagnostics";
+import { recordUncertainTransaction } from "../metrics";
 import { Prisma } from "../../generated/prisma/client";
 import { canonicalJson } from "../../domain/canonical-json";
 import { ApplicationError } from "../application-error";
@@ -114,6 +115,7 @@ export function createCoordinator(context: CoordinationContext) {
         return;
       }
       if (row.state === "CONFIRMED" || attempt.state === "REJECTED") return;
+      if (result.kind === "unknown") recordUncertainTransaction();
       const rejected = result.kind === "rejected";
       const absent = result.kind === "not_sent";
       await tx.hcsSubmissionAttempt.update({ where: { id: attempt.id }, data: {

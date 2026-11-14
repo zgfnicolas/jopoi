@@ -4,6 +4,13 @@ import { performance } from "node:perf_hooks";
 import packageInfo from "../../package.json" with { type: "json" };
 import { API_ERROR_CATALOG, isApiErrorCode } from "../shared/api-errors";
 import { HCS_CODES, type HcsCode } from "./hedera/contracts";
+import {
+  recordActionCommitted,
+  recordHttpMetric,
+  recordPoolError,
+  recordPoolWait,
+  updateMaintenanceMetrics,
+} from "./metrics";
 
 export const HTTP_OPERATIONS = {
   "session.read": ["GET", "/api/demo/session"], "session.create": ["POST", "/api/demo/session"],
@@ -235,6 +242,39 @@ export function resetDiagnosticsExporterForTests(): void { blocked = false; drop
 /** La salida es el exportador: una línea acotada y sin cola propia; ante backpressure descartá, no bloquees negocio. */
 export function logDiagnostic(input: Diagnostic): void {
   try {
+    const context = storage.getStore();
+    try {
+      if (input.event === "http.completed") {
+        recordHttpMetric({
+          method: context?.method ?? null,
+          route: context?.route ?? null,
+          status: input.status,
+          durationMs: input.durationMs,
+          code: typeof input.code === "string" ? input.code : undefined,
+          outcome: input.outcome,
+        });
+      } else if (input.event === "operation.committed") {
+        recordActionCommitted();
+      } else if (input.event === "maintenance.completed") {
+        updateMaintenanceMetrics({
+          oldestExpiredAgeMs: input.oldestExpiredAgeMs,
+          withinRetentionTarget: input.withinRetentionTarget,
+          stalledCategories: input.stalledCategories,
+          counts: input.counts,
+          lastCompletedAt: input.lastCompletedAt,
+          lastPartialAt: input.lastPartialAt,
+        });
+      } else if (input.event === "database.connection") {
+        recordPoolError(input.code === "DATABASE_POOL_ERROR" ? "pool" : "connection");
+      } else if (input.event === "dependency.completed") {
+        if (context?.operation === "database.query" || context?.operation === "database.transaction") {
+          recordPoolWait(input.durationMs);
+        }
+      }
+    } catch {
+      // In-memory metrics updates never disrupt logging or business flow.
+    }
+
     // Incluso abrir stderr puede fallar si el colector cerró el pipe antes de iniciar el proceso.
     const output = process.stderr;
     if (blocked || output.destroyed || !output.writable) {
@@ -245,7 +285,7 @@ export function logDiagnostic(input: Diagnostic): void {
       if (output.listenerCount("error") === 0) output.on("error", () => { blocked = true; });
       exporterInitialized = true;
     }
-    const context = storage.getStore(), counts = safeCounts(input.counts);
+    const counts = safeCounts(input.counts);
     const candidateLinks = input.links ?? context?.links;
     const links = candidateLinks?.filter(
       (l): l is DiagnosticLink => Boolean(l && typeof l.traceId === "string" && /^[a-f0-9]{32}$/.test(l.traceId)

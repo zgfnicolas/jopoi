@@ -9,6 +9,7 @@ import { ApplicationError } from "./application-error";
 import { getServerConfig, requireConfiguration } from "./config";
 import { isReadOperation, operationBudgetMs } from "./deadlines";
 import { currentRequestContext, logDiagnostic, shouldLogHttp, withRequestContext, type HttpOperation } from "./diagnostics";
+import { recordConflict } from "./metrics";
 import { RateLimitError } from "./security/rate-limit";
 import { csrfToken, csrfTokenMatches, extractSessionCredentials } from "./sessions/credentials";
 
@@ -129,6 +130,9 @@ export async function apiBoundary(operation: HttpOperation, request: Request, wo
       return response;
     } catch (error) {
       const result = toApiError(error, context);
+      if (result.status === 409 || result.body.error.code === "VERSION_CONFLICT" || result.body.error.code === "STATE_CONFLICT") {
+        recordConflict();
+      }
       if (shouldLogHttp(result.status, context.requestId)) {
         logDiagnostic({
           event: "http.completed",

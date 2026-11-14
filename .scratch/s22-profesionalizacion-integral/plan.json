@@ -931,7 +931,13 @@
         "S22-27",
         "S22-28"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-24-metricas-capacidad-y-atraso.md",
+        "validation": "Métricas RED implementadas con vocabularios cerrados (14 rutas parametrizadas, 5 métodos y 5 status classes) e histogramas fijos calibrados con SLOs D14 para estimar p50, p95 y p99 sin informar sólo promedio. Métricas USE de saturación que miden espera de pool y errores, con separación documentada entre capacidad por instancia (max 2) y cálculo de capacidad global (8 instancias * 2 + 4 reserva = 20 conexiones), memoria de proceso y event loop delay con monitorEventLoopDelay, y permisos externos acotados a 2 slots. Métricas de negocio para acciones, replays Idempotency-Key, conflictos 409, transacciones inciertas, cuota diaria HCS, publicaciones pendientes y atraso de limpieza/cron por categoría con objetivo de 36 h. Cardinalidad acotada a un máximo de 375 series en memoria; 1000 UUIDs y emails arbitrarios normalizados sin multiplicar labels ni exponer PII. Continuidad operativa ante falla o cierre del exportador stderr y reporte versionado (schemaVersion: 1) con cálculo de indicadores SLO. 11 pruebas de observabilidad, 28 contratos, 4 HTTP de diagnósticos, 24 CLI, 54 dominio, 9 de calidad, 7 de seguridad, typecheck estricto, lint y build de producción aprobados."
+      }
     },
     {
       "id": "25",

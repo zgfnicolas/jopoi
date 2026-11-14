@@ -125,7 +125,7 @@ test("CLI: migrations using the native alias still enforce --local-only before S
   assert.match(result.stderr, /DATABASE_UNAVAILABLE/);
 });
 test("CLI: every administrative help accepts native selector without reading a missing file", () => {
-  for (const [script, command] of [["delivery", "check"], ["database", "status"], ["ops-status"], ["export-contacts"], ["maintenance"], ["create-topic"], ["acceptance", "live"]]) {
+  for (const [script, command] of [["delivery", "check"], ["database", "status"], ["ops-status"], ["metrics-report"], ["export-contacts"], ["maintenance"], ["create-topic"], ["acceptance", "live"]]) {
     assert.ok(script, "CLI fixture requires a script");
     const result = cli(script, [...(command ? [command] : []), "--help", "--vercel-env-file", "nonexistent-s19-file"]);
     assert.equal(result.status, 0, `${script}: ${result.stderr}`);
