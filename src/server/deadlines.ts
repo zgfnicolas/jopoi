@@ -30,6 +30,9 @@ const READ_OPERATIONS = new Set([
   "runs.read",
   "traces.read",
   "traces.verify",
+  "health.live",
+  "health.ready",
+  "health.startup",
 ]);
 
 export function isReadOperation(operation: string): boolean {
@@ -39,6 +42,8 @@ export function isReadOperation(operation: string): boolean {
 export function operationBudgetMs(operation: string, policy: DeadlinePolicy = DEFAULT_DEADLINE_POLICY): number {
   if (operation === "traces.verify") return policy.verificationDeadlineMs;
   if (operation === "maintenance.run") return 45_000;
+  if (operation === "health.live" || operation === "health.startup") return 2_000;
+  if (operation === "health.ready") return 3_000;
   if (isReadOperation(operation)) return policy.readDeadlineMs;
   return policy.mutationDeadlineMs;
 }

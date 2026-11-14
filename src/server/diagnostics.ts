@@ -24,6 +24,9 @@ export const HTTP_OPERATIONS = {
   "traces.v1.read": ["GET", "/api/v1/traces/:traceId"], "traces.v1.verify": ["GET", "/api/v1/traces/:traceId/events/:eventId/verification"],
   "publications.retry": ["POST", "/api/demo/runs/:traceId/events/:eventId/retry"],
   "contacts.create": ["POST", "/api/demo-requests"], "maintenance.run": ["GET", "/api/cron"],
+  "health.live": ["GET", "/api/health/live"],
+  "health.ready": ["GET", "/api/health/ready"],
+  "health.startup": ["GET", "/api/health/startup"],
 } as const;
 export type HttpOperation = keyof typeof HTTP_OPERATIONS;
 type Operation = HttpOperation | "database.transaction" | "database.query" | "publications.drain" | "database.pool" | "provider.call";

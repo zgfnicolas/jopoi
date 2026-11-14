@@ -974,7 +974,13 @@
         "S22-27",
         "S22-32"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-25-salud-slos-alertas-runbooks.md",
+        "validation": "Sondas de salud HTTP implementadas con semántica diferenciada: /api/health/live verifica proceso y event loop sin tocar PostgreSQL ni Hedera HCS; /api/health/ready tiene presupuesto estricto (2000 ms) y distingue incapacidad SQL (503 con Retry-After: 5) de degradación HCS (200 con degraded: true) garantizando que no se reinicien instancias sanas cuando falla testnet; /api/health/startup confirma inicialización sin barridos pesados para entornos serverless. SLIs/SLOs de S22 implementados con disponibilidad 99,5 %, error budget 0,5 %, percentiles de latencia hot-path (p95 <= 750 ms, p99 <= 1500 ms) y lectura pública (p95 <= 250 ms, p99 <= 500 ms), atraso de outbox <= 10 eventos y retención <= 36 h, con exclusiones transparentes (4xx excluidos, 5xx computados). Alertas de burn rate multi-ventana (14.4x crítico y 6.0x advertencia), errores consecutivos en bajo tráfico, base de datos no disponible, cron ausente, retención demorada y atraso HCS, cada una con owner, condición de activación, condición de auto-resolución y runbook detallado en docs/runbooks/. Vistas de error (error.tsx y global-error.tsx) muestran referencia investigable segura (error.digest) sin filtrar causas privadas ni stack; respuestas 403, 429 y 503 con Retry-After reflejan el estado operativo real. Verificación automatizada con entrega a destino de prueba autorizado simulando caídas y recuperaciones. 20 pruebas de observabilidad, 28 de contratos OpenAPI, 54 de dominio, 24 de CLI, 9 de calidad, 7 de seguridad, typecheck estricto, Biome lint y build de producción aprobados."
+      }
     },
     {
       "id": "26",

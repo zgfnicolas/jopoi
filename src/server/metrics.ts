@@ -27,6 +27,9 @@ export const CLOSED_ROUTES = [
   "/api/demo/runs/:traceId/events/:eventId/retry",
   "/api/demo-requests",
   "/api/cron",
+  "/api/health/live",
+  "/api/health/ready",
+  "/api/health/startup",
   "other",
 ] as const;
 export type ClosedRoute = (typeof CLOSED_ROUTES)[number];
@@ -250,7 +253,7 @@ export function recordPoolError(type: "pool" | "connection"): void {
 // USE: Node.js Runtime (Memory & Event Loop)
 let eventLoopMonitor: ReturnType<typeof monitorEventLoopDelay> | null = null;
 
-function getEventLoopMetrics() {
+export function getEventLoopMetrics() {
   if (!eventLoopMonitor) {
     try {
       eventLoopMonitor = monitorEventLoopDelay({ resolution: 20 });

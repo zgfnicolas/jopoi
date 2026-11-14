@@ -9289,6 +9289,1461 @@
           }
         }
       }
+    },
+    "/api/health/live": {
+      "get": {
+        "operationId": "readHealthLive",
+        "summary": "Sonda de vitalidad (liveness): proceso y event loop sin dependencias",
+        "security": [],
+        "description": "Sonda de liveness para orquestadores. No consulta PostgreSQL ni Hedera HCS.",
+        "responses": {
+          "200": {
+            "description": "Lectura, resultado o replay confirmado.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthLive"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SESSION_REQUIRED, SESSION_EXPIRED, MAINTENANCE_UNAUTHORIZED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "WRONG_ROLE, REQUEST_FORBIDDEN",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "STATE_CONFLICT, VERSION_CONFLICT, IDEMPOTENCY_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "TRACE_EXPIRED, DEMO_REQUEST_EXPIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "PRECONDITION_FAILED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RULE_VIOLATION",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "PRECONDITION_REQUIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RUN_LIMIT_REACHED, RATE_LIMITED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DATABASE_UNAVAILABLE, CONFIGURATION_UNAVAILABLE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/ready": {
+      "get": {
+        "operationId": "readHealthReady",
+        "summary": "Sonda de preparación (readiness): verifica SQL con timeout y distingue degradación HCS",
+        "security": [],
+        "description": "Sonda de preparación con presupuesto estricto (2000 ms). 503 si PostgreSQL no está disponible; 200 con degraded=true si Hedera HCS falla o no está configurado.",
+        "responses": {
+          "200": {
+            "description": "Lectura, resultado o replay confirmado.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthReady"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SESSION_REQUIRED, SESSION_EXPIRED, MAINTENANCE_UNAUTHORIZED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "WRONG_ROLE, REQUEST_FORBIDDEN",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "STATE_CONFLICT, VERSION_CONFLICT, IDEMPOTENCY_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "TRACE_EXPIRED, DEMO_REQUEST_EXPIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "PRECONDITION_FAILED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RULE_VIOLATION",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "PRECONDITION_REQUIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RUN_LIMIT_REACHED, RATE_LIMITED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DATABASE_UNAVAILABLE, CONFIGURATION_UNAVAILABLE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health/startup": {
+      "get": {
+        "operationId": "readHealthStartup",
+        "summary": "Sonda de inicio (startup): arranque en entorno serverless",
+        "security": [],
+        "description": "Sonda de arranque para entornos serverless y contenedores. Confirma que la inicialización del módulo concluyó.",
+        "responses": {
+          "200": {
+            "description": "Lectura, resultado o replay confirmado.",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthStartup"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_INPUT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "SESSION_REQUIRED, SESSION_EXPIRED, MAINTENANCE_UNAUTHORIZED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "WRONG_ROLE, REQUEST_FORBIDDEN",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "STATE_CONFLICT, VERSION_CONFLICT, IDEMPOTENCY_CONFLICT",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "TRACE_EXPIRED, DEMO_REQUEST_EXPIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "PRECONDITION_FAILED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "RULE_VIOLATION",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "428": {
+            "description": "PRECONDITION_REQUIRED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RUN_LIMIT_REACHED, RATE_LIMITED",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL_ERROR",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "DATABASE_UNAVAILABLE, CONFIGURATION_UNAVAILABLE",
+            "headers": {
+              "X-Request-Id": {
+                "description": "Referencia interna de diagnóstico, distinta del requestId de intención del cuerpo.",
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "description": "private, no-store para BFF/cron; no-store para trazabilidad pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Cookie, Accept; Authorization, Accept en cron; Accept en lectura pública.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Retry-After": {
+                "description": "Plazo conocido en segundos no negativos (hasta 86400); puede omitirse cuando no se conoce. El cliente también acepta fecha HTTP.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LegacyError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -14369,6 +15824,152 @@
             ]
           }
         ]
+      },
+      "HealthLive": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "live"
+          },
+          "uptimeSeconds": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "runtime": {
+            "type": "object",
+            "properties": {
+              "memoryBytes": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "eventLoopDelayMs": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "memoryBytes",
+              "eventLoopDelayMs"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "uptimeSeconds",
+          "timestamp",
+          "runtime"
+        ],
+        "additionalProperties": false
+      },
+      "HealthReady": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ready"
+          },
+          "degraded": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          },
+          "checks": {
+            "type": "object",
+            "properties": {
+              "database": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "const": "available"
+                  },
+                  "latencyMs": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "status",
+                  "latencyMs"
+                ],
+                "additionalProperties": false
+              },
+              "hedera": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "available",
+                      "degraded",
+                      "unconfigured"
+                    ]
+                  },
+                  "details": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status",
+                  "details"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "database",
+              "hedera"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "degraded",
+          "timestamp",
+          "checks"
+        ],
+        "additionalProperties": false
+      },
+      "HealthStartup": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "started"
+          },
+          "runtime": {
+            "type": "string",
+            "const": "serverless"
+          },
+          "initializedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}(?:Z))$"
+          }
+        },
+        "required": [
+          "status",
+          "runtime",
+          "initializedAt"
+        ],
+        "additionalProperties": false
       },
       "ProblemDetails": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

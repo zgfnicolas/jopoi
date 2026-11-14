@@ -192,7 +192,7 @@ test("S22-26/D13: Cardinalidad estrictamente acotada: miles de UUIDs, emails y U
 
   const initialStats = getCardinalityStats();
   assert.equal(initialStats.seriesCount, 0);
-  assert.ok(initialStats.maxPossibleSeries <= 375);
+  assert.ok(initialStats.maxPossibleSeries <= 450);
 
   // Inyectar 1000 solicitudes con identificadores únicos (UUIDs, emails, query strings)
   const hostileUUIDs = Array.from({ length: 1000 }, () => randomUUID());

@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Liveness no consulta DB/HCS; readiness tiene presupuesto y distingue incapacidad SQL de caída HCS; startup se justifica según uso real del entorno.
-- [ ] Se implementan SLIs/SLOs de S22 con disponibilidad 99,5 %, error budget 0,5 %, percentiles, objetivos de publicación/mantenimiento y exclusiones transparentes.
-- [ ] Alertas de burn rate 14,4×/6× y señales de bajo tráfico/cron ausente/atraso tienen owner, resolución y runbook; no se mezclan errores esperables con incidentes internos.
-- [ ] Vistas de error muestran referencia segura investigable; 403/429/503 y Retry-After responden al estado real.
-- [ ] Entrega a un destino de prueba autorizado y una caída simulada verifican señal y recuperación; destino real/configuración del candidato se acredita externamente, no por un archivo declarativo.
+- [x] Liveness no consulta DB/HCS; readiness tiene presupuesto y distingue incapacidad SQL de caída HCS; startup se justifica según uso real del entorno.
+- [x] Se implementan SLIs/SLOs de S22 con disponibilidad 99,5 %, error budget 0,5 %, percentiles, objetivos de publicación/mantenimiento y exclusiones transparentes.
+- [x] Alertas de burn rate 14,4×/6× y señales de bajo tráfico/cron ausente/atraso tienen owner, resolución y runbook; no se mezclan errores esperables con incidentes internos.
+- [x] Vistas de error muestran referencia segura investigable; 403/429/503 y Retry-After responden al estado real.
+- [x] Entrega a un destino de prueba autorizado y una caída simulada verifican señal y recuperación; destino real/configuración del candidato se acredita externamente, no por un archivo declarativo.
 
