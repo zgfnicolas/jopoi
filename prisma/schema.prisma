@@ -204,6 +204,8 @@ model HcsPublication {
   consensusTimestamp      String?           @db.VarChar(30)
   verifiedAt              DateTime?         @db.Timestamptz(3)
   verificationEvidence    Json?             @db.JsonB
+  telemetryTraceId        String?           @db.VarChar(32)
+  telemetrySpanId         String?           @db.VarChar(16)
   createdAt               DateTime          @default(now()) @db.Timestamptz(3)
   updatedAt               DateTime          @updatedAt @db.Timestamptz(3)
 

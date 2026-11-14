@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { logDiagnostic } from "../diagnostics";
+import { randomBytes, randomUUID } from "node:crypto";
+import { logDiagnostic, currentRequestContext, withRequestContext, type RequestContext } from "../diagnostics";
 import { Prisma } from "../../generated/prisma/client";
 import { canonicalJson } from "../../domain/canonical-json";
 import { ApplicationError } from "../application-error";
@@ -230,6 +230,7 @@ export function createCoordinator(context: CoordinationContext) {
     const owner = await claim(eventId);
     if (!owner) return false;
     let permit: CapacityPermit | null = null;
+    let originLinks: { traceId: string; spanId: string }[] | undefined = undefined;
     try {
       // Capacidad externa global: un permiso por recorrido procesado; el SQL local no se abre durante la llamada.
       permit = await capacity.acquire();
@@ -249,35 +250,63 @@ export function createCoordinator(context: CoordinationContext) {
         return false;
       }
       let row = await transaction((tx) => load(tx, eventId, owner));
-      if (row.state === "CONFIRMED") { await verify(eventId, owner, deadline); return true; }
-      const attempt = row.attempts[0];
-      if (attempt && (["STARTED", "UNCERTAIN"].includes(attempt.state)
-        || attempt.state === "REJECTED" && row.transactionId === attempt.transactionId)) {
-        requireBudget(deadline, now());
-        const result = await provider.reconcile(attempt.transactionId, attempt.topicId);
-        await outcome(eventId, owner, attempt.transactionId, result);
+      const activeContext = currentRequestContext();
+      originLinks = row.telemetryTraceId && row.telemetrySpanId
+        ? [{ traceId: row.telemetryTraceId, spanId: row.telemetrySpanId }]
+        : undefined;
+      const eventSpan: RequestContext | undefined = activeContext && activeContext.operation === "maintenance.run"
+        ? {
+            ...activeContext,
+            operation: "publications.drain",
+            spanId: randomBytes(8).toString("hex"),
+            parentSpanId: activeContext.spanId,
+            businessTraceId: row.event.run.traceId,
+            ...(originLinks ? { links: originLinks } : {}),
+          }
+        : undefined;
+
+      const runWork = async () => {
+        if (row.state === "CONFIRMED") { await verify(eventId, owner, deadline); return true; }
+        const attempt = row.attempts[0];
+        if (attempt && (["STARTED", "UNCERTAIN"].includes(attempt.state)
+          || attempt.state === "REJECTED" && row.transactionId === attempt.transactionId)) {
+          requireBudget(deadline, now());
+          const result = await provider.reconcile(attempt.transactionId, attempt.topicId);
+          await outcome(eventId, owner, attempt.transactionId, result);
+          row = await transaction((tx) => load(tx, eventId, owner));
+          if (row.state === "CONFIRMED") { if (deadline - now().getTime() >= 20000) await verify(eventId, owner, deadline); return true; }
+          if (row.attempts[0]?.state !== "REJECTED") return true;
+          if (row.nextAttemptAt === null || row.nextAttemptAt > now()) return true;
+        }
+        if (row.attempts[0]?.state !== "RESERVED" && row.automaticAttempts >= 3 && (row.manualAuthorizedAt === null || row.manualAttempts >= 1)) return true;
+        if (deadline - now().getTime() < 20000) return true;
+        // Unsent/reserved bytes may expire safely; sent bytes are reconciled above.
+        await prepare(eventId, owner, deadline);
+        if (deadline - now().getTime() < 20000) return true;
+        await send(eventId, owner, deadline);
         row = await transaction((tx) => load(tx, eventId, owner));
-        if (row.state === "CONFIRMED") { if (deadline - now().getTime() >= 20000) await verify(eventId, owner, deadline); return true; }
-        if (row.attempts[0]?.state !== "REJECTED") return true;
-        if (row.nextAttemptAt === null || row.nextAttemptAt > now()) return true;
-      }
-      if (row.attempts[0]?.state !== "RESERVED" && row.automaticAttempts >= 3 && (row.manualAuthorizedAt === null || row.manualAttempts >= 1)) return true;
-      if (deadline - now().getTime() < 20000) return true;
-      // Unsent/reserved bytes may expire safely; sent bytes are reconciled above.
-      await prepare(eventId, owner, deadline);
-      if (deadline - now().getTime() < 20000) return true;
-      await send(eventId, owner, deadline);
-      row = await transaction((tx) => load(tx, eventId, owner));
-      if (row.state === "UNCERTAIN" && row.transactionId && deadline - now().getTime() >= 20000) {
-        await outcome(eventId, owner, row.transactionId, await provider.reconcile(row.transactionId, row.topicId!));
-        row = await transaction((tx) => load(tx, eventId, owner));
-        if (row.state === "CONFIRMED" && deadline - now().getTime() >= 20000) await verify(eventId, owner, deadline);
-      }
-      return true;
+        if (row.state === "UNCERTAIN" && row.transactionId && deadline - now().getTime() >= 20000) {
+          await outcome(eventId, owner, row.transactionId, await provider.reconcile(row.transactionId, row.topicId!));
+          row = await transaction((tx) => load(tx, eventId, owner));
+          if (row.state === "CONFIRMED" && deadline - now().getTime() >= 20000) await verify(eventId, owner, deadline);
+        }
+        return true;
+      };
+
+      if (eventSpan) return await withRequestContext(eventSpan, runWork);
+      return await runWork();
     } catch (error) {
       if (error instanceof BudgetEnded) return true;
       if (error instanceof HcsError) {
-        logDiagnostic({ event: "publication.recovered", outcome: "partial", severity: "WARN", code: error.code, durationMs: 0, error });
+        logDiagnostic({
+          event: "publication.recovered",
+          outcome: "partial",
+          severity: "WARN",
+          code: error.code,
+          durationMs: 0,
+          error,
+          ...(originLinks ? { links: originLinks } : {}),
+        });
         await transaction(async (tx) => {
         const row = await load(tx, eventId, owner);
         const uncertain = row.attempts[0] && ["STARTED", "UNCERTAIN"].includes(row.attempts[0].state);

@@ -19,6 +19,7 @@ import { requireOwnedRun, touchSessionActivity } from "../sessions/service";
 import { jsonObject, readRunOperation, readRunSnapshot, readReceiptResult, runChanges } from "./storage";
 import { computeOperationEtag, matchesIfMatch } from "./etag";
 import type { OperationResource } from "../../shared/run-contracts";
+import { currentRequestContext } from "../diagnostics";
 
 export interface OperationCommandInput {
   readonly token: string | undefined;
@@ -175,13 +176,16 @@ export async function executeOperationCommand(input: OperationCommandInput): Pro
       ...(target === null ? {} : { hcsConfigurationGeneration: target.generation, hcsTopicId: target.topicId, hcsOperatorId: target.operatorId }),
     }, select: { id: true } });
     let publication = null;
+    const telemetryContext = currentRequestContext();
     if (event !== null) {
       const stored = await tx.operationEvent.create({ data: {
         id: event.payload.eventId, runId: run.id, commandId: receipt.id,
         ordinal: event.payload.ordinal, type: event.payload.type, simulatedRole: ROLES[command.role],
         appliedAt, payloadVersion: 1, payload: jsonObject(event.payload), digest: event.digest,
         publication: { create: { network: "testnet", state: "QUEUED", verificationState: "NOT_CHECKED",
-          automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt } },
+          automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt,
+          telemetryTraceId: telemetryContext?.telemetryTraceId ?? null,
+          telemetrySpanId: telemetryContext?.spanId ?? null } },
       }, select: { publication: { select: publicationSummarySelect } } });
       publication = stored.publication;
       if (publication === null) throw new ApplicationError("INTERNAL_ERROR");
@@ -367,6 +371,7 @@ export async function patchOperationCommand(input: OperationPatchInputInternal):
       select: { id: true },
     });
 
+    const telemetryContext = currentRequestContext();
     if (event !== null) {
       await tx.operationEvent.create({
         data: {
@@ -374,7 +379,9 @@ export async function patchOperationCommand(input: OperationPatchInputInternal):
           ordinal: event.payload.ordinal, type: event.payload.type, simulatedRole: ROLES[command.role],
           appliedAt, payloadVersion: 1, payload: jsonObject(event.payload), digest: event.digest,
           publication: { create: { network: "testnet", state: "QUEUED", verificationState: "NOT_CHECKED",
-            automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt } },
+            automaticAttempts: 0, manualAttempts: 0, nextAttemptAt: appliedAt, createdAt: appliedAt,
+            telemetryTraceId: telemetryContext?.telemetryTraceId ?? null,
+            telemetrySpanId: telemetryContext?.spanId ?? null } },
         },
       });
     }

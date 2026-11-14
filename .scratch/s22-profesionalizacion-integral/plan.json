@@ -884,7 +884,13 @@
         "S22-26",
         "S22-29"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-23-trazas-distribuidas-y-exportacion-segura.md",
+        "validation": "Contexto W3C (traceparent, tracestate, baggage) validado estrictamente con parsers acotados. Solicitudes públicas no autorizan trazas ajenas (trustW3c: false) y registran el traceparent como link entrante sin fijar identidad ni labels. Persistencia aditiva en HcsPublication (telemetryTraceId VARCHAR(32), telemetrySpanId VARCHAR(16)) en comandos sin cookies, tokens ni PII; proyecciones públicas no exponen estos campos. Cron mantiene raíz independiente honesta (parentSpanId: null) y vincula publicaciones mediante span links sin inventar trazas falsas para filas históricas NULL. Exportador seguro a stderr con redacción centralizada, límite de 8 KiB por línea y descarte ante backpressure sin buffer infinito. 28 contratos, 6 de observabilidad, 4 HTTP en diagnosticos.test.ts, 34 de seguridad, 24 CLI, 54 de dominio, tres compilaciones TypeScript, lint y build de producción aprobados."
+      }
     },
     {
       "id": "24",

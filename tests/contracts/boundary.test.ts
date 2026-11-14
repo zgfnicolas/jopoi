@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { apiBoundary, readJsonBody, requireBrowserMutation } from "../../src/server/http";
+import { parseTraceparent, parseTracestate, parseBaggage, createRequestContext } from "../../src/server/diagnostics";
 import { ApplicationError } from "../../src/server/application-error";
 import { DEFAULT_DEADLINE_POLICY, mirrorVerificationBudgetMs, raceWithReadAbort, sqlStepBudget } from "../../src/server/deadlines";
 import { csrfToken, csrfTokenMatches, HOST_SESSION_COOKIE, newSessionToken, SESSION_COOKIE, sessionCookiePolicy } from "../../src/server/sessions/credentials";
@@ -470,4 +471,94 @@ test("S22-22: cálculo lineal de bloqueo de hitos preserva exactamente la semán
 
     assert.deepEqual(linear, quadratic);
   }
+});
+
+test("S22-23: validación estricta de W3C traceparent y rechazo de valores inválidos o nulos", () => {
+  // Válido estándar versión 00
+  const valid = parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01");
+  assert.deepEqual(valid, {
+    version: "00",
+    traceId: "4bf92f3577b34da6a3ce929d0e0e4736",
+    parentId: "00f067aa0ba902b7",
+    flags: "01",
+  });
+
+  // Flags válidos
+  assert.equal(parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-00")?.flags, "00");
+
+  // Inválidos: null, undefined, vacío, longitud incorrecta
+  assert.equal(parseTraceparent(null), null);
+  assert.equal(parseTraceparent(undefined), null);
+  assert.equal(parseTraceparent(""), null);
+  assert.equal(parseTraceparent("00-1234"), null);
+
+  // Versión inválida ff
+  assert.equal(parseTraceparent("ff-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"), null);
+
+  // traceId todo ceros no permitido por W3C
+  assert.equal(parseTraceparent("00-00000000000000000000000000000000-00f067aa0ba902b7-01"), null);
+
+  // parentId todo ceros no permitido por W3C
+  assert.equal(parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-0000000000000000-01"), null);
+
+  // Caracteres no hexadecimales
+  assert.equal(parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e473g-00f067aa0ba902b7-01"), null);
+  assert.equal(parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902bz-01"), null);
+
+  // Partes adicionales en versión 00
+  assert.equal(parseTraceparent("00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01-extra"), null);
+});
+
+test("S22-23: tracestate y baggage acotados; baggage externo no impone identidad, roles ni labels", () => {
+  // Tracestate válido
+  assert.equal(parseTracestate("rojo=1,azul=2"), "rojo=1,azul=2");
+  assert.equal(parseTracestate(""), null);
+  assert.equal(parseTracestate("a".repeat(513)), null); // Límite 512 bytes
+
+  // Baggage acotado
+  const baggage = parseBaggage("user=alice,role=admin,tenant=acme;flag=1");
+  assert.equal(baggage.get("user"), "alice");
+  assert.equal(baggage.get("role"), "admin");
+  assert.equal(baggage.get("tenant"), "acme");
+
+  // Límite de tamaño baggage (> 4096 bytes descartado)
+  const hugeBaggage = parseBaggage("key=" + "x".repeat(4100));
+  assert.equal(hugeBaggage.size, 0);
+
+  // Frontera de confianza: solicitud pública externa no adopta traceId ni parentSpanId ajenos, ni roles del baggage
+  const publicContext = createRequestContext("runs.command", {
+    headers: {
+      traceparent: "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01",
+      baggage: "role=coordinator,businessTraceId=00000000-0000-4000-8000-000000000001",
+    },
+    trustW3c: false, // Default para peticiones públicas
+  });
+
+  // La identidad interna de telemetría es generada localmente
+  assert.notEqual(publicContext.telemetryTraceId, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  assert.equal(publicContext.parentSpanId, null);
+  // El contexto W3C entrante queda registrado como link, no como padre directo
+  assert.deepEqual(publicContext.links, [{ traceId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", spanId: "bbbbbbbbbbbbbbbb" }]);
+  // Baggage externo no impuso businessTraceId ni rol
+  assert.equal(publicContext.businessTraceId, undefined);
+
+  // Solicitud con confianza explícita (e.g. runner interno)
+  const trustedContext = createRequestContext("runs.command", {
+    headers: {
+      traceparent: "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-01",
+    },
+    trustW3c: true,
+  });
+  assert.equal(trustedContext.telemetryTraceId, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+  assert.equal(trustedContext.parentSpanId, "bbbbbbbbbbbbbbbb");
+  assert.equal(trustedContext.links, undefined);
+});
+
+test("S22-23: proyecciones públicas excluyen telemetría privada de la outbox", () => {
+  const traceKeys = Object.keys(publicTracePublicationSelect);
+  const verifyKeys = Object.keys(publicVerificationPublicationSelect);
+  assert.ok(!traceKeys.includes("telemetryTraceId"));
+  assert.ok(!traceKeys.includes("telemetrySpanId"));
+  assert.ok(!verifyKeys.includes("telemetryTraceId"));
+  assert.ok(!verifyKeys.includes("telemetrySpanId"));
 });

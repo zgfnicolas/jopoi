@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { Client } from "pg";
 import { afterAll, beforeEach, expect, test } from "vitest";
 import { z } from "zod";
 import { environment, eventually, Visitor } from "../support/client";
@@ -14,6 +15,7 @@ const recordSchema = z.object({
   "event.name": z.string(), requestId: z.uuid(), traceId: z.string().regex(/^[a-f0-9]{32}$/), spanId: z.string().regex(/^[a-f0-9]{16}$/), parentSpanId: z.string().nullable(),
   businessTraceId: z.uuid().nullable(), route: z.string(), operation: z.string(), code: z.string(), durationMs: z.number().nonnegative(),
   status: z.number().optional(), error: z.array(z.object({ type: z.string(), code: z.string().nullable(), frames: z.array(z.string()) })).optional(),
+  links: z.array(z.object({ traceId: z.string().regex(/^[a-f0-9]{32}$/), spanId: z.string().regex(/^[a-f0-9]{16}$/) })).optional(),
 });
 async function collected(requestId: string) {
   // Colector del transporte real stderr: no se reemplazan ni espían funciones del logger.
@@ -52,6 +54,7 @@ test("S22-08 · SQL inesperado y dependencia caída son investigables sin export
     expect(rows.filter(row => row.severity === "ERROR")).toHaveLength(1);
     expect(row).toMatchObject({ code: "INTERNAL_ERROR", route: "/api/demo/runs/:traceId/commands", businessTraceId: visitor.traceId, parentSpanId: null });
     expect(row.traceId).not.toBe("11111111111111111111111111111111");
+    expect(row.links).toEqual([{ traceId: "11111111111111111111111111111111", spanId: "2222222222222222" }]);
     expect(row.error?.some(cause => cause.type.startsWith("Prisma") || cause.code !== null || cause.frames.length > 0)).toBe(true);
     expect(rows.some(row => row.operation === "database.transaction" && row.parentSpanId !== null)).toBe(true);
     privateValuesAbsent({ result: result.body, rows }, [visitor.cookie, environment.resources.databaseUrl]);
@@ -114,4 +117,59 @@ test("S22-09 · commit, after y SQL conservan relación; cron crea una raíz ind
   expect((await collected(reference(rejection.headers))).every(row => row.severity !== "ERROR")).toBe(true);
   privateValuesAbsent([...rows, ...cronRows.rows], [visitor.cookie]);
   expect(requiredEntry(rows).requestId).toBe(requestId);
+});
+
+test("S22-26 / S22-29 · outbox persiste contexto mínimo; cron mantiene raíz independiente y vincula trazas sin fabricar datos falsos", async () => {
+  const visitor = await new Visitor().setup();
+  const published = await visitor.command({ action: "publish", role: "generator", quantityKg: "12000", humidityPercent: "28" });
+  expect(published.status).toBe(200);
+  const eventId = published.body.applied.eventId;
+  expect(eventId).toBeDefined();
+
+  // 1. Verificar persistencia de contexto mínimo en SQL (HcsPublication)
+  const client = new Client({ connectionString: environment.resources.databaseUrl });
+  await client.connect();
+  try {
+    const { rows: [pubRow] } = await client.query<{
+      telemetryTraceId: string | null;
+      telemetrySpanId: string | null;
+    }>(
+      'SELECT "telemetryTraceId", "telemetrySpanId" FROM "HcsPublication" WHERE "eventId" = $1',
+      [eventId],
+    );
+    if (!pubRow) throw new Error("PUB_ROW_MISSING");
+    // Contexto mínimo preservado: 32 hex traceId y 16 hex spanId
+    expect(pubRow.telemetryTraceId).toMatch(/^[a-f0-9]{32}$/);
+    expect(pubRow.telemetrySpanId).toMatch(/^[a-f0-9]{16}$/);
+
+    // Sin cookies, tokens ni credenciales en la outbox
+    privateValuesAbsent(pubRow, [visitor.cookie]);
+
+    // 2. Simular fila histórica aditiva sin contexto de telemetría (NULL)
+    await client.query(
+      'UPDATE "HcsPublication" SET "telemetryTraceId" = NULL, "telemetrySpanId" = NULL WHERE "eventId" = $1',
+      [eventId],
+    );
+
+    const { rows: [historical] } = await client.query<{
+      telemetryTraceId: string | null;
+      telemetrySpanId: string | null;
+    }>(
+      'SELECT "telemetryTraceId", "telemetrySpanId" FROM "HcsPublication" WHERE "eventId" = $1',
+      [eventId],
+    );
+    if (!historical) throw new Error("HISTORICAL_ROW_MISSING");
+    expect(historical.telemetryTraceId).toBeNull();
+    expect(historical.telemetrySpanId).toBeNull();
+  } finally {
+    await client.end();
+  }
+
+  // 3. Ejecutar cron: mantiene raíz independiente y no fabrica trazas para filas históricas
+  const cron = await environment.cron();
+  expect(cron.status).toBe(200);
+  const cronRows = await terminal(reference(cron.headers));
+  expect(cronRows.row.parentSpanId).toBeNull();
+  expect(cronRows.row.traceId).toMatch(/^[a-f0-9]{32}$/);
+  expect(cronRows.rows.some(row => row["event.name"] === "maintenance.completed")).toBe(true);
 });

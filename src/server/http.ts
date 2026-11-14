@@ -119,6 +119,7 @@ export async function apiBoundary(operation: HttpOperation, request: Request, wo
   const context = createRequestContext(operation, {
     budgetMs,
     ...(isReadOperation(operation) ? { clientSignal: request.signal } : {}),
+    headers: request.headers,
   });
   return withRequestContext(context, async () => {
     try {

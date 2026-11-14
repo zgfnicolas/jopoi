@@ -4,7 +4,7 @@ import { once } from "node:events";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { z } from "zod";
-import { shouldLogHttp } from "../../src/server/diagnostics";
+import { shouldLogHttp, logDiagnostic, getDroppedDiagnosticsCount, resetDiagnosticsExporterForTests, createRequestContext, withRequestContext } from "../../src/server/diagnostics";
 
 test("S22-08: las traducciones reales del SDK conservan causa privada sin agregarla al resultado JSON", { timeout: 20000 }, async () => {
   const { readOperator, readSignedTransaction, sendFailure } = await import("../../src/server/hedera/sdk");
@@ -74,5 +74,59 @@ test("S22-08/09: el exportador real a stderr redacta, acota causas y aísla cont
       assert.equal(child.parentSpanId, root.spanId);
       assert.notEqual(child.spanId, root.spanId);
     }
+  }
+});
+
+test("S22-26: límite de tamaño de línea a 8 KiB y descarte ante exceso sin buffer infinito", () => {
+  resetDiagnosticsExporterForTests();
+  const before = getDroppedDiagnosticsCount();
+  assert.equal(before, 0);
+
+  // Un diagnóstico que excede 8192 bytes es descartado y contabilizado como dropped
+  const oversizedCategories = Array.from({ length: 400 }, (_, i) => `stalled_category_${i}_${"x".repeat(30)}`);
+  logDiagnostic({
+    event: "maintenance.completed",
+    outcome: "partial",
+    code: "MAINTENANCE_PARTIAL",
+    durationMs: 50,
+    stalledCategories: oversizedCategories,
+  });
+
+  const after = getDroppedDiagnosticsCount();
+  assert.equal(after, 1);
+  resetDiagnosticsExporterForTests();
+});
+
+test("S22-26: links de contexto W3C se formatean cuando existen y se omiten cuando no hay links", () => {
+  let capturedLine = "";
+  const originalWrite = process.stderr.write;
+  try {
+    process.stderr.write = ((chunk: unknown) => {
+      if (typeof chunk === "string" && chunk.startsWith("{")) {
+        capturedLine = chunk;
+      }
+      return true;
+    }) as unknown as typeof process.stderr.write;
+
+    // 1. Con links entrantes de traceparent
+    const linkedContext = createRequestContext("runs.command", {
+      headers: { traceparent: "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" },
+    });
+    withRequestContext(linkedContext, () => {
+      logDiagnostic({ event: "http.completed", outcome: "success", code: "OK", durationMs: 5 });
+    });
+    const parsedWithLinks = JSON.parse(capturedLine);
+    assert.deepEqual(parsedWithLinks.links, [{ traceId: "4bf92f3577b34da6a3ce929d0e0e4736", spanId: "00f067aa0ba902b7" }]);
+
+    // 2. Sin links
+    capturedLine = "";
+    const normalContext = createRequestContext("runs.command");
+    withRequestContext(normalContext, () => {
+      logDiagnostic({ event: "http.completed", outcome: "success", code: "OK", durationMs: 5 });
+    });
+    const parsedWithoutLinks = JSON.parse(capturedLine);
+    assert.equal(parsedWithoutLinks.links, undefined);
+  } finally {
+    process.stderr.write = originalWrite;
   }
 });
