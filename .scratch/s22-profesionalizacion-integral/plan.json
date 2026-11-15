@@ -1187,7 +1187,13 @@
         "S22-30",
         "S22-31"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-15",
+        "evidence": "docs/s22-29-rollout-restauracion-sin-perdida.md",
+        "validation": "Ensayo de rollout, migraciones seguras y restauración sin pérdida implementados y validados sobre clúster PostgreSQL 17. Runner único garantizado mediante Advisory Lock PostgreSQL (MIGRATION_ADVISORY_LOCK_ID = 2026111529) que falla cerrado ante intentos concurrentes; conexión administrativa separada (DIRECT_URL DDL con rol s17/neondb_owner vs DATABASE_URL DML restringido con rol s21_app sin CREATE TABLE); prohibición estricta de migrar durante next build y de usar db push / migrate dev en producción; verificación criptográfica de checksums de migraciones aplicadas en _prisma_migrations contra los archivos SQL en disco. Estrategia Expand/Backfill en lotes/Switch validada: Expand con lock_timeout 2s y statement_timeout 30s; backfill en lotes acotados con FOR UPDATE SKIP LOCKED y progreso medido; Switch con VALIDATE CONSTRAINT sin locks prolongados; coexistencia verificada de versiones v1 y v2 en sesión, límites de admisión (RequestRateBucket), capacidad (MaintenanceLease) y contexto de telemetría (HcsPublication). Invariantes históricas protegidas: estados inválidos (RECEIVED sin receivedGrams) bloquean la validación con error 23514 y se aíslan en cuarentena documental, sin fabricar datos sintéticos, sin modificar digests SHA-256 y sin editar migraciones aplicadas. Restauración aislada ejecutada en base independiente (s22_restore_isolated) con 100 % de paridad en conteo de filas y hashes MD5 agregados de JSON de todas las tablas de negocio. Reconciliación determinista de envíos inciertos a HCS sin duplicar mensajes y sellando la regla de que la restauración SQL no revierte el ledger inmutable de Hedera. Rollback de código a versión previa verificado sin fallos (compatibilidad hacia atrás conservada); fase destructiva (DROP COLUMN) diferida fuera de esta entrega; límites reales de RPO/RTO documentados sin promesas ficticias de RPO=0 en nivel gratuito; separación de incumbencias (rollout local: aprobado, proveedor pendiente: sí, aceptación global: false). Suite tests/observability/rollout-restore.test.ts (11 pruebas), test:observability (50 pruebas) y CLI rollout:drill aprobados."
+      }
     },
     {
       "id": "30",

@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Un runner único aplica migrate deploy con conexión administrativa separada; no migra durante build ni usa db push/migrate dev en producción.
-- [ ] Expand/backfill en lotes/switch tiene progreso, lock timeout y recuperación; se ensaya coexistencia de aplicación anterior/nueva con cambios de sesión, admisión, capacidad y contexto.
-- [ ] Un estado histórico inválido bloquea o se pone en cuarentena documentada; no se fabrican datos, se modifican digests ni se editan migraciones aplicadas.
-- [ ] Restore aislado y reinicio comparan estado, payload, digest, recibos e identidades externas; recuperación reconcilia el mismo envío incierto.
-- [ ] Rollback de código conserva columnas/compatibilidad necesarias; contract destructivo se difiere fuera de esta entrega. RPO/RTO y capacidades remotas quedan para evidencia real, sin promesas inventadas.
+- [x] Un runner único aplica migrate deploy con conexión administrativa separada; no migra durante build ni usa db push/migrate dev en producción.
+- [x] Expand/backfill en lotes/switch tiene progreso, lock timeout y recuperación; se ensaya coexistencia de aplicación anterior/nueva con cambios de sesión, admisión, capacidad y contexto.
+- [x] Un estado histórico inválido bloquea o se pone en cuarentena documentada; no se fabrican datos, se modifican digests ni se editan migraciones aplicadas.
+- [x] Restore aislado y reinicio comparan estado, payload, digest, recibos e identidades externas; recuperación reconcilia el mismo envío incierto.
+- [x] Rollback de código conserva columnas/compatibilidad necesarias; contract destructivo se difiere fuera de esta entrega. RPO/RTO y capacidades remotas quedan para evidencia real, sin promesas inventadas.
 
