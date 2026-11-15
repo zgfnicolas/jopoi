@@ -14,10 +14,10 @@
 
 ## Acceptance criteria
 
-- [ ] Se verifican plan gratuito/integración nativa, región/localidad, límites/pooler, TLS con validación de nombre/certificado, grants mínimos y separación efectiva de ejecución/migración.
-- [ ] HTTP/navegador del candidato muestran CSP/headers/cookies/CSRF/cache/status/contratos efectivos; logs/trazas, colector y alertas tienen señal real sin secretos.
-- [ ] Carga aprobada contrasta el modelo global con límites efectivos; cron se observa y progreso/retención tienen evidencia del entorno, no sólo respuesta 200.
-- [ ] Backups/restore del proveedor se prueban de forma aislada, con RPO/RTO derivados de su oferta real; una carencia permanece bloqueada y no se contrata otro plan.
-- [ ] Cuando exista autorización se confirma el recorrido testnet con evidencia real y recuperación de la misma identidad; datos sintéticos/controlados no lo sustituyen.
-- [ ] Artefactos se vinculan a revisión, recurso y fecha; permisos, candidato o autorizaciones faltantes se registran como bloqueos externos, sin marcar este ticket aprobado.
+- [ ] Se verifican plan gratuito/integración nativa, región/localidad, límites/pooler, TLS con validación de nombre/certificado, grants mínimos y separación efectiva de ejecución/migración. (Bloqueo externo: BLOCK_CRIT_1_PROVIDER_INFRASTRUCTURE)
+- [ ] HTTP/navegador del candidato muestran CSP/headers/cookies/CSRF/cache/status/contratos efectivos; logs/trazas, colector y alertas tienen señal real sin secretos. (Bloqueo externo: BLOCK_CRIT_2_LIVE_HTTPS_AND_ALERTS)
+- [ ] Carga aprobada contrasta el modelo global con límites efectivos; cron se observa y progreso/retención tienen evidencia del entorno, no sólo respuesta 200. (Bloqueo externo: BLOCK_CRIT_3_CRON_AND_LIVE_LOAD)
+- [ ] Backups/restore del proveedor se prueban de forma aislada, con RPO/RTO derivados de su oferta real; una carencia permanece bloqueada y no se contrata otro plan. (Bloqueo externo: BLOCK_CRIT_4_PROVIDER_BACKUP_RESTORE)
+- [ ] Cuando exista autorización se confirma el recorrido testnet con evidencia real y recuperación de la misma identidad; datos sintéticos/controlados no lo sustituyen. (Bloqueo externo: BLOCK_CRIT_5_TESTNET_LIVE_JOURNEY)
+- [x] Artefactos se vinculan a revisión, recurso y fecha; permisos, candidato o autorizaciones faltantes se registran como bloqueos externos, sin marcar este ticket aprobado.
 

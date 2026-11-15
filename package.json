@@ -20,7 +20,7 @@
     "quality:check": "node --import tsx scripts/quality.ts",
     "test:quality": "node --test --test-concurrency=1 tests/quality/gate.test.mjs",
     "test:domain": "node --import tsx --test tests/domain/operation-snapshot.test.ts tests/domain/persisted-operation.test.ts",
-    "test:observability": "node --conditions=react-server --import tsx --test --test-concurrency=1 tests/observability/diagnostics.test.ts tests/observability/metrics.test.ts tests/observability/alerts.test.ts tests/observability/rum.test.ts tests/observability/capacity.test.ts tests/observability/rollout-restore.test.ts tests/observability/release-gate.test.ts",
+    "test:observability": "node --conditions=react-server --import tsx --test --test-concurrency=1 tests/observability/diagnostics.test.ts tests/observability/metrics.test.ts tests/observability/alerts.test.ts tests/observability/rum.test.ts tests/observability/capacity.test.ts tests/observability/rollout-restore.test.ts tests/observability/release-gate.test.ts tests/observability/candidate-acceptance.test.ts",
     "api:generate": "node --import tsx scripts/openapi.ts",
     "api:check": "node --import tsx scripts/openapi.ts --check",
     "test:contracts": "node --conditions=react-server --import tsx --test --test-concurrency=1 tests/contracts/openapi.test.ts tests/contracts/transports.test.ts tests/contracts/boundary.test.ts",
@@ -61,7 +61,8 @@
     "frontend:lab": "node --import tsx -- scripts/frontend-lab.ts",
     "capacity:benchmark": "node --import tsx -- scripts/capacity-benchmark.ts",
     "rollout:drill": "node --import tsx -- scripts/rollout-restore.ts",
-    "release:gate": "node --import tsx -- scripts/release-gate.ts"
+    "release:gate": "node --import tsx -- scripts/release-gate.ts",
+    "candidate:check": "node --import tsx -- scripts/candidate-acceptance.ts"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "5.3.0",

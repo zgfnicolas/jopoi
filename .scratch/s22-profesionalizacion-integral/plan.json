@@ -1397,7 +1397,13 @@
         "S22-30",
         "S22-32"
       ],
-      "externalConditions": "Requiere candidato explícito, acceso al proveedor, responsable/canal de alertas y autorización operativa para despliegue, restore aislado y mensajes testnet. Ninguna dependencia de ticket reemplaza esas condiciones ni autoriza gastos."
+      "externalConditions": "Requiere candidato explícito, acceso al proveedor, responsable/canal de alertas y autorización operativa para despliegue, restore aislado y mensajes testnet. Ninguna dependencia de ticket reemplaza esas condiciones ni autoriza gastos.",
+      "implementation": {
+        "status": "blocked_external",
+        "completedOn": "2026-11-15",
+        "evidence": "docs/s22-31-aceptacion-operativa-candidato.md",
+        "validation": "Arnés de acreditación operativa del candidato y validador de requisitos de nube implementados (scripts/candidate-acceptance.ts y scripts/lib/candidate-acceptance-model.ts). Criterios evaluados: infraestructura gratuita (Vercel Hobby, Neon Free nativo en marketplace, co-ubicación iad1/us-east-1, TLS verify-full y grants mínimos), seguridad HTTP y alertas de guardia, modelo de carga y cron diario con retención < 36 h, restore aislado con RPO <= 24 h y RTO <= 30 min sin planes pagos, y recorrido real de 5 hitos en Hedera Testnet sin datos sintéticos. Criterio 6 aprobado con sellado criptográfico de revisión Git y fingerprint SHA-256. Ante la ausencia de credenciales de candidato o hosting en esta sesión local, los criterios 1 a 5 se registran determinísticamente como bloqueos externos (BLOCK_CRIT_1 a 5) y el ticket se marca como BLOQUEADO_CONDICION_EXTERNA, prohibiendo terminantemente la aprobación por omisión y respetando la política de presupuesto cero. Suite tests/observability/candidate-acceptance.test.ts (7 pruebas), test:observability (68 pruebas), CLI candidate:check y artefactos .cache/s22-candidate/ aprobados."
+      }
     },
     {
       "id": "32",
