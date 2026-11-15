@@ -67,6 +67,7 @@ La suite de documentación sigue la estructura canónica organizada en 4 ejes + 
 - [Arquitectura de software (SAD)](docs/sad.md) — Estructura arc42 con diagramas C4 (contexto y contenedores).
 - [Modelo de datos](docs/data_model.md) — Diagrama ER en Mermaid, diccionario de datos y políticas referenciales.
 - [Decisiones de arquitectura (ADR)](docs/adr/) — Registro histórico de decisiones técnicas tomadas.
+- [Glosario de dominio](docs/glossary.md) — Vocabulario y terminología agroindustrial y técnica.
 - [Sistema de diseño](DESIGN.md) — Ficha de abastecimiento industrial, tokens y componentes accesibles.
 
 ### Gestión y Operaciones

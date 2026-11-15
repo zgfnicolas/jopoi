@@ -91,7 +91,7 @@ await mkdir(directory, { recursive: true });
 await writeFile(resolve(directory, "strict-report.json"), JSON.stringify(summary, null, 2) + "\n");
 await writeFile(resolve(directory, "strict-report.txt"), output);
 await writeFile(resolve(directory, "strict-report.md"), markdown);
-if (snapshot[0] === "--snapshot") await writeFile(resolve(root, "docs/s22-02-diagnosticos-estrictos.md"), markdown);
+if (snapshot[0] === "--snapshot") await writeFile(resolve(root, "docs/specs/s22-tickets/s22-02-diagnosticos-estrictos.md"), markdown);
 if (result.status !== 0 || diagnostics.length > 0) process.exitCode = 1;
 console.log(
   `PERFIL ESTRICTO OBLIGATORIO: ${diagnostics.length} diagnósticos. Detalle: .cache/quality/strict-report.json.`,

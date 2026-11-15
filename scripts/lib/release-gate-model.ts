@@ -330,7 +330,7 @@ export const AUD_FINDINGS_REGISTRY: readonly AuditFindingEntry[] = [
     testSuites: [
       "scripts/capacity-benchmark.ts",
       "tests/observability/capacity.test.ts",
-      "docs/s22-28-ensayo-capacidad-pool-localidad.md",
+      "docs/specs/s22-tickets/s22-28-ensayo-capacidad-pool-localidad.md",
     ],
     implemented: true,
     localProven: true,
