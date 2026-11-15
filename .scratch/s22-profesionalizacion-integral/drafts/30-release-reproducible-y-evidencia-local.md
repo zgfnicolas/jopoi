@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Gate integral ejecuta instalación reproducible, Prisma offline/aislado, tipos completos, lint, OpenAPI contrastado, API, CLI, UI, build, E2E y laboratorio con la misma revisión/fingerprint.
-- [ ] Una regresión real bloquea integración/release; PR no confiable no recibe secretos y el runner de migración permanece separado.
-- [ ] Matriz enlaza 17 AUD y seis DoD con decisiones, casos y resultados, diferenciando implementado, local comprobado y evidencia externa/campo pendiente.
-- [ ] Compatibilidad antigua/nueva y preservación de los tres caminos del recorrido se demuestran juntas; no se retiran adaptadores HTTP antes del plazo/evidencia exigidos.
-- [ ] Se deja el procedimiento y validador de candidato externo preparados, con rechazo explícito de evidencia faltante; este cierre local no aprovisiona, despliega ni envía HCS real.
+- [x] Gate integral ejecuta instalación reproducible, Prisma offline/aislado, tipos completos, lint, OpenAPI contrastado, API, CLI, UI, build, E2E y laboratorio con la misma revisión/fingerprint.
+- [x] Una regresión real bloquea integración/release; PR no confiable no recibe secretos y el runner de migración permanece separado.
+- [x] Matriz enlaza 17 AUD y seis DoD con decisiones, casos y resultados, diferenciando implementado, local comprobado y evidencia externa/campo pendiente.
+- [x] Compatibilidad antigua/nueva y preservación de los tres caminos del recorrido se demuestran juntas; no se retiran adaptadores HTTP antes del plazo/evidencia exigidos.
+- [x] Se deja el procedimiento y validador de candidato externo preparados, con rechazo explícito de evidencia faltante; este cierre local no aprovisiona, despliega ni envía HCS real.
 

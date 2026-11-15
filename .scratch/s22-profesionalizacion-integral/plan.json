@@ -1294,7 +1294,13 @@
         "S22-31",
         "S22-32"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-15",
+        "evidence": "docs/s22-30-release-reproducible-y-evidencia-local.md",
+        "validation": "Gate integral de release y evidencia reproducible implementados y validados. Ejecución de instalación reproducible, Prisma offline/aislado, tipos estrictos completos (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes con 0 errores), Biome lint (263 archivos sin errores), contratos OpenAPI 3.2 validados contra Ajv, suites completas de API, contratos, dominio, seguridad, observabilidad (61 pruebas), CLI (24 pruebas), tokens/UI (12 pruebas), build de producción y laboratorio de presupuestos frontend bajo la misma revisión Git y fingerprint SHA-256. Regresión real bloquea el release (status BLOCKED); workflows de CI asegurados para PRs no confiables (contents: read, persist-credentials: false, sin secretos expuestos); runner de migraciones aislado con advisory locks y conexión administrativa separada sin migraciones en next build. Matriz exhaustiva enlazando los 17 hallazgos AUD-01 a AUD-17 y los seis bloques DoD con decisiones, historias, casos de prueba y resultados, distinguiendo estados local comprobado y pendiente de proveedor, sellando globalAcceptance: false (delegada a Ticket 31/32). Preservación íntegra de los tres caminos del recorrido (Landing, Panel y Trazabilidad) y adaptadores HTTP con Deprecation: true y Link rel=\"successor-version\" sin Sunset prematuro. Validador de candidato externo preparado con rechazo explícito ante evidencias faltantes (CANDIDATE_URL_MISSING_OR_LOCAL, NEON_TLS_VERIFY_FULL_UNVERIFIED, etc.) sin aprobación por omisión y respetando presupuesto cero. Suite tests/observability/release-gate.test.ts (11 pruebas), test:observability (61 pruebas), CLI release:gate y artefactos .cache/s22-release/ aprobados."
+      }
     },
     {
       "id": "31",
