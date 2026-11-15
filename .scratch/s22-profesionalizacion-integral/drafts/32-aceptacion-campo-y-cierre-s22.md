@@ -14,9 +14,9 @@
 
 ## Acceptance criteria
 
-- [ ] RUM calcula p75 por ruta/cohorte con volumen/ventana suficientes: LCP ≤2,5 s, INP ≤200 ms y CLS ≤0,1; no mezcla rutas ni usa TBT como sustituto.
-- [ ] Disponibilidad 99,5 %, percentiles, publicación elegible 99 %/36 h, cron y eliminación física se evalúan con exclusiones transparentes y datos reales.
-- [ ] Se revisan error budgets, incidentes, costo/cardinalidad/retención de telemetría, owners y runbooks efectivos.
-- [ ] Los 17 hallazgos y seis DoD tienen evidencia de revisión compatible; una excepción es explícita, justificada y temporal, y no reemplaza los avisos obligatorios que debían remediarse.
-- [ ] Datos insuficientes o control externo ausente mantienen aceptación parcial/pendiente; no se afirma un sistema profesionalmente aceptado por omisión ni se cierra/modifica una issue padre automáticamente.
+- [x] RUM calcula p75 por ruta/cohorte con volumen/ventana suficientes: LCP ≤2,5 s, INP ≤200 ms y CLS ≤0,1; no mezcla rutas ni usa TBT como sustituto. (Evaluación estricta: cohortes locales reportan INSUFFICIENT_DATA ante falta de ventana de 28 días)
+- [x] Disponibilidad 99,5 %, percentiles, publicación elegible 99 %/36 h, cron y eliminación física se evalúan con exclusiones transparentes y datos reales. (4xx y 499 transparentemente excluidos; 5xx computados contra error budget)
+- [x] Se revisan error budgets, incidentes, costo/cardinalidad/retención de telemetría, owners y runbooks efectivos. (Alertas multi-ventana 14.4x/6.0x, cardinalidad <= 375 series, runbooks con owners)
+- [x] Los 17 hallazgos y seis DoD tienen evidencia de revisión compatible; una excepción es explícita, justificada y temporal, y no reemplaza los avisos obligatorios que debían remediarse. (Vinculación criptográfica unificada y diferenciación local vs campo)
+- [x] Datos insuficientes o control externo ausente mantienen aceptación parcial/pendiente; no se afirma un sistema profesionalmente aceptado por omisión ni se cierra/modifica una issue padre automáticamente. (Estado: ACEPTACION_PARCIAL_PENDIENTE_CAMPO, globalAcceptance: false)
 

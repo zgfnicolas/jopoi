@@ -1471,7 +1471,13 @@
         "S22-30",
         "S22-32"
       ],
-      "externalConditions": "Requiere ventana móvil de 28 días y al menos 200 muestras válidas por métrica/cohorte para CWV; objetivos de disponibilidad/publicación necesitan su propia evidencia operativa. Tiempo transcurrido no sustituye volumen o aprobación."
+      "externalConditions": "Requiere ventana móvil de 28 días y al menos 200 muestras válidas por métrica/cohorte para CWV; objetivos de disponibilidad/publicación necesitan su propia evidencia operativa. Tiempo transcurrido no sustituye volumen o aprobación.",
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-15",
+        "evidence": "docs/s22-32-aceptacion-campo-y-cierre-s22.md",
+        "validation": "Evaluación de resultados de campo y cierre formal de los seis bloques de Definition of Done (DoD) y 17 hallazgos AUD implementados y validados (scripts/field-acceptance.ts y scripts/lib/field-acceptance-model.ts). Criterios evaluados: RUM con cálculo matemático de percentil 75 exacto, ventana móvil de 28 días, exigencia de >= 200 muestras por cohorte y sellado estricto de inpIsLaboratoryTbt=false; disponibilidad 99,5%, latencia hot-path (p95 <= 750 ms, p99 <= 1500 ms) y retención física <= 36 h con exclusiones transparentes (4xx y 499 excluidos, 5xx computados contra error budget); cardinalidad acotada a 375 series, sin PII, buffer infinito desactivado y runbooks con owners operativos. Matriz integral enlazando los 17 hallazgos AUD (9 cerrados definitivos, 8 pendientes de campo) y los 6 bloques DoD (JSTS y API aprobados; Rendering, Prisma, Seguridad y Observabilidad pendientes de datos de hosting). Ante la ausencia de una ventana de 28 días de tráfico real en local, el sistema emite determinísticamente ACEPTACION_PARCIAL_PENDIENTE_CAMPO y preserva globalAcceptance: false, prohibiendo terminantemente la aprobación por omisión, respetando presupuesto cero y sin modificar issues padre. Suite tests/observability/field-acceptance.test.ts (9 pruebas), test:observability (77 pruebas), CLI field:acceptance y artefactos .cache/s22-field/ aprobados."
+      }
     }
   ]
 }
