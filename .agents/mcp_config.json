@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "packet-tracer": {
+      "command": "node",
+      "args": ["scripts/mcp-packet-tracer.mjs"],
+      "disabled": true
+    }
+  }
+}

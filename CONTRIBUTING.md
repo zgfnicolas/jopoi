@@ -101,3 +101,16 @@ Si tu cambio modifica una regla de negocio (`RN-*`), la matriz de roles, una ent
 1. Actualizar el documento correspondiente en `docs/` (`business_rules.md`, `roles.md`, `data_model.md`, `sad.md`).
 2. Registrar la entrada pertinente en la sección `[Sin publicar]` de `CHANGELOG.md`.
 3. Si se toma una decisión técnica estructural difícil de revertir, redactar un nuevo ADR en `docs/adr/`.
+
+---
+
+## 6. Configuración de Antigravity CLI (agy)
+
+El proyecto está preparado para trabajar de manera nativa con **Antigravity CLI** (`agy`):
+
+- **Instrucciones generales:** `AGENTS.md` (común a todos los agentes) y `GEMINI.md` (específico para Antigravity).
+- **Reglas modulares:** Ubicadas en `.agents/rules/` con activación automática por glob (`api-contracts.md`, `ui-accessibility.md`) o decisión del modelo (`persistencia-db.md`).
+- **Subagentes:** Utilizá `@code-reviewer` para auditar cambios pendientes antes de abrir un PR, y `@observability-auditor` para validar SLOs y runbooks.
+- **Hooks de protección:** `.agents/hooks.json` bloquea automáticamente cualquier intento no autorizado de acceder a `.env` o ejecutar comandos destructivos.
+- **Permisos recomendados:** Copiá la plantilla de [`docs/antigravity-settings.example.json`](docs/antigravity-settings.example.json) a tu archivo personal `~/.gemini/antigravity-cli/settings.json` para configurar `allow`, `ask` y `deny` junto con el sandbox de terminal.
+

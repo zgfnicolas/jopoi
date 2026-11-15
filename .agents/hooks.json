@@ -1,0 +1,16 @@
+{
+  "proteger-archivos": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/hooks/protect-files.mjs",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
