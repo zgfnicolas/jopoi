@@ -1125,7 +1125,13 @@
         "S22-26",
         "S22-28"
       ],
-      "externalConditions": null
+      "externalConditions": null,
+      "implementation": {
+        "status": "completed",
+        "completedOn": "2026-11-14",
+        "evidence": "docs/s22-28-ensayo-capacidad-pool-localidad.md",
+        "validation": "Ensayo de capacidad, dimensionamiento de admisión y modelo global de conexiones implementados y validados sobre build real de producción (next start) con clúster PostgreSQL 17 y dataset sintético al menos equivalente a S21 (1.000 sesiones, 3.000 recorridos, 15.000 recibos, 15.000 eventos, 15.000 publicaciones HCS y 10.000 contactos demo). Validación de planes con EXPLAIN ANALYZE. Modelo global de conexiones formalizado: 8 instancias x 2 conn = 16 clientes + 1 CLI + 1 migración + 2 reserva operativa = 20 conexiones cliente al pooler (pgBouncer transaction pooling M:N multiplexing hacia 4-6 conexiones de backend PostgreSQL), con parámetros estrictos (max: 2, min: 0, connTimeout: 3000ms, idleTimeout: 10000ms, stmtTimeout: 5000ms, UTC y SSL verify-full) y co-ubicación iad1 <-> us-east-1 con justificación de rechazo de Edge rendering. Medición en arranque frío (session: 601.73 ms <= 2000 ms) y estado caliente con concurrencia 8: session p95=352.3ms, run p95=340.9ms, trace p95=299.2ms, commands_replay p95=524.3ms (todos p95 <= 750 ms y p99 <= 1500 ms con 0 errores HTTP y exactamente 2 conexiones activas por instancia), separando la confirmación local del envío HCS posterior al commit. Memoria acotada (delta heap 6.52 MiB, RSS 60.58 MiB). Regla de convergencia implementada (reducir admisión en vez de aumentar pool arbitrariamente) y separación estricta de incumbencias (capacidad local demostrada: sí, límites del proveedor pendientes del ticket 31: sí, aceptación global: false). Suite tests/observability/capacity.test.ts (11 pruebas), test:observability (39 pruebas) y CLI capacity:benchmark aprobados."
+      }
     },
     {
       "id": "29",

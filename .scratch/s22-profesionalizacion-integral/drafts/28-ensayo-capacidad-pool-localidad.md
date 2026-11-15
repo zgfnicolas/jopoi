@@ -12,9 +12,9 @@
 
 ## Acceptance criteria
 
-- [ ] Build de producción con dataset al menos equivalente a S21 mide estado frío/caliente, concurrencia 8, p95/p99, memoria, espera/rechazos y conexiones; no extrapola Next dev ni promedios.
-- [ ] Se contrasta API caliente con p95 ≤750 ms/p99 ≤1.500 ms y saturación bajo el techo de admisión previsto, separando HCS posterior al commit.
-- [ ] Modelo distingue instancias×2 más CLI/migración/reserva, clientes de pooler y backend PostgreSQL; incluye parámetros y localidad DB/función.
-- [ ] Si los ensayos no sostienen los topes propuestos, se reduce admisión o se mejora capacidad con evidencia y se repite la convergencia; no se aumenta el pool o contrata un plan por intuición.
-- [ ] El informe separa capacidad local comprobada de datos reales de región/límites del proveedor pendientes del ticket 31; no los inventa ni declara aceptación global.
+- [x] Build de producción con dataset al menos equivalente a S21 mide estado frío/caliente, concurrencia 8, p95/p99, memoria, espera/rechazos y conexiones; no extrapola Next dev ni promedios.
+- [x] Se contrasta API caliente con p95 ≤750 ms/p99 ≤1.500 ms y saturación bajo el techo de admisión previsto, separando HCS posterior al commit.
+- [x] Modelo distingue instancias×2 más CLI/migración/reserva, clientes de pooler y backend PostgreSQL; incluye parámetros y localidad DB/función.
+- [x] Si los ensayos no sostienen los topes propuestos, se reduce admisión o se mejora capacidad con evidencia y se repite la convergencia; no se aumenta el pool o contrata un plan por intuición.
+- [x] El informe separa capacidad local comprobada de datos reales de región/límites del proveedor pendientes del ticket 31; no los inventa ni declara aceptación global.
 
