@@ -18,3 +18,7 @@ description: "Reglas de sesiones anónimas, aislamiento, idempotencia, rate limi
 - **Trazabilidad pública (S11):**
   - Los endpoints públicos de trazabilidad son estrictamente de lectura (sin cookies de sesión requeridas) y jamás exponen `sessionId`, `tokenHash`, contactos ni credenciales.
 - **Secretos:** Ninguna variable de `.env.example` puede exponerse al cliente ni llevar prefijo `NEXT_PUBLIC_`.
+- **Runtime Node.js y Asincronía (`node-backend-engineering`):**
+  - Prohibido usar APIs bloqueantes `*Sync` (`fs.*Sync`, `crypto.*Sync`, `execSync`) o regex con backtracking catastrófico en el camino de una request HTTP.
+  - Toda llamada saliente (ej. `mirrorJson` hacia Hedera mirror node) debe llevar `AbortSignal.timeout()`, `redirect: "error"` y lectura del body por streaming acotada a `maxBytes`.
+  - Ejecutar subprocesos en CLI/scripts con `spawn(..., { shell: false })` y validar rutas relativas con `resolve` + `startsWith(ROOT + sep)`.

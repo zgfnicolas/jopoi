@@ -5,7 +5,13 @@ export interface DatabaseControl { id: string; passed: boolean; evidence: "catal
 
 /** SELECT-only, no row values, connection strings, role names or provider errors in output. */
 export async function auditDatabase(url: string) {
-  const client = new Client({ ...databaseConnection(url), connectionTimeoutMillis: 3000, statement_timeout: 5000 });
+  const client = new Client({
+    ...databaseConnection(url),
+    connectionTimeoutMillis: 3000,
+    statement_timeout: 5000,
+    lock_timeout: 2000,
+    idle_in_transaction_session_timeout: 10000,
+  });
   try {
     await client.connect();
     await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");

@@ -3,7 +3,7 @@ import { ApplicationError } from "../application-error";
 const UNAVAILABLE_CODES = new Set([
   "P1000", "P1001", "P1002", "P1003", "P1008", "P1010", "P1011", "P1017", "P2024", "P2037",
   "ECONNREFUSED", "ECONNRESET", "ENOTFOUND", "ETIMEDOUT", "EPIPE", "ENETUNREACH",
-  "28P01", "28000", "3D000", "53300", "57P01", "57P02", "57P03", "57014",
+  "28P01", "28000", "3D000", "53300", "55P03", "57P01", "57P02", "57P03", "57014",
 ]);
 
 const UNAVAILABLE_KINDS = new Set([
@@ -26,7 +26,13 @@ export function mapDatabaseError(error: unknown): unknown {
     if (["P2034", "40001", "40P01"].includes(code) || kind === "TransactionWriteConflict") {
       return new ApplicationError("VERSION_CONFLICT");
     }
-    if (UNAVAILABLE_CODES.has(code) || code.startsWith("08") || UNAVAILABLE_KINDS.has(kind)) {
+    if (
+      UNAVAILABLE_CODES.has(code) ||
+      code.startsWith("08") ||
+      code.startsWith("53") ||
+      code.startsWith("57P") ||
+      UNAVAILABLE_KINDS.has(kind)
+    ) {
       return new ApplicationError("DATABASE_UNAVAILABLE");
     }
     const message = "message" in current && typeof current.message === "string" ? current.message : "";

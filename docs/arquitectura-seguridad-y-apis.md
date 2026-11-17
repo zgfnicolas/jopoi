@@ -87,3 +87,24 @@ Cuando Jopói evolucione de prototipo personal a plataforma comercial con empres
 | **Concurrencia optimista** | Cada comando exige `expectedVersion` y actualiza `DemoRun` atómicamente verificando versión (`409 VERSION_CONFLICT` ante lost updates). | `src/server/operations/` |
 | **Transactional Outbox hacia Hedera HCS** | La transacción SQL (`Serializable`) persiste cambio de estado, `OperationEvent` (hash JCS/SHA-256) y `HcsPublication` (`QUEUED`) antes de invocar la red; la publicación usa leases (`leaseUntil`), máx. 3 intentos automáticos + 1 manual y consulta al mirror node ante `UNCERTAIN`. | `src/server/events/`, `src/server/hedera/` |
 | **Cron idempotente y sin solapamiento** | `/api/cron` exige `Authorization: Bearer <CRON_SECRET>`, adquiere lease exclusivo en `MaintenanceLease` y procesa pendientes/retención en lotes acotados. | `src/app/api/cron/`, `scripts/maintenance.ts` |
+
+---
+
+## 4. Persistencia SQL, PostgreSQL Engineering y Runtime Node.js
+
+### 4.1 Modelado relacional 3NF, integridad y snapshots (`SKL-DB-SQL-001` / `SKL-DB-POSTGRES-001`)
+- **Normalización e integridad referencial:** `prisma/schema.prisma` define 11 tablas con PKs explícitas. `DemoSession → DemoRun` usa `ON DELETE RESTRICT` para proteger recorridos activos; los hijos composicionales de `DemoRun` (`SessionRunIntent`, `CommandReceipt`, `OperationEvent`, `HcsPublication`, `HcsSubmissionAttempt`) usan `ON DELETE CASCADE` exclusivamente para el barrido de retención de 7 días.
+- **Claves foráneas compuestas:** `SessionRunIntent` referencia `(runId, sessionId)` y `OperationEvent` referencia `(commandId, runId)`, impidiendo en PostgreSQL cualquier cruce entre sesiones o comandos de otro recorrido.
+- **Snapshots históricos justificados:** `DemoRun.scenarioSnapshot`, `CommandReceipt.result` y `OperationEvent.payload` (`JSONB`) conservan copias históricas inmutables al momento del hecho, validadas mediante `CHECK (jsonb_typeof(...) = 'object')`.
+- **Inmutabilidad por triggers y `CHECK` constraints:** Las migraciones SQL declaran restricciones de formato/rango y 4 triggers `BEFORE UPDATE` (`OperationEvent_immutable`, `DemoRun_immutable_fields`, `DemoRun_hcs_binding_immutable`, `HcsSubmissionAttempt_immutable`) con `REVOKE EXECUTE ... FROM PUBLIC`.
+- **Auditoría automatizada de 12 controles (`npm run db:audit`):** `src/server/database/audit.ts` verifica en sesión `REPEATABLE READ READ ONLY`: `DB-ROLE`, `DB-OWNER`, `DB-DDL`, `DB-EVENT-UPDATE`, `DB-FUNCTION-EXECUTE`, `DB-TABLES`, `DB-TRIGGERS`, `DB-CONSTRAINTS`, `DB-INDEXES`, `DB-TLS`, `DB-TIMEZONE` (`UTC`) y `DB-HISTORIC-TIME`.
+
+### 4.2 Prisma 7, pooling y mapeo `SQLSTATE` (`SKL-ARCH-ORM-001`)
+- **Singleton, timeouts y cierre ordenado:** `src/server/database/client.ts` instancia un único `PrismaClient` por proceso con `@prisma/adapter-pg` (`max: 2`, `min: 0`, `connectionTimeoutMillis: 3000`, `idleTimeoutMillis: 10000`, `statement_timeout: 5000`, `lock_timeout: 2000`, `idle_in_transaction_session_timeout: 10000`, `query_timeout: 5500`) y sesión fijada a `-c timezone=UTC`. `src/server/database/index.ts` expone `closeDatabase()` para drenado limpio al apagar.
+- **Aislamiento, transacciones cortas y orden anti-deadlock:** `withTransaction()` usa `Serializable` (`maxWait: 2000`, `timeout: 5000`) sin I/O externo dentro de la transacción; la admisión de rate limiting usa transacciones cortas `ReadCommitted`; los barridos por lotes en `src/server/hedera/maintenance-core.ts` ordenan por PK (`orderBy`) antes de borrar/liberar para adquirir locks en orden determinístico.
+- **Traducción por `SQLSTATE` (`src/server/database/errors.ts`):** `P2034`, `40001` y `40P01` se mapean a `VERSION_CONFLICT` (`409`); `55P03` (`lock_not_available`), `57014` (`statement_timeout`), las clases `08*`, `53*` y `57P*`, `P1000..P1017` y `P2024` se mapean a `DATABASE_UNAVAILABLE` (`503`) sin exponer mensajes ni cadenas de conexión.
+
+### 4.3 Runtime Node.js no bloqueante (`SKL-NODE-BACKEND-001`)
+- **Sin bloqueo del event loop:** `src/domain/` es puro (`BigInt`, JCS); ninguna ruta HTTP ejecuta APIs `*Sync`.
+- **Streams, timeouts y precisión `uint64`:** Tanto `readJsonBody` (`src/server/http.ts`) como `mirrorJson` (`src/server/hedera/mirror.ts`) leen `ReadableStream` por chunks cancelando al instante si superan `maxBytes`. `mirrorJson` fija `AbortSignal.timeout(3000)`, `redirect: "error"` y utiliza el parámetro `context.source` del reviver de `JSON.parse` para conservar `sequence_number` (`uint64`) sin redondeo de `Number`.
+- **Ejecución segura de procesos y rutas:** `scripts/delivery.ts` y `scripts/local-postgres.ts` invocan binarios con `spawn(..., { shell: false, windowsHide: true })` y validan rutas con `resolve()` + `startsWith(ROOT + sep)`.

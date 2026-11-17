@@ -21,6 +21,13 @@ export function getDatabase(): PrismaClient {
   return database;
 }
 
+export async function closeDatabase(): Promise<void> {
+  const current = database ?? developmentGlobal.jopoiDatabase;
+  database = undefined;
+  if (process.env.NODE_ENV !== "production") developmentGlobal.jopoiDatabase = undefined;
+  if (current !== undefined) await current.$disconnect();
+}
+
 /** Lecturas u operaciones SQL independientes con traducción de errores de dependencia. */
 export async function withDatabase<T>(work: (db: PrismaClient) => Promise<T>): Promise<T> {
   try {

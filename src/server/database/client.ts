@@ -11,6 +11,8 @@ export function createDatabaseClient(url: string): PrismaClient {
     connectionTimeoutMillis: 3000,
     idleTimeoutMillis: 10000,
     statement_timeout: 5000,
+    lock_timeout: 2000,
+    idle_in_transaction_session_timeout: 10000,
     query_timeout: 5500,
     allowExitOnIdle: true,
   }, {

@@ -4,6 +4,8 @@ import { spawnSync } from "node:child_process";
 import { databaseConnection, migrationConnection } from "../../src/server/database/connection-policy";
 import { localhostCertificate } from "../support/tls-certificate";
 import { X509Certificate } from "node:crypto";
+import { ApplicationError } from "../../src/server/application-error";
+import { mapDatabaseError } from "../../src/server/database/errors";
 
 test("S21 CLI: auditoría ayuda sin cargar entorno ni conectar",()=>{
   const result=spawnSync(process.execPath,["--import","tsx","scripts/database-audit.ts","--help"],{encoding:"utf8",windowsHide:true,env:{...process.env,DATABASE_URL:"invalid-private-marker"}});
@@ -29,4 +31,18 @@ test("S21 TLS: certificado sintético efímero válido para localhost",()=>{
   assert.equal(cert.checkIP("127.0.0.1"),"127.0.0.1");
   assert.equal(cert.checkHost("localhost"),"localhost");
   assert.equal(cert.verify(cert.publicKey),true);
+});
+test("S21 SQLSTATE: mapDatabaseError traduce conflictos y bloqueos/timeouts sin filtrar detalles",()=>{
+  for(const code of ["P2034","40001","40P01"]){
+    const mapped=mapDatabaseError({cause:{code,message:"secret-sql-detail"}});
+    assert.ok(mapped instanceof ApplicationError);
+    assert.equal(mapped.code,"VERSION_CONFLICT");
+    assert.doesNotMatch(mapped.message,/secret-sql-detail/);
+  }
+  for(const code of ["55P03","57014","53100","53200","53300","57P04","08006","P2024"]){
+    const mapped=mapDatabaseError({driverAdapterError:{cause:{originalCode:code,message:"secret-conn-string"}}});
+    assert.ok(mapped instanceof ApplicationError);
+    assert.equal(mapped.code,"DATABASE_UNAVAILABLE");
+    assert.doesNotMatch(mapped.message,/secret-conn-string/);
+  }
 });

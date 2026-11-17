@@ -40,27 +40,27 @@ export async function runMaintenance(context: CoordinationContext, force = false
     });
     if (canClean()) counts.runs = await transaction(async (tx) => {
       await fenced(tx);
-      const rows = await tx.demoRun.findMany({ where: expiredRuns, take: 100, select: { id: true } });
+      const rows = await tx.demoRun.findMany({ where: expiredRuns, orderBy: { id: "asc" }, take: 100, select: { id: true } });
       return (await tx.demoRun.deleteMany({ where: { ...expiredRuns, id: { in: rows.map(r => r.id) } } })).count;
     });
     if (canClean()) counts.contacts = await transaction(async (tx) => {
       await fenced(tx);
-      const rows = await tx.demoRequest.findMany({ where: expiredContacts, take: 100, select: { id: true } });
+      const rows = await tx.demoRequest.findMany({ where: expiredContacts, orderBy: { id: "asc" }, take: 100, select: { id: true } });
       return (await tx.demoRequest.deleteMany({ where: { id: { in: rows.map(r => r.id) } } })).count;
     });
     if (canClean()) counts.sessions = await transaction(async (tx) => {
       await fenced(tx);
-      const rows = await tx.demoSession.findMany({ where: expiredSessions, take: 100, select: { id: true } });
+      const rows = await tx.demoSession.findMany({ where: expiredSessions, orderBy: { id: "asc" }, take: 100, select: { id: true } });
       return (await tx.demoSession.deleteMany({ where: { ...expiredSessions, id: { in: rows.map(r => r.id) } } })).count;
     });
     if (canClean()) counts.quotas = await transaction(async (tx) => {
       await fenced(tx);
-      const rows = await tx.dailyQuota.findMany({ where: oldQuotas, take: 100, select: { scope: true, date: true } });
+      const rows = await tx.dailyQuota.findMany({ where: oldQuotas, orderBy: [{ scope: "asc" }, { date: "asc" }], take: 100, select: { scope: true, date: true } });
       return rows.length ? (await tx.dailyQuota.deleteMany({ where: { OR: rows } })).count : 0;
     });
     if (canClean()) counts.leases = await transaction(async (tx) => {
       await fenced(tx);
-      const rows = await tx.hcsPublication.findMany({ where: oldLeases, take: 100, select: { eventId: true } });
+      const rows = await tx.hcsPublication.findMany({ where: oldLeases, orderBy: { eventId: "asc" }, take: 100, select: { eventId: true } });
       return (await tx.hcsPublication.updateMany({ where: { ...oldLeases, eventId: { in: rows.map(r => r.eventId) } }, data: { leaseOwner: null, leaseExpiresAt: null } })).count;
     });
     const cleanupComplete = canClean() && await transaction(async (tx) => {

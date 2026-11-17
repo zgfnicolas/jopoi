@@ -14,11 +14,15 @@ Todos los cambios relevantes de este proyecto se documentan en este archivo sigu
   - Curación de skills en `.agents/skills.json` y nuevo skill `.agents/skills/jopoi-verify/SKILL.md`.
   - Plantilla de permisos y sandbox en `docs/antigravity-settings.example.json`.
   - Tres nuevas skills especializadas en `.agents/skills/`: `js-project-configuration`, `identity-sessions-authorization` y `api-engineering-python-ts`.
+  - Cuatro skills de datos y runtime Node.js en `.agents/skills/`: `orm-persistence-js-ts`, `sql-relational-design`, `postgresql-engineering` y `node-backend-engineering`.
   - Pipeline reproducible en `.github/workflows/ci.yml` y actualizaciones automatizadas con cooldown en `.github/dependabot.yml`.
-- Documentación de gestión y contribución: `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/pull_request_template.md`, `docs/plans/README.md`, `docs/arquitectura-seguridad-y-apis.md` e Inicio rápido en `README.md`.
+- Documentación de gestión y contribución: `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/pull_request_template.md`, `docs/plans/README.md`, `docs/arquitectura-seguridad-y-apis.md` (ampliada con persistencia SQL/PostgreSQL y runtime Node.js) e Inicio rápido en `README.md`.
 
 ### Cambiado
 - Endurecimiento de supply chain en `.npmrc` (`engine-strict=true`, `strict-peer-deps=true`, `min-release-age=3`) y `package.json` (`engines` y `devEngines` compatibles con Node 24 y 26 LTS, `allowScripts`, scripts `audit:deps`, `audit:signatures`, `check`), además de compatibilidad LTS 24/26 en `src/server/delivery/preflight.ts`.
+- Agregados `lock_timeout: 2000` e `idle_in_transaction_session_timeout: 10000` al pool/cliente SQL (`src/server/database/client.ts`, `src/server/database/audit.ts`), cierre ordenado `closeDatabase()` en `src/server/database/index.ts` y orden determinístico anti-deadlock (`orderBy`) en los lotes de limpieza de `src/server/hedera/maintenance-core.ts`.
+- Ampliado `mapDatabaseError()` en `src/server/database/errors.ts` con `SQLSTATE 55P03` y cobertura completa de clases `08*`, `53*` y `57P*`, junto con test unitario `S21 SQLSTATE` en `tests/cli/seguridad.test.ts`.
+- Actualizadas las reglas modulares `.agents/rules/database-and-prisma.md` y `.agents/rules/server-api-and-security.md` con invariantes de PostgreSQL, Prisma 7 y runtime Node.js.
 - Actualizado `.gitignore` para incluir `secrets/`.
 
 ### Seguridad
