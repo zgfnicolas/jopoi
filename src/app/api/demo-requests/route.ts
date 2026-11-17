@@ -6,6 +6,7 @@ import { apiBoundary, PRIVATE_RESPONSE_HEADERS, readJsonBody, requireBrowserMuta
 import { requireRateLimit } from "@/server/security/rate-limit";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request): Promise<NextResponse> {
   return apiBoundary(async () => {

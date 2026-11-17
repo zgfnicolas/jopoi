@@ -6,7 +6,11 @@ import { ApplicationError } from "./application-error";
 import { getServerConfig, requireConfiguration } from "./config";
 import { RateLimitError } from "./security/rate-limit";
 
-export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie" });
+export const PRIVATE_RESPONSE_HEADERS = Object.freeze({
+  "Cache-Control": "private, no-store",
+  Vary: "Cookie",
+  "X-Content-Type-Options": "nosniff",
+});
 
 /** Origen configurado y Fetch Metadata, nunca Host o X-Forwarded-Host aportados por el visitante. */
 export function requireBrowserMutation(request: Request): void {
@@ -59,11 +63,19 @@ export async function readJsonBody(request: Request, maxBytes: number): Promise<
 export async function apiBoundary(work: () => Promise<NextResponse>): Promise<NextResponse> {
   const context = createRequestContext();
   try {
-    return await work();
+    const response = await work();
+    if (!response.headers.has("X-Request-Id")) {
+      response.headers.set("X-Request-Id", context.requestId);
+    }
+    if (!response.headers.has("X-Content-Type-Options")) {
+      response.headers.set("X-Content-Type-Options", "nosniff");
+    }
+    return response;
   } catch (error) {
     const result = toApiError(error, context);
     return NextResponse.json(result.body, { status: result.status, headers: {
       ...PRIVATE_RESPONSE_HEADERS,
+      "X-Request-Id": context.requestId,
       ...(error instanceof RateLimitError ? { "Retry-After": String(error.retryAfter) } : {}),
     } });
   }

@@ -13,3 +13,8 @@ description: "Reglas de sistema de diseño industrial, tokens CSS, accesibilidad
   - En español claro; presentar el beneficio operativo y económico antes de mencionar blockchain/Hedera.
   - Identificar explícitamente qué datos son ficticios de demostración (empresas, pesos, fotos, importes) y qué se registra realmente en Hedera testnet.
   - Mostrar de forma diferenciada el estado operativo de la carga, el estado de publicación en HCS y el estado de verificación del hash.
+- **Convenciones Next.js 16 y rendimiento:**
+  - Server Components por defecto en `src/app/`; aislar `"use client"` en componentes hoja interactivos (`src/components/`).
+  - En rutas dinámicas y funciones de servidor de Next 16, resolver con `await` las APIs asíncronas (`params`, `cookies()`, `headers()`).
+  - Optimizar Core Web Vitals (LCP/CLS) usando `next/image` (con dimensiones explícitas, `sizes` y `preload` solo en imagen principal) y `next/font` con `display: "swap"`.
+  - Validar toda respuesta HTTP recibida en `src/frontend/` con esquemas Zod tipados contra contratos de `src/shared/` (`src/frontend/*-models.ts` y `src/shared/`), usando `cache: "no-store"`, `redirect: "error"` y timeout acotado con `AbortSignal`.

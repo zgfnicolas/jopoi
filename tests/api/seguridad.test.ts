@@ -62,7 +62,10 @@ test("S21-04 · frontera HTTP rechaza entradas sin efectos y protege caché",asy
   for(const headers of invalidHeaders) {
     expect([400,403]).toContain((await visitor.post("/api/demo/runs/reset",{requestId:randomUUID()},headers)).status);
   }
-  expect((await visitor.post("/api/demo/session",{extra:true})).status).toBe(400);
+  const invalidBody=await visitor.post<{error:{requestId:string}}>("/api/demo/session",{extra:true});
+  expect(invalidBody.status).toBe(400);
+  expect(invalidBody.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/i);
+  expect(invalidBody.headers.get("x-request-id")).toBe(invalidBody.body.error.requestId);
   const chunked=new ReadableStream<Uint8Array>({start(controller){controller.enqueue(new TextEncoder().encode(' '.repeat(5000)));controller.close();}});
   const options:RequestInit & {duplex:"half"}={method:"POST",headers:{Origin:environment.origin,"X-Jopoi-Request":"demo","Content-Type":"application/json"},body:chunked,duplex:"half"};
   expect((await fetch(environment.origin+"/api/demo/session",options)).status).toBe(400);
@@ -70,6 +73,12 @@ test("S21-04 · frontera HTTP rechaza entradas sin efectos y protege caché",asy
   const response=await visitor.get("/api/demo/session");
   expect(response.headers.get("cache-control")).toContain("no-store");
   expect(response.headers.get("vary")).toContain("Cookie");
+  expect(response.headers.get("x-content-type-options")).toBe("nosniff");
+  expect(response.headers.get("x-frame-options")).toBe("DENY");
+  expect(response.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
+  expect(response.headers.get("permissions-policy")).toBe("camera=(), microphone=(), geolocation=()");
+  expect(response.headers.get("x-powered-by")).toBeNull();
+  expect(response.headers.get("x-request-id")).toMatch(/^[0-9a-f-]{36}$/i);
   expect(response.body).toMatchObject({session:{runCount:1}});
 });
 

@@ -19,3 +19,6 @@ description: "Reglas de negocio Q30, máquina de estados, precisión decimal y e
   - Bloquear asignación si el viaje es incompatible (material, capacidad, carrocería, ruta u horario).
   - Peso recibido positivo; solo permite `RECEIVED` si coincide con el peso declarado (cualquier diferencia exige `INCIDENT`).
 - **Eventos y Hashes (S07):** Los payloads públicos usan esquema v1, se canonicalizan con RFC 8785 (`canonicalize`) y se resumen con SHA-256 antes de encolarse para HCS.
+- **Diseño de contratos y módulos profundos (`api-and-interface-design`, `improve-codebase-architecture` / `codebase-design`):**
+  - Contratos en `src/shared/` con Zod en las fronteras; preservar invariantes S01–S21, códigos de error y el formato público `{ error: { code, message, requestId, fields? } }` sin introducir versiones paralelas ni cambios silenciosos.
+  - Preferir módulos profundos con interfaces claras en `src/domain/` y `src/shared/` antes que wrappers superficiales, alineados con `@GLOSSARY.md` y `docs/adr/`.

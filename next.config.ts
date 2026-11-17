@@ -3,9 +3,23 @@ import { PHASE_DEVELOPMENT_SERVER } from "next/constants";
 import { readFileSync } from "node:fs";
 import { resolve, sep } from "node:path";
 
+const SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 export default function configuration(phase: string): NextConfig {
-  const config: NextConfig = { serverExternalPackages: ["@hiero-ledger/sdk"],
-    async headers() { return [{ source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }]; },
+  const config: NextConfig = {
+    poweredByHeader: false,
+    serverExternalPackages: ["@hiero-ledger/sdk"],
+    async headers() {
+      return [
+        { source: "/:path*", headers: SECURITY_HEADERS },
+        { source: "/api/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] },
+      ];
+    },
   };
   const directory = process.env.JOPOI_API_TEST_DIRECTORY;
   if (!directory) return config;
