@@ -1,0 +1,30 @@
+{
+  "jopoi-security-guard": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/hooks/protect-jopoi.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "jopoi-ui-post-edit": {
+    "PostToolUse": [
+      {
+        "matcher": "edit_file|write_file",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/hooks/post-edit-ui.sh",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "entries": [
+    {
+      "path": ".agents/skills",
+      "exclude": [
+        "Hedera Agent Kit v4 Migration",
+        "Hedera Hackathon PRD",
+        "Hedera Hackathon Submission Validator",
+        "Hedera Hook Creation",
+        "Hedera Policy Creation",
+        "agent-kit-plugin",
+        "axelar-gmp",
+        "better-auth-security-best-practices",
+        "ccip",
+        "chainlink-data-feeds",
+        "create-harness-spec",
+        "git-flow-branch-creator",
+        "git-guardrails-claude-code",
+        "harness-spec-anatomy",
+        "hedera-agent-kit-v4-migration",
+        "hedera-hackathon-prd",
+        "hedera-hackathon-submission-validator",
+        "hedera-hook-creation",
+        "hedera-policy-creation",
+        "hedera-token-service",
+        "hss-system-contract",
+        "hts-system-contract",
+        "layerzero-messaging",
+        "migrate-to-shoehorn",
+        "pyth-price-feeds",
+        "review-harness-spec",
+        "scaffold-exercises",
+        "setup-pre-commit",
+        "supra-push-oracle",
+        "x402-payments"
+      ]
+    }
+  ]
+}

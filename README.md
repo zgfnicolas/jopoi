@@ -4,10 +4,49 @@ Prototipo personal de coordinación B2B de subproductos y transporte en Corrient
 
 La definición del proyecto quedó confirmada en Q31 y las 18 specs originales y S19 están documentadas. S01–S11 implementan backend y coordinación HCS; S12–S15 incorporan interfaz, contacto, panel y trazabilidad/QR. S16 prepara la entrega con validación offline, entorno explícito, observación privada y guía de publicación/recuperación. S17 incorpora pruebas HTTP con PostgreSQL aislado y Hedera controlado. S18 añade recorridos de navegador en Chromium y WebKit móvil emulado, evidencia y aceptación separada del candidato publicado. Las cuatro migraciones están aplicadas y comprobadas en PostgreSQL local. Despliegue, planes gratuitos y cinco hitos reales de testnet requieren configuración y evidencia externas; no se declaran aprobados por pasar pruebas locales.
 
+## Stack
+
+- **Aplicación:** Next.js 16 (App Router) + React 19 + TypeScript estricto (ESM, Node 24)
+- **Persistencia:** PostgreSQL con Prisma 7 (`@prisma/adapter-pg`) y JSONB (Neon nativo vía Vercel Marketplace)
+- **Trazabilidad:** Hedera Consensus Service (HCS) en testnet con `@hiero-ledger/sdk`
+- **Validación y pruebas:** Zod, Vitest (`test:api`), Node test runner (`test:cli`, `test:ui:tokens`) y Playwright (`test:e2e`)
+- **Despliegue:** Vercel Hobby + Neon Free (presupuesto cero)
+
+## Inicio rápido
+
+Requisitos: **Node.js `>=24.0.0 <25`** (ver `.node-version`) y una instancia local de **PostgreSQL**.
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+1. Completá `.env.local` con `DATABASE_URL`, `DIRECT_URL` (o `DATABASE_URL_UNPOOLED`), `SESSION_SECRET` y `CRON_SECRET` (32 bytes aleatorios cada uno). En Windows podés inicializar el PostgreSQL portable incluido con `npm run db:local:setup` y `npm run db:local`; en Linux/macOS usá tu servicio local de PostgreSQL.
+2. Aplicá las migraciones y levantá el servidor de desarrollo:
+
+```bash
+npm run db:migrate
+npm run dev
+```
+
+La aplicación queda disponible en `http://127.0.0.1:3000`.
+
+3. Verificá tipos, esquema, tokens UI, CLI y preparación de entrega antes de entregar cambios:
+
+```bash
+npm run typecheck && npm run db:validate && npm run test:ui:tokens && npm run test:cli && npm run delivery:check
+```
+
+Para detalles completos de contribución y configuración de Antigravity CLI, consultá [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Documentación
 
 | Documento | Contenido |
 | --- | --- |
+| [Guía para agentes (AGENTS.md)](AGENTS.md) | Instrucciones concisas de arquitectura, comandos, reglas inviolables y límites para agentes de IA. |
+| [Cómo contribuir](CONTRIBUTING.md) | Entorno local, flujo de commits, suites de prueba y configuración de Antigravity CLI. |
+| [Historial de cambios](CHANGELOG.md) | Registro cronológico de cambios del proyecto (Keep a Changelog). |
+| [Plantilla de permisos Antigravity](docs/antigravity-settings.example.json) | Reglas recomendadas de sandbox y permisos (`allow` / `ask` / `deny`) para `agy`. |
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
 | [Specs ordenadas](docs/specs/README.md) | 18 specs originales y S19 para persistencia gestionada desde Vercel. |
 | [Seguridad y datos S21](docs/s21-validacion.md) | Límites compartidos, sesiones, TLS/UTC, auditoría SQL, integridad, recuperación y evidencia local/remota separada. |
