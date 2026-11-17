@@ -8,10 +8,15 @@ import { RateLimitError } from "./security/rate-limit";
 
 export const PRIVATE_RESPONSE_HEADERS = Object.freeze({ "Cache-Control": "private, no-store", Vary: "Cookie" });
 
-/** Origen configurado, nunca Host o X-Forwarded-Host aportados por el visitante. */
+/** Origen configurado y Fetch Metadata, nunca Host o X-Forwarded-Host aportados por el visitante. */
 export function requireBrowserMutation(request: Request): void {
   const { url } = requireConfiguration(getServerConfig().origin());
-  if (request.headers.get("origin") !== url || request.headers.get("x-jopoi-request") !== "demo") {
+  const secFetchSite = request.headers.get("sec-fetch-site")?.trim().toLowerCase();
+  if (
+    (secFetchSite !== undefined && secFetchSite !== "" && secFetchSite !== "same-origin" && secFetchSite !== "none") ||
+    request.headers.get("origin") !== url ||
+    request.headers.get("x-jopoi-request") !== "demo"
+  ) {
     throw new ApplicationError("REQUEST_FORBIDDEN");
   }
   if (request.headers.get("content-type")?.split(";", 1)[0].trim().toLowerCase() !== "application/json") {

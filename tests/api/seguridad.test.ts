@@ -58,7 +58,7 @@ test("S21-03 · contacto limitado, idempotencia conservada y datos de red proteg
 
 test("S21-04 · frontera HTTP rechaza entradas sin efectos y protege caché",async()=>{
   const visitor=await new Visitor().setup();
-  const invalidHeaders:Record<string,string>[]=[{Origin:""},{"X-Jopoi-Request":""},{"Content-Type":"text/plain"}];
+  const invalidHeaders:Record<string,string>[]=[{Origin:""},{"X-Jopoi-Request":""},{"Content-Type":"text/plain"},{"Sec-Fetch-Site":"cross-site"},{"Sec-Fetch-Site":"same-site"}];
   for(const headers of invalidHeaders) {
     expect([400,403]).toContain((await visitor.post("/api/demo/runs/reset",{requestId:randomUUID()},headers)).status);
   }

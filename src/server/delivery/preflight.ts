@@ -18,7 +18,7 @@ function json(path: string): unknown { return JSON.parse(readFileSync(path, "utf
 export async function deliveryCheck(root: string, profile: DeliveryProfile, environment: Environment) {
   const issues: Issue[] = [];
   const add = (check: string, code: string, level: Issue["level"] = "error") => issues.push({ check, code, level });
-  if (Number(process.versions.node.split(".")[0]) !== 24) add("node", "NODE_24_REQUIRED");
+  if (![24, 26].includes(Number(process.versions.node.split(".")[0]))) add("node", "NODE_24_REQUIRED");
   try {
     const pkg = packageSchema.parse(json(resolve(root, "package.json")));
     const lock = lockSchema.parse(json(resolve(root, "package-lock.json")));
@@ -28,7 +28,7 @@ export async function deliveryCheck(root: string, profile: DeliveryProfile, envi
       const expected = Object.entries(locked?.[field] ?? {}).sort(([a], [b]) => a.localeCompare(b));
       if (JSON.stringify(actual) !== JSON.stringify(expected)) add("lockfile", "LOCKFILE_OUT_OF_SYNC");
     }
-    if (![">=24.0.0 <25", "24.x"].includes(pkg.engines.node)) add("node", "NODE_ENGINE_MISMATCH");
+    if (![">=24.0.0 <25", ">=24.0.0 <27", ">=26.0.0 <27", "24.x", "26.x"].includes(pkg.engines.node)) add("node", "NODE_ENGINE_MISMATCH");
     if (pkg.scripts.build !== "prisma generate && next build") add("build", "BUILD_SEQUENCE_REVIEW_REQUIRED");
   } catch { add("manifest", "PACKAGE_OR_LOCKFILE_INVALID"); }
   try {

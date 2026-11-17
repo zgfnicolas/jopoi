@@ -13,10 +13,16 @@ Todos los cambios relevantes de este proyecto se documentan en este archivo sigu
   - Hooks de ciclo de vida en `.agents/hooks.json` y `scripts/hooks/` (`protect-jopoi.sh` y `post-edit-ui.sh`).
   - Curación de skills en `.agents/skills.json` y nuevo skill `.agents/skills/jopoi-verify/SKILL.md`.
   - Plantilla de permisos y sandbox en `docs/antigravity-settings.example.json`.
-- Documentación de gestión y contribución: `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/pull_request_template.md`, `docs/plans/README.md` y secciones de Stack e Inicio rápido en `README.md`.
+  - Tres nuevas skills especializadas en `.agents/skills/`: `js-project-configuration`, `identity-sessions-authorization` y `api-engineering-python-ts`.
+  - Pipeline reproducible en `.github/workflows/ci.yml` y actualizaciones automatizadas con cooldown en `.github/dependabot.yml`.
+- Documentación de gestión y contribución: `CONTRIBUTING.md`, `CHANGELOG.md`, `.github/pull_request_template.md`, `docs/plans/README.md`, `docs/arquitectura-seguridad-y-apis.md` e Inicio rápido en `README.md`.
 
 ### Cambiado
+- Endurecimiento de supply chain en `.npmrc` (`engine-strict=true`, `strict-peer-deps=true`, `min-release-age=3`) y `package.json` (`engines` y `devEngines` compatibles con Node 24 y 26 LTS, `allowScripts`, scripts `audit:deps`, `audit:signatures`, `check`), además de compatibilidad LTS 24/26 en `src/server/delivery/preflight.ts`.
 - Actualizado `.gitignore` para incluir `secrets/`.
+
+### Seguridad
+- Reforzada la defensa CSRF en `src/server/http.ts` (`requireBrowserMutation`) incorporando validación Fetch Metadata (`Sec-Fetch-Site`) junto con `Origin`, `X-Jopoi-Request` y `Content-Type`, con nuevos casos negativos en `tests/api/seguridad.test.ts`.
 
 ## [0.1.0] - 2026-10-29
 

@@ -29,6 +29,7 @@ npm run test:cli             # tests de CLI de entrega y seguridad
 npm run test:ui:tokens       # validar tokens de diseño en CSS/UI
 npm run test:e2e             # tests E2E de navegador (Playwright)
 npm run delivery:check       # verificar preparación offline de entrega
+npm run check                # verificar tipos, Prisma, tokens UI, CLI y entrega
 ```
 Antes de dar una tarea por terminada: `npm run typecheck`, `npm run test:api`, `npm run test:cli` y `npm run test:ui:tokens` deben pasar en verde.
 
@@ -45,6 +46,7 @@ Antes de dar una tarea por terminada: `npm run typecheck`, `npm run test:api`, `
 - Reglas de operación y estados: @docs/reglas-de-operacion.md
 - Eventos canónicos, hashes y cola HCS: @docs/eventos-y-hashes.md y @docs/hedera-testnet.md
 - Seguridad S21 (sesiones, concurrencia, SQL, TLS): @docs/s21-validacion.md
+- Arquitectura de seguridad, tokens, supply chain y APIs: @docs/arquitectura-seguridad-y-apis.md
 - Validación UI, accesibilidad WCAG 2.2 AA y SEO (S20): @docs/s20-validacion.md
 - Decisiones de arquitectura (ADR): `docs/adr/`
 - Planes de implementación por fase: `docs/plans/`

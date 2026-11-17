@@ -47,6 +47,7 @@ Para detalles completos de contribución y configuración de Antigravity CLI, co
 | [Cómo contribuir](CONTRIBUTING.md) | Entorno local, flujo de commits, suites de prueba y configuración de Antigravity CLI. |
 | [Historial de cambios](CHANGELOG.md) | Registro cronológico de cambios del proyecto (Keep a Changelog). |
 | [Plantilla de permisos Antigravity](docs/antigravity-settings.example.json) | Reglas recomendadas de sandbox y permisos (`allow` / `ask` / `deny`) para `agy`. |
+| [Arquitectura de seguridad, supply chain y APIs](docs/arquitectura-seguridad-y-apis.md) | Configuración npm multi-entorno, sesión opaca vs Access/Refresh tokens, CSRF Fetch Metadata y estándares HTTP. |
 | [Alcance de la demo](docs/alcance-demo.md) | Fuente vigente: objetivo, límites, reglas, presupuesto y criterios de aceptación. |
 | [Specs ordenadas](docs/specs/README.md) | 18 specs originales y S19 para persistencia gestionada desde Vercel. |
 | [Seguridad y datos S21](docs/s21-validacion.md) | Límites compartidos, sesiones, TLS/UTC, auditoría SQL, integridad, recuperación y evidencia local/remota separada. |

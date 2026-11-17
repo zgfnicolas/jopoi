@@ -14,6 +14,7 @@ description: "Reglas de sesiones anónimas, aislamiento, idempotencia, rate limi
 - **Autorización e Idempotencia (S08):**
   - Una sesión solo puede leer o mutar sus propios `DemoRun`.
   - Toda mutación valida primero el payload con Zod (`src/shared/`) y utiliza los recibos transaccionales (`SessionIntentReceipt`, `OperationCommandReceipt`) para evitar duplicados por doble clic o reintentos.
+- **Protección CSRF multicapa (`requireBrowserMutation`):** Toda mutación de navegador exige `Sec-Fetch-Site` (`same-origin` o `none` cuando el navegador lo envía), `Origin` idéntico a `APP_URL`, header `X-Jopoi-Request: demo` y `Content-Type: application/json`. Ver detalles de AuthN/AuthZ y APIs en `@docs/arquitectura-seguridad-y-apis.md`.
 - **Trazabilidad pública (S11):**
   - Los endpoints públicos de trazabilidad son estrictamente de lectura (sin cookies de sesión requeridas) y jamás exponen `sessionId`, `tokenHash`, contactos ni credenciales.
 - **Secretos:** Ninguna variable de `.env.example` puede exponerse al cliente ni llevar prefijo `NEXT_PUBLIC_`.
