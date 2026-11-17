@@ -26,6 +26,7 @@
         "hts-system-contract",
         "layerzero-messaging",
         "migrate-to-shoehorn",
+        "prisma-postgres",
         "pyth-price-feeds",
         "review-harness-spec",
         "scaffold-exercises",

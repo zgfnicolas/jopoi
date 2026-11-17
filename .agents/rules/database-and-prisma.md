@@ -1,6 +1,6 @@
 ---
 trigger: glob
-globs: "**/prisma/**/*, **/src/server/database/**/*.ts, **/scripts/*database*.ts, **/scripts/local-postgres.ts"
+globs: "prisma.config.ts, **/prisma/**/*, **/src/server/database/**/*.ts, **/scripts/*database*.ts, **/scripts/local-postgres.ts"
 description: "Reglas de persistencia PostgreSQL, Prisma 7, diseño relacional 3NF, transacciones ACID, SQLSTATE, TLS y retención (S03, S19, S21)."
 ---
 
@@ -17,3 +17,4 @@ description: "Reglas de persistencia PostgreSQL, Prisma 7, diseño relacional 3N
 - **Transacciones ACID:** Cortas (`maxWait: 2000`, `timeout: 5000`), sin llamadas HTTP ni Hedera adentro. Todo cambio operativo guarda estado, recibo de idempotencia, `OperationEvent` y `HcsPublication` en una misma transacción antes de publicar en testnet.
 - **Seguridad y Auditoría (`db:audit`):** Cualquier cambio debe preservar los 12 controles de `src/server/database/audit.ts` (`DB-ROLE`, `DB-OWNER`, `DB-DDL`, `DB-EVENT-UPDATE`, `DB-FUNCTION-EXECUTE`, `DB-TABLES`, `DB-TRIGGERS`, `DB-CONSTRAINTS`, `DB-INDEXES`, `DB-TLS`, `DB-TIMEZONE`, `DB-HISTORIC-TIME`) y `sslmode=verify-full` fuera de loopback.
 - **Migraciones:** No editar ni borrar migraciones aplicadas en `prisma/migrations/`, ni usar `db push` o `migrate reset` sin confirmación explícita del usuario.
+- **Consultas parametrizadas y proyecciones:** Prohibido usar `$queryRawUnsafe`, `$executeRawUnsafe` o proyecciones implícitas (`SELECT *`); toda consulta SQL nativa debe usar tagged templates (`Prisma.sql` / `Prisma.join`), `select` explícito y `orderBy` determinístico.
